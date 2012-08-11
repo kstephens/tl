@@ -412,7 +412,7 @@ tl tl_evaluator(TLP tl exp, tl env)
 
   L(arg);
   val = cdr(exp);
-  push(val); // next arg
+  push(val);
   push(tl_s__argval);
   exp = car(exp); 
   G(eval);
@@ -556,6 +556,10 @@ tl tl_repl(TLP tl env)
   }
   return val;
 }
+#define BOP(O,N) \
+  tl tl_fixnum__##N(TLP tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
+  tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
+#include "cops.h"
 tl tl_stdenv(TLP tl env)
 {
   env = tl_let(TL tl_s(stdin), tl_stdin, env);
@@ -567,6 +571,11 @@ tl tl_stdenv(TLP tl env)
   env = tl_let(TL tl_s_cdr, tl_m_prim(TL tl_pair__cdr, "cdr", 1), env);
   env = tl_let(TL tl_s(read), tl_m_prim(TL tl_read, "read", 1), env);
   env = tl_let(TL tl_s(write), tl_m_prim(TL tl_write, "write", 2), env);
+  env = tl_let(TL tl_s(display), tl_m_prim(TL tl_string__display, "display", 2), env);
+#define BOP(O,N) \
+  env = tl_let(TL tl__s(#O), tl_m_prim(TL tl_fixnum__##N, #O, 2), env); \
+  env = tl_let(TL tl__s("%"#O), tl_m_prim(TL tl_word__##N, "%"#O, 2), env);
+#include "cops.h"
   return env;
 }
 

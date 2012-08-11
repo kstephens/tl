@@ -1,0 +1,11 @@
+BOP(+,ADD)
+BOP(-,SUB)
+BOP(*,MUL)
+BOP(/,DIV)
+BOP(%,MOD)
+BOP(|,OR)
+BOP(&,AND)
+BOP(^,XOR)
+BOP(<<,LSH)
+BOP(>>,RSH)
+#undef BOP
