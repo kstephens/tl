@@ -19,8 +19,9 @@ tl tl_allocate(TLP tl type, size_t size)
 {
   tl o = tl_malloc(size + sizeof(type));
   o += sizeof(type);
-#define tl_t(o) ((tl*)(o))[-1]
-  tl_t(o) = type;
+#define tl_t_(o) ((tl*)(o))[-1]
+  tl_t_(o) = type;
+#define tl_t(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
   memset(o, 0, size);
   return o;
 }
@@ -72,9 +73,9 @@ tl tl_m_runtime(TLP tl parent)
 #define tl_s_setE tl_(58)
 
   tl_t_type = tl_m_type(TL "type");
-  tl_t(tl_t_type) = tl_t_type;
+  tl_t_(tl_t_type) = tl_t_type;
   tl_t_runtime = tl_m_type(TL "runtime");
-  tl_t(tl_rt) = tl_t_runtime;
+  tl_t_(tl_rt) = tl_t_runtime;
   tl_t_void = tl_m_type(TL "void");
   tl_t_fixnum = tl_m_type(TL "fixnum");
   tl_t_string = tl_m_type(TL "string");
@@ -128,14 +129,19 @@ tl tl_error(TLP tl msg, tl obj)
   fprintf(stderr, "\n");
   abort(); return 0;
 }
+#if 0
+#define tl_i(x) ((tl) ((((ssize_t) (x)) << 1) & 1))
+#define tl_I(o) (((ssize_t) (o)) >> 1)
+#else
 tl tl_m_fixnum(TLP ssize_t x)
 {
   tl o = tl_allocate(TL tl_t_fixnum, sizeof(x));
   *(ssize_t*) o = x;
   return o;
 }
-#define tl_i(o) tl_m_fixnum(TL o)
+#define tl_i(x) tl_m_fixnum(TL x)
 #define tl_I(o) (*(ssize_t*) (o))
+#endif
 tl tl_m_string(TLP void *x, size_t l)
 {
   tl o = tl_allocate(TL tl_t_string, sizeof(x) + sizeof(l));
@@ -478,7 +484,7 @@ tl tl_evaluator(TLP tl exp, tl env)
 
   L(closure);
   val = cons(cdr(exp), env); 
-  tl_t(val) = tl_t_lambda;
+  tl_t_(val) = tl_t_lambda;
   G(rtn);
   
   L(callprim);
