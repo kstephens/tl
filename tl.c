@@ -47,6 +47,7 @@ tl tl_m_runtime(TLP tl parent)
 #define tl_stderr tl_(24)
 #define tl_in_error tl_(25)
 #define tl_eos tl_(26)
+#define tl_env tl_(27)
 #define tl_s_quote tl_(40)
 #define tl_s_if tl_(41)
 #define tl_s_lambda tl_(42)
@@ -64,6 +65,8 @@ tl tl_m_runtime(TLP tl parent)
 #define tl_s_unquote tl_(54)
 #define tl_s__callrtn tl_(55)
 #define tl_s__stmt tl_(56)
+#define tl_s_define tl_(57)
+#define tl_s_setE tl_(58)
 
   tl_t_type = tl_m_type(TL "type");
   tl_t(tl_t_type) = tl_t_type;
@@ -84,6 +87,8 @@ tl tl_m_runtime(TLP tl parent)
   tl_s_unquote_splicing = tl_m_symbol(TL "unquote-splicing");
   tl_s_unquote = tl_m_symbol(TL "unquote");
   tl_s_DOT = tl_m_symbol(TL ".");
+  tl_s_define = tl_m_symbol(TL "define");
+  tl_s_setE = tl_m_symbol(TL "set!");
   tl_s_if = tl_m_symbol(TL "if");
   tl_s_lambda = tl_m_symbol(TL "lambda");
   tl_s__if2 = tl_m_symbol(TL "&if");
@@ -284,6 +289,12 @@ tl tl_let(TLP tl var, tl val, tl env)
   cdr(vv) = cons(val, cdr(vv));
   return env;
 }
+tl tl_define(TLP tl var, tl val, tl env)
+{
+  while ( env && cdr(env) )
+    env = cdr(env);
+  return tl_let(TL var, val, env);
+}
 tl tl_eqQ(TLP tl x, tl y)
 {
   return x == y ? tl_T : tl_F;
@@ -315,6 +326,13 @@ tl tl_value(TLP tl name, tl env)
   if ( slot == tl_s__unbound )
     return tl_error(TL "unbound", name);
   return car(slot);
+}
+tl tl_setE(TLP tl name, tl val, tl env)
+{
+  tl slot = tl_lookup(TL name, env);
+  if ( slot == tl_s__unbound )
+    return tl_error(TL "unbound", name);
+  return car(slot) = val;
 }
 int tl_eval_debug;
 tl tl_evaluator(TLP tl exp, tl env)
@@ -384,6 +402,8 @@ tl tl_evaluator(TLP tl exp, tl env)
   }
   if ( car(exp) == tl_s_if ) G(if1);
   if ( car(exp) == tl_s_lambda ) G(closure);
+  if ( car(exp) == tl_s_define ) G(define);
+  if ( car(exp) == tl_s_setE ) G(setE);
 
   L(args);
   push(args);
@@ -401,9 +421,9 @@ tl tl_evaluator(TLP tl exp, tl env)
   pop(exp);
   args = cdr(args) = cons(val, tl_nil);
   if ( exp ) G(arg);
-
   pop(args);
   args = cdr(args);
+
   L(call);
   val = car(args);
   args = cdr(args);
@@ -452,6 +472,29 @@ tl tl_evaluator(TLP tl exp, tl env)
   pop(args);
   G(rtn);
 
+  L(define);
+  push(cadr(exp));
+  push(tl_s_define);
+  exp = cadr(cdr(exp));
+  G(eval);
+
+  L(define_);
+  pop(exp);
+  env = tl_define(TL exp, val, env);
+  val = exp;
+  G(rtn);
+
+  L(setE);
+  push(cadr(exp));
+  push(tl_s_setE);
+  exp = cadr(cdr(exp));
+  G(eval);
+
+  L(setE_);
+  pop(exp);
+  tl_setE(TL exp, val, env);
+  G(rtn);
+
   L(rtn);
   if ( clink == tl_nil )
     return val;
@@ -464,6 +507,10 @@ tl tl_evaluator(TLP tl exp, tl env)
     G(stmt);
   if ( exp == tl_s__callrtn )
     G(callrtn);
+  if ( exp == tl_s_define )
+    G(define_);
+  if ( exp == tl_s_setE )
+    G(setE_);
   abort();
 }
 tl tl_puts(TLP tl p, void *s)
