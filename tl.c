@@ -227,7 +227,7 @@ tl tl_puts(TLP tl p, void *s)
 tl tl_port__write(TLP tl p, tl s, tl l)
 {
   fwrite(tl_S(s), tl_I(l), 1, FP);
-  return tl_v;
+  return p;
 }
 tl tl_port__read(TLP tl p, tl s, tl l)
 {
@@ -338,6 +338,8 @@ tl tl_lookup(TLP tl name, tl env)
     tl vv = car(env);
     tl vars = car(vv), vals = cdr(vv);
     while ( vars ) {
+      if ( vars == name )
+        return cons(vals, tl_nil); // restarg hack.
       if ( car(vars) == name )
         return vals;
       vars = cdr(vars);
