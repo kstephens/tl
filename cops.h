@@ -8,4 +8,15 @@ BOP(&,AND)
 BOP(^,XOR)
 BOP(<<,LSH)
 BOP(>>,RSH)
+UOP(-,NEG)
+UOP(!,LNOT)
+UOP(~,NOT)
+ROP(<,LT)
+ROP(>,GT)
+ROP(<=,LE)
+ROP(>=,GE)
+ROP(==,EQ)
+ROP(!=,NE)
 #undef BOP
+#undef UOP
+#undef ROP

@@ -576,6 +576,12 @@ tl tl_repl(TLP tl env)
 #define BOP(O,N) \
   tl tl_fixnum__##N(TLP tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
   tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
+#define ROP(O,N)                                                        \
+  tl tl_fixnum__##N(TLP tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_T : tl_F; } \
+  tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
+#define UOP(O,N) \
+  tl tl_fixnum__##N(TLP tl x) { return tl_i(O tl_I(x)); }  \
+  tl tl_word__##N(TLP tl x) { return (tl) (O ((ssize_t) x)); }
 #include "cops.h"
 tl tl_stdenv(TLP tl env)
 {
@@ -595,6 +601,12 @@ tl tl_stdenv(TLP tl env)
 #define BOP(O,N) \
   env = tl_let(TL tl__s(#O), tl_m_prim(TL tl_fixnum__##N, #O, 2), env); \
   env = tl_let(TL tl__s("%"#O), tl_m_prim(TL tl_word__##N, "%"#O, 2), env);
+#define UOP(O,N) \
+  env = tl_let(TL tl__s("@"#O), tl_m_prim(TL tl_fixnum__##N, "@"#O, 1), env); \
+  env = tl_let(TL tl__s("%@"#O), tl_m_prim(TL tl_word__##N, "%@"#O, 1), env);
+#define ROP(O,N) \
+  env = tl_let(TL tl__s(#O), tl_m_prim(TL tl_fixnum__##N, #O, 1), env); \
+  env = tl_let(TL tl__s("%"#O), tl_m_prim(TL tl_word__##N, "%"#O, 1), env);
 #include "cops.h"
   return env;
 }
