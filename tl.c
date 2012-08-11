@@ -71,6 +71,8 @@ tl tl_m_runtime(TLP tl parent)
 #define tl_s__stmt tl_(56)
 #define tl_s_define tl_(57)
 #define tl_s_setE tl_(58)
+#define tl_s__env tl_(59)
+#define tl_s__args tl_(60)
 
   tl_t_type = tl_m_type(TL "type");
   tl_t_(tl_t_type) = tl_t_type;
@@ -105,6 +107,8 @@ tl tl_m_runtime(TLP tl parent)
   tl_s_t = tl_m_symbol(TL "t");
   tl_s__callrtn = tl_m_symbol(TL "&callrtn");
   tl_s__stmt = tl_m_symbol(TL "&stmt");
+  tl_s__env = tl_m_symbol(TL "&env");
+  tl_s__args = tl_m_symbol(TL "&args");
 
   tl_v = tl_allocate(TL tl_t_void, 0);
   tl_eos = tl_allocate(TL tl_t_eos, 0);
@@ -402,6 +406,8 @@ tl tl_evaluator(TLP tl exp, tl env)
   L(eval);
   if ( tl_t(exp) == tl_t_pair ) G(evcomb);
   if ( tl_t(exp) == tl_t_symbol ) {
+    if ( exp == tl_s__env ) { val = env; G(rtn); }
+    if ( exp == tl_s__args ) { val = args; G(rtn); }
     val = tl_value(TL exp, env); 
     G(rtn);
   }
