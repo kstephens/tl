@@ -196,35 +196,52 @@ tl tl_m_prim(TLP void *f, const char *name, int na)
 }
 tl tl_m_port(TLP FILE *x)
 {
-  tl o = tl_allocate(TL tl_t_port, sizeof(x));
-  *(FILE**) o = x;
-  return o;
+  tl p = tl_allocate(TL tl_t_port, sizeof(x));
+#define FP *(FILE**)p
+  FP = x;
+  return p;
 }
-tl tl_port__write(TLP tl o, tl s, tl l)
+tl tl_open(TLP tl fn, tl mode)
 {
-  fwrite(tl_S(s), tl_I(l), 1, (*(FILE**) o));
+  FILE *fp = fopen(tl_S(fn), tl_S(mode));
+  return fp ? tl_m_port(TL fp) : tl_nil;
+}
+tl tl_close(TLP tl p)
+{
+  fclose(FP);
+  FP = 0;
+  return p;
+}
+tl tl_puts(TLP tl p, void *s)
+{
+  fwrite(s, strlen(s), 1, FP);
+  fflush(FP);
+  return p;
+}
+tl tl_port__write(TLP tl p, tl s, tl l)
+{
+  fwrite(tl_S(s), tl_I(l), 1, FP);
   return tl_v;
 }
-tl tl_port__read(TLP tl o, tl s, tl l)
+tl tl_port__read(TLP tl p, tl s, tl l)
 {
-  ssize_t c = fread(tl_S(s), tl_I(l), 1, (*(FILE**) o));
+  ssize_t c = fread(tl_S(s), tl_I(l), 1, FP);
   return tl_i((long) c);
 }
 tl tl_string__display(TLP tl o, tl p)
 {
   return tl_port__write(TL p, o, tl_i(strlen(tl_S(o))));
 }
-#define fp *(FILE**)p
 tl tl_string__write(TLP tl o, tl p)
 {
-  fwrite("\"", 1, 1, fp);
+  fwrite("\"", 1, 1, FP);
   tl_string__display(TL o, p);
-  fwrite("\"", 1, 1, fp);
+  fwrite("\"", 1, 1, FP);
   return p;
 }
 tl tl_fixnum__write(TLP tl o, tl p)
 {
-  fprintf(fp, "%lld", (long long) tl_I(o));
+  fprintf(FP, "%lld", (long long) tl_I(o));
   return p;
 }
 tl tl_symbol__write(TLP tl o, tl p)
@@ -233,30 +250,30 @@ tl tl_symbol__write(TLP tl o, tl p)
 }
 tl tl_type__write(TLP tl o, tl p)
 {
-  fprintf(fp, "#<%s %s @%p>", tl_iv(tl_t(o), 0), tl_iv(o, 0), o);
+  fprintf(FP, "#<%s %s @%p>", tl_iv(tl_t(o), 0), tl_iv(o, 0), o);
   return p;
 }
 tl tl_prim__write(TLP tl o, tl p)
 {
-  fprintf(fp, "#<prim %s @%p @%p>", tl_iv(o, 1), o, tl_iv(o, 0));
+  fprintf(FP, "#<prim %s @%p @%p>", tl_iv(o, 1), o, tl_iv(o, 0));
   return p;
 }
 tl tl_pair__write(TLP tl o, tl p)
 {
-  fwrite("(", 1, 1, fp);
+  fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
   if ( tl_t(o) == tl_t_pair ) {
     tl_write(TL car(o), p);
     o = cdr(o);
     if ( ! o ) goto rtn;
-    fwrite(" ", 1, 1, fp);
+    fwrite(" ", 1, 1, FP);
     goto again;
   }
-  fwrite(". ", 2, 1, fp);
+  fwrite(". ", 2, 1, FP);
   tl_write(TL o, p);
  rtn:
-  fwrite(")", 1, 1, fp);
+  fwrite(")", 1, 1, FP);
   return p;
 }
 tl tl_write(TLP tl o, tl p)
@@ -275,9 +292,10 @@ tl tl_write(TLP tl o, tl p)
     return tl_type__write(TL o, p);
   if ( tl_t(o) == tl_t_prim )
     return tl_prim__write(TL o, p);
-  fprintf(fp, "#<%s %p>", tl_iv(tl_t(o), 0), o);
+  fprintf(FP, "#<%s %p>", tl_iv(tl_t(o), 0), o);
   return p;
 }
+#undef FP
 tl tl_bind(TLP tl vars, tl args, tl env)
 {
   // if ( length(vars) != length(args) ) error
@@ -516,12 +534,6 @@ tl tl_evaluator(TLP tl exp, tl env)
     G(setE_);
   abort();
 }
-tl tl_puts(TLP tl p, void *s)
-{
-  fwrite(s, strlen(s), 1, fp);
-  fflush(fp);
-  return p;
-}
 tl tl_eval_print(TLP tl expr, tl env)
 {
   tl_write(TL expr, tl_stdout); fprintf(stdout, " => \n");
@@ -575,6 +587,8 @@ tl tl_stdenv(TLP tl env)
   env = tl_let(TL tl_s_cons, tl_m_prim(TL tl_m_pair, "cons", 2), env);
   env = tl_let(TL tl_s_car, tl_m_prim(TL tl_pair__car, "car", 1), env);
   env = tl_let(TL tl_s_cdr, tl_m_prim(TL tl_pair__cdr, "cdr", 1), env);
+  env = tl_let(TL tl_s(open), tl_m_prim(TL tl_open, "open", 2), env);
+  env = tl_let(TL tl_s(close), tl_m_prim(TL tl_close, "close", 1), env);
   env = tl_let(TL tl_s(read), tl_m_prim(TL tl_read, "read", 1), env);
   env = tl_let(TL tl_s(write), tl_m_prim(TL tl_write, "write", 2), env);
   env = tl_let(TL tl_s(display), tl_m_prim(TL tl_string__display, "display", 2), env);
