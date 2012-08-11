@@ -571,6 +571,7 @@ tl tl_stdenv(TLP tl env)
   env = tl_let(TL tl_s(stdout), tl_stdout, env);
   env = tl_let(TL tl_s(stderr), tl_stderr, env);
   env = tl_let(TL tl__s("eq?"), tl_m_prim(TL tl_eqQ, "eq?", 2), env);
+  env = tl_let(TL tl__s("eqv?"), tl_m_prim(TL tl_eqvQ, "eqv?", 2), env);
   env = tl_let(TL tl_s_cons, tl_m_prim(TL tl_m_pair, "cons", 2), env);
   env = tl_let(TL tl_s_car, tl_m_prim(TL tl_pair__car, "car", 1), env);
   env = tl_let(TL tl_s_cdr, tl_m_prim(TL tl_pair__cdr, "cdr", 1), env);
