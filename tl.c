@@ -12,9 +12,12 @@ typedef void *tl;
 #define tl_nil ((tl) 0)
 #define tl_F tl_nil
 #define tl_T tl_s_t
+#include "gc/gc.h"
+#define tl_malloc(S) GC_malloc(S)
+#define tl_realloc(P,S) GC_realloc(P,S)
 tl tl_allocate(TLP tl type, size_t size)
 {
-  tl o = malloc(size + sizeof(type));
+  tl o = tl_malloc(size + sizeof(type));
   o += sizeof(type);
 #define tl_t(o) ((tl*)(o))[-1]
   tl_t(o) = type;
@@ -546,6 +549,8 @@ tl tl_eval_print(TLP tl expr, tl env)
 #define STRING_2_NUMBER(s, radix) tl_string__string_TO_number(TL s)
 #define STRING_2_SYMBOL(s) tl_string__intern(TL s)
 #define ERROR(msg,args...) tl_error(TL msg, #args)
+#define MALLOC(S) tl_malloc(S)
+#define REALLOC(P,S) tl_realloc(P,S)
 #include "lispread.c"
 tl tl_repl(TLP tl env)
 {
