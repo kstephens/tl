@@ -15,7 +15,6 @@ tl tl_allocate(tl type, size_t size)
   o += sizeof(type);
 #define tl_t_(o) ((tl*)(o))[-1]
   tl_t_(o) = type;
-#define tl_type(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
   memset(o, 0, size);
   return o;
 }
@@ -111,10 +110,21 @@ tl tl_m_runtime(tl parent)
   tl_stderr = tl_m_port(stderr);
   return tl_rt;
 }
+tl tl_type(tl o)
+{
+#define _tl_type(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
+  return _tl_type(o);
+}
+#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl x)
 {
   tl o = tl_allocate(tl_t_type, sizeof(x));
   *(void**) o = x;
+  return o;
+}
+tl tl_typeSET(tl o, tl t)
+{
+  tl_t_(o) = t;
   return o;
 }
 tl tl_write(tl o, tl p);
