@@ -215,17 +215,6 @@ tl tl_m_port(FILE *x)
   FP = x;
   return p;
 }
-tl tl_open(tl fn, tl mode)
-{
-  FILE *fp = fopen(tl_S(fn), tl_S(mode));
-  return fp ? tl_m_port(fp) : tl_nil;
-}
-tl tl_close(tl p)
-{
-  fclose(FP);
-  FP = 0;
-  return p;
-}
 tl tl_puts(tl p, void *s)
 {
   fwrite(s, strlen(s), 1, FP);
@@ -635,8 +624,8 @@ tl tl_stdenv(tl env)
   env = tl_let(tl_s_car, tl_m_prim(tl_pair__car, "car", 1), env);
   env = tl_let(tl_s_cdr, tl_m_prim(tl_pair__cdr, "cdr", 1), env);
   env = tl_let(tl_s(eval), tl_m_prim(tl_eval, "eval", 2), env);
-  env = tl_let(tl_s(open), tl_m_prim(tl_open, "open", 2), env);
-  env = tl_let(tl_s(close), tl_m_prim(tl_close, "close", 1), env);
+  env = tl_let(tl_s(fopen), tl_m_prim(fopen, "fopen", 2), env);
+  env = tl_let(tl_s(fclose), tl_m_prim(fclose, "fclose", 1), env);
   env = tl_let(tl__s("%read"), tl_m_prim(tl_read, "%read", 1), env);
   env = tl_let(tl__s("%newline"), tl_m_prim(tl_newline, "%newline", 1), env);
   env = tl_let(tl__s("%write"), tl_m_prim(tl__write, "%write", 3), env);
