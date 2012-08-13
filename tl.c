@@ -404,6 +404,8 @@ tl tl_evaluator(TLP tl exp, tl env)
     } while(0)
 
   L(eval);
+  if ( exp == tl_nil ) 
+    { val = exp; G(rtn); }
   if ( tl_t(exp) == tl_t_pair ) G(evcomb);
   if ( tl_t(exp) == tl_t_symbol ) {
     if ( exp == tl_s__env ) { val = env; G(rtn); }
