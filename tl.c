@@ -369,11 +369,11 @@ tl tl_setE(TLP tl name, tl val, tl env)
 }
 int tl_eval_debug;
 #define tl_eval_debug 0
-tl tl_evaluator(TLP tl exp, tl env)
+tl tl_eval(TLP tl exp, tl env)
 {
   tl val = tl_nil, args = tl_nil, clink = tl_nil;
   if ( tl_eval_debug ) {
-    fprintf(stderr, "\n  evaluator:");
+    fprintf(stderr, "\n  eval:");
     fprintf(stderr, "\n    env => ");
     tl_write(TL env, tl_stderr);
     fprintf(stderr, "\n    exp => ");
@@ -554,7 +554,7 @@ tl tl_evaluator(TLP tl exp, tl env)
 tl tl_eval_print(TLP tl expr, tl env)
 {
   tl_write(TL expr, tl_stdout); fprintf(stdout, " => \n");
-  tl val = tl_evaluator(TL expr, env);
+  tl val = tl_eval(TL expr, env);
   tl_write(TL val, tl_stdout); fprintf(stdout, "\n");
   return val;
 }
@@ -613,6 +613,7 @@ tl tl_stdenv(TLP tl env)
   env = tl_let(TL tl_s_cons, tl_m_prim(TL tl_m_pair, "cons", 2), env);
   env = tl_let(TL tl_s_car, tl_m_prim(TL tl_pair__car, "car", 1), env);
   env = tl_let(TL tl_s_cdr, tl_m_prim(TL tl_pair__cdr, "cdr", 1), env);
+  env = tl_let(TL tl_s(eval), tl_m_prim(TL tl_eval, "eval", 2), env);
   env = tl_let(TL tl_s(open), tl_m_prim(TL tl_open, "open", 2), env);
   env = tl_let(TL tl_s(close), tl_m_prim(TL tl_close, "close", 1), env);
   env = tl_let(TL tl_s(read), tl_m_prim(TL tl_read, "read", 1), env);
