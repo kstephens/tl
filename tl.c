@@ -368,6 +368,7 @@ tl tl_setE(TLP tl name, tl val, tl env)
   return car(slot) = val;
 }
 int tl_eval_debug;
+#define tl_eval_debug 0
 tl tl_evaluator(TLP tl exp, tl env)
 {
   tl val = tl_nil, args = tl_nil, clink = tl_nil;
@@ -404,7 +405,7 @@ tl tl_evaluator(TLP tl exp, tl env)
     } while(0)
 
   L(eval);
-  if ( exp == tl_nil ) 
+  if ( exp == tl_nil )
     { val = exp; G(rtn); }
   if ( tl_t(exp) == tl_t_pair ) G(evcomb);
   if ( tl_t(exp) == tl_t_symbol ) {
@@ -568,6 +569,8 @@ tl tl_eval_print(TLP tl expr, tl env)
 #define EOS tl_eos
 #define CONS cons
 #define CAR car
+#define T tl_T
+#define F tl_F
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_i(I)
 #define LIST_2_VECTOR(X) X
@@ -601,6 +604,7 @@ tl tl_repl(TLP tl env)
 #include "cops.h"
 tl tl_stdenv(TLP tl env)
 {
+  env = tl_let(TL tl__s("t"), tl__s("t"), env);
   env = tl_let(TL tl_s(stdin), tl_stdin, env);
   env = tl_let(TL tl_s(stdout), tl_stdout, env);
   env = tl_let(TL tl_s(stderr), tl_stderr, env);
