@@ -132,7 +132,7 @@ tl tl_error(tl msg, tl obj)
 {
   if ( tl_in_error != tl_nil ) abort();
   tl_in_error = tl_t;
-  fprintf(stderr, "\nERROR: %s: %s @%p : ", msg, tl_iv(tl_type(obj), 0), obj);
+  fprintf(stderr, "\nERROR: %s: %s @%p : ", (char*)msg, (char*) tl_iv(tl_type(obj), 0), obj);
   tl_write(obj, tl_stderr);
   fprintf(stderr, "\n");
   abort(); return 0;
@@ -257,12 +257,12 @@ tl tl_symbol__write(tl o, tl p)
 }
 tl tl_type__write(tl o, tl p)
 {
-  fprintf(FP, "#<%s %s @%p>", tl_iv(tl_type(o), 0), tl_iv(o, 0), o);
+  fprintf(FP, "#<%s %s @%p>", (char*) tl_iv(tl_type(o), 0), (char*) tl_iv(o, 0), o);
   return p;
 }
 tl tl_prim__write(tl o, tl p)
 {
-  fprintf(FP, "#<prim %s @%p @%p>", tl_iv(o, 1), o, tl_iv(o, 0));
+  fprintf(FP, "#<prim %s @%p @%p>", (char*) tl_iv(o, 1), o, tl_iv(o, 0));
   return p;
 }
 tl tl__write(tl o, tl p, tl op);
@@ -300,7 +300,7 @@ tl tl__write(tl o, tl p, tl op)
     return tl_type__write(o, p);
   if ( tl_type(o) == tl_t_prim )
     return tl_prim__write(o, p);
-  fprintf(FP, "#<%s @%p>", tl_iv(tl_type(o), 0), o);
+  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
   return p;
 }
 tl tl_display(tl o, tl p) { return tl__write(o, p, (tl) 0); }
@@ -333,7 +333,8 @@ tl tl_eqQ(tl x, tl y)
 tl tl_eqvQ(tl x, tl y)
 {
   if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
-    return tl_I(x) == tl_I(y) ? tl_t : tl_f;
+#define tl_b(x) ((x) ? tl_t : tl_f)
+    return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
 }
 tl tl_lookup(tl name, tl env)
