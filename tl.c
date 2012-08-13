@@ -170,8 +170,8 @@ tl tl_m_pair(tl a, tl d)
 }
 #define cadr(o) car(cdr(o))
 #define cddr(o) cdr(cdr(o))
-tl tl_pair__car(tl o) { return car(o); }
-tl tl_pair__cdr(tl o) { return cdr(o); }
+tl tl_car(tl o) { return car(o); }
+tl tl_cdr(tl o) { return cdr(o); }
 #define cons(a, r) tl_m_pair(a, r)
 tl tl_m_symbol(void *x)
 {
@@ -189,7 +189,8 @@ tl tl_m_symbol(void *x)
   return o;
 }
 #define tl__s(S) tl_m_symbol(S)
-#define tl_s(N) tl_m_symbol(#N)
+#define _tl_s(N)tl_m_symbol(#N)
+#define tl_s(N)_tl_s(N)
 tl tl_string__string_TO_number(tl o)
 {
   long long i = 0;
@@ -201,13 +202,12 @@ tl tl_string__intern(tl o)
 {
   return tl_m_symbol(tl_S(o));
 }
-tl tl_m_prim(void *f, const char *name, int na)
+tl tl_m_prim(void *f, const char *name)
 {
-  tl o = tl_allocate(tl_t_prim, sizeof(f) + sizeof(na));
+  tl o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
 #define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
   *(void**) (o + 0) = f;
   *(void**) (o + sizeof(f)) = (void*) name;
-  *(ssize_t*) (o + sizeof(f) + sizeof(name)) = na;
   return o;
 }
 tl tl_m_port(FILE *x)
@@ -510,6 +510,8 @@ tl tl_eval(tl exp, tl env)
     val = tl_FP(val,tl,(tl,tl))(car(args), cadr(args));
   else if ( cdr(cddr(args)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl))(car(args), cadr(args), car(cddr(args)));
+  else if ( cdr(cdr(cddr(args))) == tl_nil )
+    val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
   else
     tl_error("too many args", val);
   pop(args);
@@ -618,38 +620,24 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 #include "cops.h"
 tl tl_stdenv(tl env)
 {
-  env = tl_let(tl__s("t"), tl__s("t"), env);
-  env = tl_let(tl__s("nil"), tl_nil, env);
-  env = tl_let(tl__s("&eos"), tl_eos, env);
-  env = tl_let(tl_s(stdin), tl_stdin, env);
-  env = tl_let(tl_s(stdout), tl_stdout, env);
-  env = tl_let(tl_s(stderr), tl_stderr, env);
-  env = tl_let(tl__s("eq?"), tl_m_prim(tl_eqQ, "eq?", 2), env);
-  env = tl_let(tl__s("eqv?"), tl_m_prim(tl_eqvQ, "eqv?", 2), env);
-  env = tl_let(tl_s_cons, tl_m_prim(tl_m_pair, "cons", 2), env);
-  env = tl_let(tl_s_car, tl_m_prim(tl_pair__car, "car", 1), env);
-  env = tl_let(tl_s_cdr, tl_m_prim(tl_pair__cdr, "cdr", 1), env);
-  env = tl_let(tl_s(eval), tl_m_prim(tl_eval, "eval", 2), env);
-  env = tl_let(tl_s(fopen), tl_m_prim(fopen, "fopen", 2), env);
-  env = tl_let(tl_s(fclose), tl_m_prim(fclose, "fclose", 1), env);
-  env = tl_let(tl__s("%read"), tl_m_prim(tl_read, "%read", 1), env);
-  env = tl_let(tl__s("%newline"), tl_m_prim(tl_newline, "%newline", 1), env);
-  env = tl_let(tl__s("%write"), tl_m_prim(tl__write, "%write", 3), env);
-#define ITYPE(T,N)                                                      \
-  env = tl_let(tl__s("%"#N"-get"), tl_m_prim(tl_##N##__get, "%"#N"-get", 1), env);  \
-  env = tl_let(tl__s("%"#N"-set"), tl_m_prim(tl_##N##__set, "%"#N"-set", 2), env);  \
-  env = tl_let(tl__s("%"#N"-sizeof"), tl_m_prim(tl_##N##__sizeof, "%"#N"-size", 0), env);
+#define D(N,V) env = tl_let(tl_s(N), V, env)
+  D(t, tl_s(t));
+  D(nil, tl_nil);
+#define V(N) D(N,tl_##N)
+  V(eos);
+  V(_stdin); V(_stdout); V(_stderr);
+#define P(N) D(N, tl_m_prim(N, #N))
+  P(tl_eqQ); P(tl_eqvQ);
+  P(tl_m_pair); P(tl_car); P(tl_cdr);
+  P(tl_eval);  P(tl_repl);
+  P(fopen); P(fclose);
+  P(tl_read); P(tl_newline), P(tl__write);
+#define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
 #include "ctypes.h"
-#define BOP(O,N) \
-  env = tl_let(tl__s(#O), tl_m_prim(tl_fixnum__##N, #O, 2), env); \
-  env = tl_let(tl__s("%"#O), tl_m_prim(tl_word__##N, "%"#O, 2), env);
-#define UOP(O,N) \
-  env = tl_let(tl__s("@"#O), tl_m_prim(tl_fixnum__##N, "@"#O, 1), env); \
-  env = tl_let(tl__s("%@"#O), tl_m_prim(tl_word__##N, "%@"#O, 1), env);
-#define ROP(O,N) \
-  env = tl_let(tl__s(#O), tl_m_prim(tl_fixnum__##N, #O, 1), env); \
-  env = tl_let(tl__s("%"#O), tl_m_prim(tl_word__##N, "%"#O, 1), env);
+#define BOP(O,N) P(tl_fixnum_##N); P(tl_word_##N);
+#define UOP(O,N) BOP(O,N)
+#define ROP(O,N) BOP(O,N)
 #include "cops.h"
   return env;
 }
