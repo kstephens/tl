@@ -419,16 +419,16 @@ tl tl_evaluator(TLP tl exp, tl env)
   G(rtn);
 
   L(if1);
-  val = cdr(exp);
+  val = cddr(exp);
   push(val);
   push(tl_s__if2);
-  exp = car(exp);
+  exp = cadr(exp);
   G(eval);
 
   L(if2);
   pop(exp);
-  if ( ! val )
-    exp = cdr(exp);
+  if ( val == tl_F )
+    exp = (exp = cdr(exp)) != tl_nil ? car(exp) : tl_v;
   else
     exp = car(exp);
   G(eval);
