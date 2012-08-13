@@ -41,9 +41,9 @@ tl tl_m_runtime(tl parent)
 #define tl_t_lambda tl_(10)
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
-#define tl_stdin tl_(22)
-#define tl_stdout tl_(23)
-#define tl_stderr tl_(24)
+#define tl__stdin tl_(22)
+#define tl__stdout tl_(23)
+#define tl__stderr tl_(24)
 #define tl_in_error tl_(25)
 #define tl_eos tl_(26)
 #define tl_env tl_(27)
@@ -107,9 +107,9 @@ tl tl_m_runtime(tl parent)
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
-  tl_stdin = tl_m_port(stdin);
-  tl_stdout = tl_m_port(stdout);
-  tl_stderr = tl_m_port(stderr);
+  tl__stdin = tl_m_port(stdin);
+  tl__stdout = tl_m_port(stdout);
+  tl__stderr = tl_m_port(stderr);
   return tl_rt;
 }
 tl tl_type(tl o)
@@ -378,10 +378,10 @@ tl tl_eval(tl exp, tl env)
   if ( tl_eval_debug ) {
     fprintf(stderr, "\n  eval:");
     fprintf(stderr, "\n    env => ");
-    tl_write(env, tl_stderr);
+    tl_write(env, tl__stderr);
     fprintf(stderr, "\n    exp => ");
-    tl_write(exp, tl_stderr);
-    tl_write(tl_type(exp), tl_stderr);
+    tl_write(exp, tl__stderr);
+    tl_write(tl_type(exp), tl__stderr);
     fprintf(stderr, "\n");
   }
 #define pop(x)  x = car(clink); clink = cdr(clink)
@@ -390,15 +390,15 @@ tl tl_eval(tl exp, tl env)
   if ( tl_eval_debug ) {                  \
   fprintf(stderr, "    %s:", #N);         \
   fprintf(stderr, "\n      exp   => ");   \
-  tl_write(exp, tl_stderr);            \
+  tl_write(exp, tl__stderr);            \
   fprintf(stderr, "\n      val   => ");   \
-  tl_write(val, tl_stderr);            \
+  tl_write(val, tl__stderr);            \
   fprintf(stderr, "\n      args  => ");   \
-  tl_write(args, tl_stderr);           \
+  tl_write(args, tl__stderr);           \
   fprintf(stderr, "\n      clink => ");   \
-  tl_write(clink, tl_stderr);          \
+  tl_write(clink, tl__stderr);          \
   fprintf(stderr, "\n      env   => ");   \
-  tl_write(env, tl_stderr);            \
+  tl_write(env, tl__stderr);            \
   fprintf(stderr, "\n");                  \
   }
 #define G(N) do {                             \
@@ -556,11 +556,11 @@ tl tl_eval(tl exp, tl env)
     G(setE_);
   abort();
 }
-tl tl_eval_print(tl expr, tl env)
+tl tl_eval_print(tl expr, tl env, tl out)
 {
-  tl_write(expr, tl_stdout); fprintf(stdout, " => \n");
+  if ( out != tl_f ) { tl_write(expr, tl__stdout); fprintf(stdout, " => \n"); }
   tl val = tl_eval(expr, env);
-  tl_write(val, tl_stdout); fprintf(stdout, "\n");
+  if ( out != tl_f ) { tl_write(val, tl__stdout); fprintf(stdout, "\n"); }
   return val;
 }
 #define VALUE tl
@@ -588,12 +588,15 @@ tl tl_eval_print(tl expr, tl env)
 #define MALLOC(S) tl_malloc(S)
 #define REALLOC(P,S) tl_realloc(P,S)
 #include "lispread.c"
-tl tl_repl(tl env)
+tl tl_repl(tl env, tl in, tl out, tl prompt)
 {
   tl expr, val;
-  tl port = tl_stdin;
-  while ( tl_puts(tl_stdout, "> "), (expr = tl_read(port)) != tl_eos ) {
-    val = tl_eval_print(expr, env);
+  tl port = tl__stdin;
+ again:
+  if ( prompt != tl_f ) tl_puts(prompt, "> ");
+  if ( (expr = tl_read(port)) != tl_eos ) {
+    val = tl_eval_print(expr, env, out);
+    goto again;
   }
   return val;
 }
@@ -655,10 +658,10 @@ int main(int argc, char **argv)
 {
   tl tl_rt = tl_m_runtime(0);
   tl env = tl_stdenv(tl_nil);
-  fprintf(stdout, "env =>\n  "); tl_write(env, tl_stdout); fprintf(stdout, "\n");
+  fprintf(stdout, "env =>\n  "); tl_write(env, tl__stdout); fprintf(stdout, "\n");
   tl expr, val;
 
-  tl_repl(env);
+  tl_repl(env, tl__stdin, tl__stdout, tl__stdout);
   /*
    */
   return 0;
