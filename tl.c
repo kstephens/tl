@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 typedef void *tl;
+typedef size_t tlw;
+typedef ssize_t tlsw;
 tl tl_rt; // runtime.
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
@@ -112,7 +114,7 @@ tl tl_m_runtime(tl parent)
 }
 tl tl_type(tl o)
 {
-#define _tl_type(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
+#define _tl_type(o) (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
   return _tl_type(o);
 }
 #define tl_type(o)_tl_type(o)
@@ -133,22 +135,22 @@ tl tl_error(tl msg, tl obj)
   if ( tl_in_error != tl_nil ) abort();
   tl_in_error = tl_t;
   fprintf(stderr, "\nERROR: %s: %s @%p : ", (char*)msg, (char*) tl_iv(tl_type(obj), 0), obj);
-  tl_write(obj, tl_stderr);
+  tl_write(obj, tl__stderr);
   fprintf(stderr, "\n");
   abort(); return 0;
 }
 #if 0
-#define tl_i(x) ((tl) ((((ssize_t) (x)) << 1) & 1))
-#define tl_I(o) (((ssize_t) (o)) >> 1)
+#define tl_i(x) ((tl) ((((tlsw) (x)) << 1) & 1))
+#define tl_I(o) (((tlsw) (o)) >> 1)
 #else
-tl tl_m_fixnum(ssize_t x)
+tl tl_m_fixnum(tlsw x)
 {
   tl o = tl_allocate(tl_t_fixnum, sizeof(x));
-  *(ssize_t*) o = x;
+  *(tlsw*) o = x;
   return o;
 }
 #define tl_i(x) tl_m_fixnum(x)
-#define tl_I(o) (*(ssize_t*) (o))
+#define tl_I(o) (*(tlsw*) (o))
 #endif
 tl tl_m_string(void *x, size_t l)
 {
@@ -596,20 +598,20 @@ tl tl_repl(tl env)
   return val;
 }
 #define ITYPE(T,N)                                                      \
-  tl tl_##N##__get(tl ptr) { return (tl) (ssize_t) *(T*)ptr; }      \
-  tl tl_##N##__set(tl ptr, tl word) { return (tl) (ssize_t) (*((T*)ptr) = (T)word); } \
-  tl tl_##N##__sizeof(TLP0) { return tl_i((ssize_t) sizeof(T)); }
+  tl tl_##N##_get(tl ptr) { return (tl) (tlw) *(T*)ptr; }      \
+  tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (size_t)(T)word); } \
+  tl tl_##N##_sizeof(TLP0) { return tl_i((tlw) sizeof(T)); }
 #define FTYPE(T,N)
 #include "ctypes.h"
 #define BOP(O,N) \
-  tl tl_fixnum__##N(tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
-  tl tl_word__##N(tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
+  tl tl_fixnum_##N(tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
+  tl tl_word_##N(tl x, tl y) { return (tl) (((tlw) x) O ((tlw) y)); }
 #define ROP(O,N)                                                        \
-  tl tl_fixnum__##N(tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_t : tl_f; } \
-  tl tl_word__##N(tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
+  tl tl_fixnum_##N(tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_t : tl_f; } \
+  tl tl_word_##N(tl x, tl y) { return (tl) (((tlw) x) O ((tlw) y)); }
 #define UOP(O,N) \
-  tl tl_fixnum__##N(tl x) { return tl_i(O tl_I(x)); }  \
-  tl tl_word__##N(tl x) { return (tl) (O ((ssize_t) x)); }
+  tl tl_fixnum_##N(tl x) { return tl_i(O tl_I(x)); }  \
+  tl tl_word_##N(tl x) { return (tl) (O ((tlw) x)); }
 #include "cops.h"
 tl tl_stdenv(tl env)
 {
