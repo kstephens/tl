@@ -6,6 +6,7 @@ typedef void *tl;
 #define TLT0 tl
 #define TLT tl,
 #define TLP tl tl_rt,
+#define TLP0 tl tl_rt
 #define TL tl_rt,
 #define TL0 tl_rt
 
@@ -594,6 +595,12 @@ tl tl_repl(TLP tl env)
   }
   return val;
 }
+#define ITYPE(T,N)                                                      \
+  tl tl_##N##__get(TLP tl ptr) { return (tl) (ssize_t) *(T*)ptr; }      \
+  tl tl_##N##__set(TLP tl ptr, tl word) { return (tl) (ssize_t) (*((T*)ptr) = (T)word); } \
+  tl tl_##N##__sizeof(TLP0) { return tl_i((ssize_t) sizeof(T)); }
+#define FTYPE(T,N)
+#include "ctypes.h"
 #define BOP(O,N) \
   tl tl_fixnum__##N(TLP tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
   tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
@@ -618,9 +625,15 @@ tl tl_stdenv(TLP tl env)
   env = tl_let(TL tl_s(eval), tl_m_prim(TL tl_eval, "eval", 2), env);
   env = tl_let(TL tl_s(open), tl_m_prim(TL tl_open, "open", 2), env);
   env = tl_let(TL tl_s(close), tl_m_prim(TL tl_close, "close", 1), env);
-  env = tl_let(TL tl_s(read), tl_m_prim(TL tl_read, "read", 1), env);
-  env = tl_let(TL tl_s(write), tl_m_prim(TL tl_write, "write", 2), env);
-  env = tl_let(TL tl_s(display), tl_m_prim(TL tl_string__display, "display", 2), env);
+  env = tl_let(TL tl__s("%read"), tl_m_prim(TL tl_read, "%read", 1), env);
+  env = tl_let(TL tl__s("%newline"), tl_m_prim(TL tl_newline, "%newline", 1), env);
+  env = tl_let(TL tl__s("%write"), tl_m_prim(TL tl__write, "%write", 3), env);
+#define ITYPE(T,N)                                                      \
+  env = tl_let(TL tl__s("%"#N"-get"), tl_m_prim(TL tl_##N##__get, "%"#N"-get", 1), env);  \
+  env = tl_let(TL tl__s("%"#N"-set"), tl_m_prim(TL tl_##N##__set, "%"#N"-set", 2), env);  \
+  env = tl_let(TL tl__s("%"#N"-sizeof"), tl_m_prim(TL tl_##N##__sizeof, "%"#N"-size", 0), env);
+#define FTYPE(T,N)
+#include "ctypes.h"
 #define BOP(O,N) \
   env = tl_let(TL tl__s(#O), tl_m_prim(TL tl_fixnum__##N, #O, 2), env); \
   env = tl_let(TL tl__s("%"#O), tl_m_prim(TL tl_word__##N, "%"#O, 2), env);
