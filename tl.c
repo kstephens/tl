@@ -435,14 +435,14 @@ tl tl_evaluator(TLP tl exp, tl env)
   G(eval);
 
   L(evcomb);
-  if ( car(exp) == tl_s_quote ) {
-    val = car(cdr(exp)); G(rtn);
-  }
+  if ( car(exp) == tl_s_quote )
+    { val = car(cdr(exp)); G(rtn); }
   if ( car(exp) == tl_s_if ) G(if1);
   if ( car(exp) == tl_s_lambda ) G(closure);
   if ( car(exp) == tl_s_define ) G(define);
   if ( car(exp) == tl_s_setE ) G(setE);
-
+  //  if ( car(exp) == tl__s("&debug") )
+  //   { tl_eval_debug = 1; G(rtn); }
   L(args);
   push(args);
   args = cons(tl_nil, tl_nil);
