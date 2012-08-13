@@ -239,6 +239,10 @@ tl tl_port__read(TLP tl p, tl s, tl l)
   ssize_t c = fread(tl_S(s), tl_I(l), 1, FP);
   return tl_i((long) c);
 }
+tl tl_newline(TLP tl p)
+{
+  return tl_puts(TL p, "\n");
+}
 tl tl_string__display(TLP tl o, tl p)
 {
   return tl_port__write(TL p, o, tl_i(strlen(tl_S(o))));
@@ -269,36 +273,37 @@ tl tl_prim__write(TLP tl o, tl p)
   fprintf(FP, "#<prim %s @%p @%p>", tl_iv(o, 1), o, tl_iv(o, 0));
   return p;
 }
-tl tl_pair__write(TLP tl o, tl p)
+tl tl__write(TLP tl o, tl p, tl op);
+tl tl_pair__write(TLP tl o, tl p, tl op)
 {
   fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
   if ( tl_t(o) == tl_t_pair ) {
-    tl_write(TL car(o), p);
+    tl__write(TL car(o), p, op);
     o = cdr(o);
     if ( ! o ) goto rtn;
     fwrite(" ", 1, 1, FP);
     goto again;
   }
   fwrite(". ", 2, 1, FP);
-  tl_write(TL o, p);
+  tl__write(TL o, p, op);
  rtn:
   fwrite(")", 1, 1, FP);
   return p;
 }
-tl tl_write(TLP tl o, tl p)
+tl tl__write(TLP tl o, tl p, tl op)
 {
   if ( o == tl_nil )
-    return tl_pair__write(TL o, p);
+    return tl_pair__write(TL o, p, op);
   if ( tl_t(o) == tl_t_fixnum )
     return tl_fixnum__write(TL o, p);
   if ( tl_t(o) == tl_t_string )
-    return tl_string__write(TL o, p);
+    return (op != tl_nil ? tl_string__write : tl_string__display)(TL o, p);
   if ( tl_t(o) == tl_t_symbol )
     return tl_symbol__write(TL o, p);
   if ( tl_t(o) == tl_t_pair )
-    return tl_pair__write(TL o, p);
+    return tl_pair__write(TL o, p, op);
   if ( tl_t(o) == tl_t_type )
     return tl_type__write(TL o, p);
   if ( tl_t(o) == tl_t_prim )
@@ -306,6 +311,8 @@ tl tl_write(TLP tl o, tl p)
   fprintf(FP, "#<%s %p>", tl_iv(tl_t(o), 0), o);
   return p;
 }
+tl tl_display(TLP tl o, tl p) { return tl__write(TL o, p, (tl) 0); }
+tl tl_write(TLP tl o, tl p) { return tl__write(TL o, p, (tl) 1); }
 #undef FP
 tl tl_bind(TLP tl vars, tl args, tl env)
 {
@@ -614,6 +621,8 @@ tl tl_repl(TLP tl env)
 tl tl_stdenv(TLP tl env)
 {
   env = tl_let(TL tl__s("t"), tl__s("t"), env);
+  env = tl_let(TL tl__s("nil"), tl_nil, env);
+  env = tl_let(TL tl__s("&eos"), tl_eos, env);
   env = tl_let(TL tl_s(stdin), tl_stdin, env);
   env = tl_let(TL tl_s(stdout), tl_stdout, env);
   env = tl_let(TL tl_s(stderr), tl_stderr, env);
