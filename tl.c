@@ -11,8 +11,8 @@ typedef void *tl;
 #define TL0 tl_rt
 
 #define tl_nil ((tl) 0)
-#define tl_F tl_nil
-#define tl_T tl_s_t
+#define tl_f tl_nil
+#define tl_t tl_s_t
 #include "gc/gc.h"
 #define tl_malloc(S) GC_malloc(S)
 #define tl_realloc(P,S) GC_realloc(P,S)
@@ -22,7 +22,7 @@ tl tl_allocate(TLP tl type, size_t size)
   o += sizeof(type);
 #define tl_t_(o) ((tl*)(o))[-1]
   tl_t_(o) = type;
-#define tl_t(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
+#define tl_type(o) (((ssize_t) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
   memset(o, 0, size);
   return o;
 }
@@ -128,8 +128,8 @@ tl tl_write(TLP tl o, tl p);
 tl tl_error(TLP tl msg, tl obj)
 {
   if ( tl_in_error != tl_nil ) abort();
-  tl_in_error = tl_T;
-  fprintf(stderr, "\nERROR: %s: %s @%p : ", msg, tl_iv(tl_t(obj), 0), obj);
+  tl_in_error = tl_t;
+  fprintf(stderr, "\nERROR: %s: %s @%p : ", msg, tl_iv(tl_type(obj), 0), obj);
   tl_write(TL obj, tl_stderr);
   fprintf(stderr, "\n");
   abort(); return 0;
@@ -190,7 +190,7 @@ tl tl_string__string_TO_number(TLP tl o)
   long long i = 0;
   if ( sscanf(tl_S(o), "%lld", &i) == 1 )
     return tl_i(i);
-  return tl_F;
+  return tl_f;
 }
 tl tl_string__intern(TLP tl o)
 {
@@ -265,7 +265,7 @@ tl tl_symbol__write(TLP tl o, tl p)
 }
 tl tl_type__write(TLP tl o, tl p)
 {
-  fprintf(FP, "#<%s %s @%p>", tl_iv(tl_t(o), 0), tl_iv(o, 0), o);
+  fprintf(FP, "#<%s %s @%p>", tl_iv(tl_type(o), 0), tl_iv(o, 0), o);
   return p;
 }
 tl tl_prim__write(TLP tl o, tl p)
@@ -279,7 +279,7 @@ tl tl_pair__write(TLP tl o, tl p, tl op)
   fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
-  if ( tl_t(o) == tl_t_pair ) {
+  if ( tl_type(o) == tl_t_pair ) {
     tl__write(TL car(o), p, op);
     o = cdr(o);
     if ( ! o ) goto rtn;
@@ -296,19 +296,19 @@ tl tl__write(TLP tl o, tl p, tl op)
 {
   if ( o == tl_nil )
     return tl_pair__write(TL o, p, op);
-  if ( tl_t(o) == tl_t_fixnum )
+  if ( tl_type(o) == tl_t_fixnum )
     return tl_fixnum__write(TL o, p);
-  if ( tl_t(o) == tl_t_string )
+  if ( tl_type(o) == tl_t_string )
     return (op != tl_nil ? tl_string__write : tl_string__display)(TL o, p);
-  if ( tl_t(o) == tl_t_symbol )
+  if ( tl_type(o) == tl_t_symbol )
     return tl_symbol__write(TL o, p);
-  if ( tl_t(o) == tl_t_pair )
+  if ( tl_type(o) == tl_t_pair )
     return tl_pair__write(TL o, p, op);
-  if ( tl_t(o) == tl_t_type )
+  if ( tl_type(o) == tl_t_type )
     return tl_type__write(TL o, p);
-  if ( tl_t(o) == tl_t_prim )
+  if ( tl_type(o) == tl_t_prim )
     return tl_prim__write(TL o, p);
-  fprintf(FP, "#<%s %p>", tl_iv(tl_t(o), 0), o);
+  fprintf(FP, "#<%s @%p>", tl_iv(tl_type(o), 0), o);
   return p;
 }
 tl tl_display(TLP tl o, tl p) { return tl__write(TL o, p, (tl) 0); }
@@ -336,12 +336,12 @@ tl tl_define(TLP tl var, tl val, tl env)
 }
 tl tl_eqQ(TLP tl x, tl y)
 {
-  return x == y ? tl_T : tl_F;
+  return x == y ? tl_t : tl_f;
 }
 tl tl_eqvQ(TLP tl x, tl y)
 {
-  if ( tl_t(x) == tl_t_fixnum && tl_t(y) == tl_t_fixnum )
-    return tl_I(x) == tl_I(y) ? tl_T : tl_F;
+  if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
+    return tl_I(x) == tl_I(y) ? tl_t : tl_f;
   return tl_eqQ(TL x, y);
 }
 tl tl_lookup(TLP tl name, tl env)
@@ -386,7 +386,7 @@ tl tl_eval(TLP tl exp, tl env)
     tl_write(TL env, tl_stderr);
     fprintf(stderr, "\n    exp => ");
     tl_write(TL exp, tl_stderr);
-    tl_write(TL tl_t(exp), tl_stderr);
+    tl_write(TL tl_type(exp), tl_stderr);
     fprintf(stderr, "\n");
   }
 #define pop(x)  x = car(clink); clink = cdr(clink)
@@ -415,8 +415,8 @@ tl tl_eval(TLP tl exp, tl env)
   L(eval);
   if ( exp == tl_nil )
     { val = exp; G(rtn); }
-  if ( tl_t(exp) == tl_t_pair ) G(evcomb);
-  if ( tl_t(exp) == tl_t_symbol ) {
+  if ( tl_type(exp) == tl_t_pair ) G(evcomb);
+  if ( tl_type(exp) == tl_t_symbol ) {
     if ( exp == tl_s__env ) { val = env; G(rtn); }
     if ( exp == tl_s__args ) { val = args; G(rtn); }
     val = tl_value(TL exp, env); 
@@ -436,7 +436,7 @@ tl tl_eval(TLP tl exp, tl env)
 
   L(if2);
   pop(exp);
-  if ( val == tl_F )
+  if ( val == tl_f )
     exp = (exp = cdr(exp)) != tl_nil ? car(exp) : tl_v;
   else
     exp = car(exp);
@@ -473,7 +473,7 @@ tl tl_eval(TLP tl exp, tl env)
   L(call);
   val = car(args);
   args = cdr(args);
-  if ( tl_t(val) == tl_t_prim ) G(callprim);
+  if ( tl_type(val) == tl_t_prim ) G(callprim);
 
   L(callclosure);
   push(env);
@@ -579,8 +579,8 @@ tl tl_eval_print(TLP tl expr, tl env)
 #define EOS tl_eos
 #define CONS cons
 #define CAR car
-#define T tl_T
-#define F tl_F
+#define T tl_t
+#define F tl_f
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_i(I)
 #define LIST_2_VECTOR(X) X
@@ -612,7 +612,7 @@ tl tl_repl(TLP tl env)
   tl tl_fixnum__##N(TLP tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
   tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
 #define ROP(O,N)                                                        \
-  tl tl_fixnum__##N(TLP tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_T : tl_F; } \
+  tl tl_fixnum__##N(TLP tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_t : tl_f; } \
   tl tl_word__##N(TLP tl x, tl y) { return (tl) (((ssize_t) x) O ((ssize_t) y)); }
 #define UOP(O,N) \
   tl tl_fixnum__##N(TLP tl x) { return tl_i(O tl_I(x)); }  \
