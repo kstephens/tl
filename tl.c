@@ -505,6 +505,8 @@ tl tl_eval(TLP tl exp, tl env)
     val = tl_FP(val,tl,(TLT tl))(TL car(args));
   else if ( cddr(args) == tl_nil )
     val = tl_FP(val,tl,(TLT tl,tl))(TL car(args), cadr(args));
+  else if ( cdr(cddr(args)) == tl_nil )
+    val = tl_FP(val,tl,(TLT tl,tl,tl))(TL car(args), cadr(args), car(cddr(args)));
   else
     tl_error(TL "too many args", val);
   pop(args);
