@@ -635,6 +635,7 @@ tl tl_stdenv(tl env)
   P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
+  P(GC_malloc); P(GC_realloc);
 #define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
 #include "ctypes.h"
