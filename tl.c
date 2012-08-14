@@ -166,15 +166,16 @@ tl tl_m_string(void *x, size_t l)
   return o;
 }
 #define tl_S(o) (*(void**) (o))
-tl tl_cons(tl a, tl d)
+tl tl_type_cons(tl t, tl a, tl d)
 {
-  tl o = tl_allocate(tl_t_pair, sizeof(tl) * 2);
+  tl o = tl_allocate(t, sizeof(tl) * 2);
 #define car(o) ((tl*) (o))[0]
 #define cdr(o) ((tl*) (o))[1]
   car(o) = a;
   cdr(o) = d;
   return o;
 }
+tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 #define cadr(o) car(cdr(o))
 #define cddr(o) cdr(cdr(o))
 tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
@@ -629,7 +630,7 @@ tl tl_stdenv(tl env)
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
-  P(tl_cons); 
+  P(tl_type_cons); P(tl_cons); 
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval);  P(tl_repl);
   P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
