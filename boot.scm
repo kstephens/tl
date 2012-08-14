@@ -13,14 +13,35 @@
 (define * tl_fixnum_MUL)
 (define / tl_fixnum_DIV)
 
+(define make-type 
+  (lambda (n)
+    (tl_m_type (->char* n))))
+
+(define ->char* (lambda (s) (tl_ivar s 0)))
+
+(define <port> (make-type "port"))
+(define <-FILE*
+  (lambda (f)
+    (tl_typeSET (cons f #f) <port>)))
+(define ->FILE* tl_car)
+(define open-file 
+  (lambda (f m)
+    (<-FILE* (fopen (->char* f) (->char* m)))))
+(define close-file
+  (lambda (f)
+    (fclose (->FILE* f))))
+(define *stdin*  (<-FILE* _stdin))
+(define *stdout* (<-FILE* _stdout))
+(define *stderr* (<-FILE* _stderr))
+
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
-  (tl__write obj (if (null? port) _stdout (car port)) '())))
+  (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0))))
 (define write (lambda (obj . port)
-  (tl__write obj (if (null? port) _stdout (car port)) #t)))
+  (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1))))
 (define newline (lambda port)
-  (fputc (tl_I 10) (if (null? port) _stdout (car port)))
+  (fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port))))
   #t)
 (define read (lambda port
-  (tl_read (if (null? port) _stdin (car port)))))
+  (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
 

@@ -23,7 +23,6 @@ tl tl_allocate(tl type, size_t size)
 }
 tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
-tl tl_m_port(FILE *x);
 tl tl_m_runtime(tl parent)
 {
 #define tl_iv(o,n) ((tl*)(o))[n]
@@ -37,9 +36,8 @@ tl tl_m_runtime(tl parent)
 #define tl_t_symbol tl_(5)
 #define tl_t_pair tl_(6)
 #define tl_t_prim tl_(7)
-#define tl_t_port tl_(8)
-#define tl_t_eos tl_(9)
-#define tl_t_lambda tl_(10)
+#define tl_t_eos tl_(8)
+#define tl_t_lambda tl_(9)
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
 #define tl_in_error tl_(25)
@@ -77,7 +75,6 @@ tl tl_m_runtime(tl parent)
   tl_t_symbol = tl_m_type("symbol");
   tl_t_pair   = tl_m_type("pair");
   tl_t_prim   = tl_m_type("prim");
-  tl_t_port   = tl_m_type("port");
   tl_t_eos    = tl_m_type("eos");
   tl_t_lambda = tl_m_type("lambda");
 
@@ -622,6 +619,7 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
+  P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
