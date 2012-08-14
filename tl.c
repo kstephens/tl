@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h> /* strtoll() */
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
@@ -191,11 +192,16 @@ tl tl_m_symbol(void *x)
 #define tl__s(S) tl_m_symbol(S)
 #define _tl_s(N)tl_m_symbol(#N)
 #define tl_s(N)_tl_s(N)
-tl tl_string__string_TO_number(tl o)
+tl tl_string_TO_number(tl o, int radix)
 {
-  long long i = 0;
-  if ( sscanf(tl_S(o), "%lld", &i) == 1 )
-    return tl_i(i);
+  long long i = 0; char *endptr = 0;
+  const char *str = tl_S(o), *strend = strchr(str, '\0');
+  if ( radix < 1 ) radix = 10;
+  i = strtoll(str, &endptr, radix);
+  if ( endptr == strend ) {
+    tl o = tl_i(i);
+    if ( tl_I(o) == i ) return o;
+  }
   return tl_f;
 }
 tl tl_string__intern(tl o)
@@ -584,7 +590,7 @@ tl tl_eval_print(tl expr, tl env, tl out)
 #define STRING(S,L) tl_m_string((S), (L))
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
-#define STRING_2_NUMBER(s, radix) tl_string__string_TO_number(s)
+#define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) tl_string__intern(s)
 #define ERROR(msg,args...) tl_error(msg, #args)
 #define MALLOC(S) tl_malloc(S)
