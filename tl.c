@@ -166,7 +166,7 @@ tl tl_m_string(void *x, size_t l)
   return o;
 }
 #define tl_S(o) (*(void**) (o))
-tl tl_m_pair(tl a, tl d)
+tl tl_cons(tl a, tl d)
 {
   tl o = tl_allocate(tl_t_pair, sizeof(tl) * 2);
 #define car(o) ((tl*) (o))[0]
@@ -179,7 +179,7 @@ tl tl_m_pair(tl a, tl d)
 #define cddr(o) cdr(cdr(o))
 tl tl_car(tl o) { return car(o); }
 tl tl_cdr(tl o) { return cdr(o); }
-#define cons(a, r) tl_m_pair(a, r)
+#define cons tl_cons
 tl tl_m_symbol(void *x)
 {
   tl l = tl_symtab;
@@ -625,7 +625,7 @@ tl tl_stdenv(tl env)
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
-  P(tl_m_pair); P(tl_car); P(tl_cdr);
+  P(tl_cons); P(tl_car); P(tl_cdr);
   P(tl_eval);  P(tl_repl);
   P(fopen); P(fclose); P(fputs); P(fputc);
   P(tl_read); P(tl__write);
