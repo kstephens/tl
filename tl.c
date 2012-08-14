@@ -602,6 +602,9 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
   tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (size_t)(T)word); } \
   tl tl_##N##_sizeof(TLP0) { return tl_i((tlw) sizeof(T)); }
 #define FTYPE(T,N)
+// ITYPE(tl,tl)
+ITYPE(tlw,tlw)
+ITYPE(tlsw,tlsw)
 #include "ctypes.h"
 #define BOP(O,N) \
   tl tl_fixnum_##N(tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
