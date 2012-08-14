@@ -30,9 +30,9 @@
 (define close-file
   (lambda (f)
     (fclose (->FILE* f))))
-(define *stdin*  (<-FILE* _stdin))
-(define *stdout* (<-FILE* _stdout))
-(define *stderr* (<-FILE* _stderr))
+(define *stdin*  (<-FILE* _stdin))(set! _stdin #f)
+(define *stdout* (<-FILE* _stdout))(set! _stdout #f)
+(define *stderr* (<-FILE* _stderr))(set! _stderr #f)
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
