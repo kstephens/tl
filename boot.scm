@@ -1,4 +1,5 @@
 (define *env* &env)
+(define environment-vars (lambda (x) (car (car x))))
 (define &eos eos)
 (define eos? (lambda (x) (eq? x &eos)))
 (define eq? tl_eqQ)
