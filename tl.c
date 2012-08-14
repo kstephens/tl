@@ -40,6 +40,11 @@ tl tl_m_runtime(tl parent)
 #define tl_t_eos tl_(8)
 #define tl_t_environment tl_(9)
 #define tl_t_lambda tl_(10)
+#define tl_t_if2 tl_(11)
+#define tl_t_evcom3 tl_(12)
+#define tl_t_define tl_(13)
+#define tl_t_setE tl_(14)
+
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
 #define tl_in_error tl_(25)
@@ -80,6 +85,10 @@ tl tl_m_runtime(tl parent)
   tl_t_eos    = tl_m_type("eos");
   tl_t_environment = tl_m_type("environment");
   tl_t_lambda = tl_m_type("lambda");
+  tl_t_if2 = tl_m_type("if2");
+  tl_t_evcom3 = tl_m_type("evcom3");
+  tl_t_define = tl_m_type("define");
+  tl_t_setE = tl_m_type("set!");
 
   tl_s_quote = tl_m_symbol("quote");
   tl_s_quasiquote = tl_m_symbol("quasiquote");
@@ -368,10 +377,10 @@ tl tl_setE(tl name, tl val, tl env)
   return car(slot) = val;
 }
 int tl_eval_debug;
-#define tl_eval_debug 0
+#define tl_eval_debug 1
 tl tl_eval(tl exp, tl env)
 {
-  tl val = tl_nil, args = tl_nil, clink = tl_nil;
+  tl val = tl_nil, args = tl_nil, argp = tl_nil, clink = tl_nil;
   if ( tl_eval_debug ) {
     fprintf(stderr, "\n  eval:");
     fprintf(stderr, "\n    env => ");
@@ -382,6 +391,7 @@ tl tl_eval(tl exp, tl env)
     fprintf(stderr, "\n");
   }
 #define pop(x)  x = car(clink); clink = cdr(clink)
+#define tpush(t,x) clink = tl_type_cons(t, x, clink)
 #define push(x) clink = cons(x, clink)
 #define L(N) N:                           \
   if ( tl_eval_debug ) {                  \
@@ -421,13 +431,14 @@ tl tl_eval(tl exp, tl env)
 
   L(if1);
   val = cddr(exp);
-  push(val);
-  push(tl_s__if2);
+  push(env);
+  tpush(tl_t_if2, val);
   exp = cadr(exp);
   G(eval);
 
   L(if2);
   pop(exp);
+  pop(env);
   if ( val == tl_f )
     exp = (exp = cdr(exp)) != tl_nil ? car(exp) : tl_v;
   else
@@ -435,32 +446,37 @@ tl tl_eval(tl exp, tl env)
   G(eval);
 
   L(evcomb);
+  args = argp = tl_nil;
+
+  L(evcom1);
   if ( car(exp) == tl_s_quote )
     { val = car(cdr(exp)); G(rtn); }
   if ( car(exp) == tl_s_if ) G(if1);
-  if ( car(exp) == tl_s_lambda ) G(closure);
+  if ( car(exp) == tl_s_lambda ) G(proc);
   if ( car(exp) == tl_s_define ) G(define);
   if ( car(exp) == tl_s_setE ) G(setE);
   //  if ( car(exp) == tl__s("&debug") )
   //   { tl_eval_debug = 1; G(rtn); }
-  L(args);
-  push(args);
-  args = cons(tl_nil, tl_nil);
-  push(args);
 
-  L(arg);
+  L(evcom2);
+  push(env);
+  push(args);
+  push(argp);
   val = cdr(exp);
-  push(val);
-  push(tl_s__argval);
-  exp = car(exp); 
+  tpush(tl_t_evcom3, val);
+  exp = car(exp);
   G(eval);
 
-  L(argval);
+  L(evcom3);
   pop(exp);
-  args = cdr(args) = cons(val, tl_nil);
-  if ( exp ) G(arg);
+  pop(argp);
   pop(args);
-  args = cdr(args);
+  pop(env);
+  if ( argp != tl_nil )
+    argp = cdr(argp) = cons(val, tl_nil);
+  else
+    args = argp = cons(val, tl_nil);
+  G(evcom1);
 
   L(call);
   val = car(args);
@@ -468,34 +484,13 @@ tl tl_eval(tl exp, tl env)
   if ( tl_type(val) == tl_t_prim ) G(callprim);
 
   L(callclosure);
-  push(env);
-  push(tl_s__callrtn);
   // val = ((params . body) . env)
   env = tl_bind(car(car(val)), args, cdr(val));
   exp = cdr(car(val));
   val = tl_nil;
 
-  L(stmts);
-  if ( ! exp ) G(rtn);
-  val = car(exp);
-  exp = cdr(exp);
-  push(exp);
-  push(tl_s__stmt);
-  exp = val;
-  G(eval);
-
-  L(stmt);
-  pop(exp);
-  G(stmts);
-
-  L(callrtn);
-  pop(env);
-  pop(args);
-  G(rtn);
-
-  L(closure);
-  val = cons(cdr(exp), env); 
-  tl_t_(val) = tl_t_lambda;
+  L(proc);
+  val = tl_type_cons(tl_t_lambda, cdr(exp), env); 
   G(rtn);
   
   L(callprim);
@@ -515,8 +510,7 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
 
   L(define);
-  push(cadr(exp));
-  push(tl_s_define);
+  tpush(tl_t_define, cadr(exp));
   exp = cadr(cdr(exp));
   G(eval);
 
@@ -527,8 +521,7 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
 
   L(setE);
-  push(cadr(exp));
-  push(tl_s_setE);
+  tpush(tl_s_setE, cadr(exp));
   exp = cadr(cdr(exp));
   G(eval);
 
@@ -540,18 +533,13 @@ tl tl_eval(tl exp, tl env)
   L(rtn);
   if ( clink == tl_nil )
     return val;
-  pop(exp);
-  if ( exp == tl_s__if2 )
+  if ( tl_t_(clink) == tl_t_if2 )
     G(if2);
-  if ( exp == tl_s__argval )
-    G(argval);
-  if ( exp == tl_s__stmt )
-    G(stmt);
-  if ( exp == tl_s__callrtn )
-    G(callrtn);
-  if ( exp == tl_s_define )
+  if ( tl_t_(clink) == tl_t_evcom3 )
+    G(evcom3);
+  if ( tl_t_(clink) == tl_t_define )
     G(define_);
-  if ( exp == tl_s_setE )
+  if ( tl_t_(clink) == tl_t_setE )
     G(setE_);
   abort();
 }
