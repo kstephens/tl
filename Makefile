@@ -1,4 +1,5 @@
-CFLAGS += -g -O3 -I/opt/local/include
+#CFLAGS += -O3
+CFLAGS += -g -I/opt/local/include
 LDFLAGS += -L/opt/local/lib -lgc
 
 all : tl
