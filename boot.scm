@@ -13,6 +13,7 @@
 (define - tl_fixnum_SUB)
 (define * tl_fixnum_MUL)
 (define / tl_fixnum_DIV)
+(define % tl_fixnum_MOD)
 
 (define make-type 
   (lambda (n)
