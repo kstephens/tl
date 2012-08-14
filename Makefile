@@ -1,4 +1,6 @@
-#CFLAGS += -O3
+ifndef NO_OPTIMIZE
+CFLAGS += -O3
+endif
 CFLAGS += -g -I/opt/local/include
 LDFLAGS += -L/opt/local/lib -lgc
 
