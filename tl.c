@@ -174,8 +174,8 @@ tl tl_cons(tl a, tl d)
 }
 #define cadr(o) car(cdr(o))
 #define cddr(o) cdr(cdr(o))
-tl tl_car(tl o) { return car(o); }
-tl tl_cdr(tl o) { return cdr(o); }
+tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
+tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
 #define cons tl_cons
 tl tl_m_symbol(void *x)
 {
@@ -623,7 +623,8 @@ tl tl_stdenv(tl env)
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
-  P(tl_cons); P(tl_car); P(tl_cdr);
+  P(tl_cons); 
+  P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval);  P(tl_repl);
   P(fopen); P(fclose); P(fputs); P(fputc);
   P(tl_read); P(tl__write);
