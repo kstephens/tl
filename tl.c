@@ -38,7 +38,8 @@ tl tl_m_runtime(tl parent)
 #define tl_t_pair tl_(6)
 #define tl_t_prim tl_(7)
 #define tl_t_eos tl_(8)
-#define tl_t_lambda tl_(9)
+#define tl_t_environment tl_(9)
+#define tl_t_lambda tl_(10)
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
 #define tl_in_error tl_(25)
@@ -77,6 +78,7 @@ tl tl_m_runtime(tl parent)
   tl_t_pair   = tl_m_type("pair");
   tl_t_prim   = tl_m_type("prim");
   tl_t_eos    = tl_m_type("eos");
+  tl_t_environment = tl_m_type("environment");
   tl_t_lambda = tl_m_type("lambda");
 
   tl_s_quote = tl_m_symbol("quote");
@@ -305,12 +307,12 @@ tl tl_write(tl o, tl p) { return tl__write(o, p, (tl) 1); }
 tl tl_bind(tl vars, tl args, tl env)
 {
   // if ( length(vars) != length(args) ) error
-  return cons(cons(vars, args), env);
+  return cons(tl_typeSET(cons(vars, args), tl_t_environment), env);
 }
 tl tl_let(tl var, tl val, tl env)
 {
-  if ( ! env )
-    env = cons(cons(tl_nil, tl_nil), env);
+  if ( env == tl_nil )
+    env = tl_bind(tl_nil, tl_nil, env);
   tl vv = car(env);
   car(vv) = cons(var, car(vv));
   cdr(vv) = cons(val, cdr(vv));
