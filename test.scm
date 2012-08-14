@@ -1,13 +1,3 @@
-(define *env* &env)
-(define &eos eos)
-(define eos? (lambda (x) (eq? x &eos)))
-(define eq? tl_eqQ)
-(define eqv? tl_eqvQ)
-(define car tl_car)
-(define cdr tl_cdr)
-(define cons tl_m_pair)
-(define eval tl_eval)
-(define repl tl_repl)
 
 (quote a)
 (car '(a b))
@@ -22,16 +12,6 @@
 (if #f 'true 'false)
 (if #t 'true)
 (if #f 'true)
-
-(define null? (lambda (x) (eq? x '())))
-(define display (lambda (obj . port)
-  (tl__write obj (if (null? port) _stdout (car port)) '())))
-(define write (lambda (obj . port)
-  (tl__write obj (if (null? port) _stdout (car port)) #t)))
-(define newline (lambda port)
-  (tl_newline (if (null? port) _stdout (car port))))
-(define read (lambda port
-  (tl_read (if (null? port) _stdin (car port)))))
 
 (define a (lambda () 
             (display "a")(newline)
