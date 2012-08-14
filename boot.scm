@@ -5,7 +5,7 @@
 (define eqv? tl_eqvQ)
 (define car tl_car)
 (define cdr tl_cdr)
-(define cons tl_m_pair)
+(define cons tl_cons)
 (define eval tl_eval)
 (define repl tl_repl)
 (define + tl_fixnum_ADD)
