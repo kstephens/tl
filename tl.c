@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h> /* strtoll() */
+#include <unistd.h>
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
@@ -626,7 +627,8 @@ tl tl_stdenv(tl env)
   P(tl_cons); 
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval);  P(tl_repl);
-  P(fopen); P(fclose); P(fflush); P(fputs); P(fputc);
+  P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
+  P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
 #define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
