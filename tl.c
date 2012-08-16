@@ -3,16 +3,40 @@
 #include <string.h>
 #include <inttypes.h> /* strtoll() */
 #include <unistd.h>
+#include "gc/gc.h"
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
+#define tl_malloc(S) GC_malloc(S)
+#define tl_realloc(P,S) GC_realloc(P,S)
+#ifdef tl_PTHREAD
+#include <pthread.h>
+static pthread_once_t tl_init_once;
+pthread_key_t tl_rt_thread_key;
+static void tl_init_pthread_()
+{
+  pthread_key_create(&tl_rt_thread_key, 0);
+}
+static void tl_init_pthread()
+{
+  pthread_once(&tl_init_once, tl_init_pthread_);
+}
+tl* tl_rt_thread() {
+  tl *tlp = pthread_getspecific(tl_rt_thread_key);
+  if ( ! tlp ) {
+    tlp = tl_malloc(sizeof(*tlp));
+    pthread_setspecific(tl_rt_thread_key, tlp);
+  }
+  return tlp;
+}
+#define tl_rt (*tl_rt_thread())
+#else
+static void tl_init_pthread() { }
 tl tl_rt; // runtime.
+#endif
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
 #define tl_t tl_s_t
-#include "gc/gc.h"
-#define tl_malloc(S) GC_malloc(S)
-#define tl_realloc(P,S) GC_realloc(P,S)
 tl tl_allocate(tl type, size_t size)
 {
   tl o = tl_malloc(size + sizeof(type));
@@ -26,6 +50,7 @@ tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
 tl tl_m_runtime(tl parent)
 {
+  tl_init_pthread();
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
   tl_rt = tl_allocate(0, sizeof(tl) * 100);
@@ -626,6 +651,7 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
+  P(tl_m_runtime);
   P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
@@ -656,7 +682,7 @@ tl tl_stdenv(tl env)
 
 int main(int argc, char **argv)
 {
-  tl tl_rt = tl_m_runtime(0);
+  tl_rt = tl_m_runtime(0);
   tl env = tl_stdenv(tl_nil);
   tl expr, val;
 
