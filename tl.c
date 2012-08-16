@@ -24,15 +24,20 @@ static void tl_init_pthread()
 tl* tl_rt_thread() {
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
-    tlp = tl_malloc(sizeof(*tlp));
+    tlp = tl_malloc(sizeof(*tlp) * 10);
+    memset(tlp, 0, sizeof(*tlp) * 10);
+    tlp[2] = pthread_self();
     pthread_setspecific(tl_rt_thread_key, tlp);
   }
   return tlp;
 }
-#define tl_rt (*tl_rt_thread())
+#define tl_rt tl_rt_thread()[0]
+#define tl_env tl_rt_thread()[1]
+#define tl_pthread tl_rt_thread()[2]
 #else
 static void tl_init_pthread() { }
 tl tl_rt; // runtime.
+tl tl_env; // environment.
 #endif
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
@@ -46,6 +51,8 @@ tl tl_allocate(tl type, size_t size)
   memset(o, 0, size);
   return o;
 }
+tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
+tl tl_runtime() { return tl_rt; }
 tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
 tl tl_m_runtime(tl parent)
@@ -69,7 +76,6 @@ tl tl_m_runtime(tl parent)
 #define tl_symtab tl_(21)
 #define tl_in_error tl_(25)
 #define tl_eos tl_(26)
-#define tl_env tl_(27)
 #define tl_s_quote tl_(40)
 #define tl_s_if tl_(41)
 #define tl_s_lambda tl_(42)
@@ -132,6 +138,7 @@ tl tl_m_runtime(tl parent)
   tl_eos = tl_allocate(tl_t_eos, 0);
   return tl_rt;
 }
+tl tl_get_env() { return tl_env; }
 tl tl_type(tl o)
 {
 #define _tl_type(o) (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
@@ -524,6 +531,8 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
   
   L(callprim);
+  push(tl_env);
+  tl_env = env;
   if ( args == tl_nil )
     val = tl_FP(val,tl,())();
   else if ( cdr(args) == tl_nil )
@@ -536,6 +545,7 @@ tl tl_eval(tl exp, tl env)
     val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
   else
     tl_error("too many args", val);
+  pop(tl_env);
   pop(args);
   G(rtn);
 
@@ -651,7 +661,7 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
-  P(tl_m_runtime);
+  P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_i); P(tl_I);
   P(tl_ivar); P(tl_set_ivar);
