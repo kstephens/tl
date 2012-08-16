@@ -7,6 +7,7 @@
 (define car tl_car)
 (define cdr tl_cdr)
 (define cons tl_cons)
+(define apply tl_apply)
 (define eval tl_eval)
 (define repl tl_repl)
 (define + tl_fixnum_ADD)
@@ -38,12 +39,11 @@
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
-  (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0))))
+  (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
-  (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1))))
+  (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1)))))
 (define newline (lambda port)
-  (fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port))))
-  #t)
+  (tl_void (tl_fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port))))))
 (define read (lambda port
   (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
 
