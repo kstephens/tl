@@ -68,7 +68,7 @@ tl tl_m_symbol(void *x);
 tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
-  size_t size = sizeof(tl) * 128;
+  size_t size = sizeof(tl) * (128 + 256 /* characters */);
   tl_init_pthread();
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
@@ -77,14 +77,15 @@ tl tl_m_runtime(tl parent)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
 #define tl_t_fixnum tl_(3)
-#define tl_t_string tl_(4)
-#define tl_t_symbol tl_(5)
-#define tl_t_pair tl_(6)
-#define tl_t_prim tl_(7)
-#define tl_t_eos tl_(8)
-#define tl_t_environment tl_(9)
-#define tl_t_lambda tl_(10)
-#define tl_t_thread tl_(11)
+#define tl_t_character tl_(4)
+#define tl_t_string tl_(5)
+#define tl_t_symbol tl_(6)
+#define tl_t_pair tl_(7)
+#define tl_t_prim tl_(8)
+#define tl_t_eos tl_(9)
+#define tl_t_environment tl_(10)
+#define tl_t_lambda tl_(11)
+#define tl_t_thread tl_(12)
 
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
@@ -129,6 +130,7 @@ tl tl_m_runtime(tl parent)
   tl_t_(tl_rt) = tl_t_runtime;
   tl_t_void = tl_m_type("void");
   tl_t_fixnum = tl_m_type("fixnum");
+  tl_t_character = tl_m_type("character");
   tl_t_string = tl_m_type("string");
   tl_t_symbol = tl_m_type("symbol");
   tl_t_pair   = tl_m_type("pair");
@@ -164,6 +166,11 @@ tl tl_m_runtime(tl parent)
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
+
+  for ( int i = 0; i < 0x100; i ++ )
+#define tl_c(c) tl_iv(tl_rt, 128 + ((c) & 0xff))
+#define tl_C(o) (*(int*)(o))
+    *(int*) (tl_c(i) = tl_allocate(tl_t_character, sizeof(int))) = i;
 }
 
   {
@@ -365,6 +372,8 @@ tl tl__write(tl o, tl p, tl op)
     return (op != tl_nil ? tl_string__write : tl_string__display)(o, p);
   if ( tl_type(o) == tl_t_symbol )
     return tl_symbol__write(o, p);
+  if ( tl_type(o) == tl_t_character )
+    { fprintf(FP, "#\\%c", tl_C(o)); return p; }
   if ( tl_type(o) == tl_t_pair )
     return tl_pair__write(o, p, op);
   if ( tl_type(o) == tl_t_type )
@@ -745,7 +754,7 @@ tl tl_pthread_join(tl t)
 #define T tl_t
 #define F tl_f
 #define SET_CDR(C,R) cdr(C) = (R)
-#define MAKE_CHAR(I) tl_i(I)
+#define MAKE_CHAR(I) tl_c(I)
 #define LIST_2_VECTOR(X) X
 #define STRING(S,L) tl_m_string((S), (L))
 #define SYMBOL_DOT tl_s_DOT
