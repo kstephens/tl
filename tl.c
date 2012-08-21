@@ -82,12 +82,13 @@ tl tl_m_runtime(tl parent)
 #define tl_t_character tl_(4)
 #define tl_t_string tl_(5)
 #define tl_t_symbol tl_(6)
-#define tl_t_pair tl_(7)
-#define tl_t_prim tl_(8)
-#define tl_t_eos tl_(9)
-#define tl_t_environment tl_(10)
-#define tl_t_lambda tl_(11)
-#define tl_t_thread tl_(12)
+#define tl_t_null tl_(7)
+#define tl_t_pair tl_(8)
+#define tl_t_prim tl_(9)
+#define tl_t_eos tl_(10)
+#define tl_t_environment tl_(11)
+#define tl_t_lambda tl_(12)
+#define tl_t_thread tl_(13)
 
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
@@ -136,6 +137,7 @@ tl tl_m_runtime(tl parent)
   tl_t_character = tl_m_type("character");
   tl_t_string = tl_m_type("string");
   tl_t_symbol = tl_m_type("symbol");
+  tl_t_null   = tl_m_type("null");
   tl_t_pair   = tl_m_type("pair");
   tl_t_prim   = tl_m_type("prim");
   tl_t_eos    = tl_m_type("eos");
@@ -184,7 +186,7 @@ tl tl_m_runtime(tl parent)
 tl tl_get_env() { return tl_env; }
 tl tl_type(tl o)
 {
-#define _tl_type(o) (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
+#define _tl_type(o) ((o) == 0 ? tl_t_null : (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o)))
   return _tl_type(o);
 }
 #define tl_type(o)_tl_type(o)
