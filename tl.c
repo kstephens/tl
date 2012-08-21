@@ -817,6 +817,7 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
+  P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_void);
@@ -838,6 +839,8 @@ tl tl_stdenv(tl env)
 #endif
 #define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
+ITYPE(tlw,tlw)
+ITYPE(tlsw,tlsw)
 #include "ctypes.h"
 #define BOP(O,N) P(tl_fixnum_##N); P(tl_word_##N);
 #define UOP(O,N) BOP(O,N)
