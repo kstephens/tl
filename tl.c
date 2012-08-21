@@ -591,7 +591,7 @@ tl tl_eval(tl exp, tl env)
     // tl_eval_debug = 1;
     // pop(val); // args.
     val = car(args);
-    args = car(cdr(args));
+    args = cadr(args);
     G(apply);
   }
   push(tl_env);
@@ -716,7 +716,6 @@ tl tl_pthread_create(tl proc, tl env)
   tl tl_rt_save = tl_rt;       // save current runtime.
   tl rt = tl_m_runtime(tl_rt); // create new runtime.
   tl_rt = rt;                  // use new runtime.
-  // env = tl_stdenv(env);        // construct new environment in new runtime.
   env = tl_env;
   tl_rt = tl_rt_save;          // restore current runtime
 
