@@ -733,6 +733,13 @@ tl tl_pthread_create(tl proc, tl env)
 #endif
   return pt;
 }
+tl tl_pthread_self()
+{
+  tl *tp = tl_rt_thread();
+  if ( ! tp[-1] ) tp[-1] = tl_t_thread;
+  if ( ! tp[1] ) tp[1] = tl_rt;
+  return tp;
+}
 tl tl_pthread_join(tl t)
 {
   void *value = 0;
@@ -825,7 +832,7 @@ tl tl_stdenv(tl env)
 #ifdef tl_PTHREAD
   P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
   P(pthread_join); P(pthread_cancel);
-  P(tl_pthread_create); P(tl_pthread_join);
+  P(tl_pthread_create); P(tl_pthread_self); P(tl_pthread_join);
 #endif
 #define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
