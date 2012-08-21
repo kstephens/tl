@@ -22,8 +22,6 @@ static void tl_init_()
 {
   pthread_key_create(&tl_rt_thread_key, 0);
   GC_INIT();
-  // GC_use_threads_discovery();
-  // GC_allow_register_threads();
 }
 static void tl_init()
 {
@@ -682,11 +680,7 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 static void *tl_pthread_start(void *data)
 {
   tl *pt = data, proc;
-  // {
-  //    struct GC_stack_base stack_base;
-  //    GC_get_stack_base(&stack_base);
-  //    GC_register_my_thread(&stack_base);
-  // }
+
   pthread_setspecific(tl_rt_thread_key, pt);
   pt[0] = pthread_self();
   tl_rt = pt[1];
@@ -694,27 +688,27 @@ static void *tl_pthread_start(void *data)
   proc = pt[10];
   pt[10] = 0;
 
+#if 0
   fprintf(stderr, "\n  pthread %p object %p in rt %p applying ", pthread_self(), pt, tl_rt);
   tl_write(proc, stderr);
   fprintf(stderr, " in env ");
   tl_write(tl_env, stderr);
   fprintf(stderr, "\n"); fflush(stderr);
+#endif
 
   pt[5] = tl_apply(proc, tl_nil);
   pt[6] = tl_t;      // result is ready.
 
+#if 0
   fprintf(stderr, "\n  pthread %p object %p in rt %p returning ", pthread_self(), pt, tl_rt);
   tl_write(pt[5], stderr);
   fprintf(stderr, "\n"); fflush(stderr);
-
-  // GC_unregister_my_thread();
-
+#endif
   return tl_result; // pthread_exit(tl_result);
 }
 tl tl_pthread_create(tl proc, tl env)
 {
   pthread_t new_thread = 0;
-  pthread_attr_t attrs;
   int result = 0;
   tl *pt;
   tl tl_rt_save = tl_rt;       // save current runtime.
@@ -728,18 +722,15 @@ tl tl_pthread_create(tl proc, tl env)
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
-  pthread_attr_init(&attrs);
-  // pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED); // PTHREAD_CREATE_JOINABLE);
-  result = pthread_create(&new_thread, &attrs, tl_pthread_start, pt);
-  pthread_attr_destroy(&attrs);
-
+  result = pthread_create(&new_thread, 0, tl_pthread_start, pt);
   while ( ! (pt[0] == new_thread && pt[10] == 0) ) 
     ;                          // wait for thread to start.
 
+#if 0
   fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
           result, pthread_self(), tl_rt, 
           new_thread, pt, rt);
-  // GC_dump();
+#endif
   return pt;
 }
 tl tl_pthread_join(tl t)
