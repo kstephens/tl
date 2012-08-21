@@ -1,5 +1,5 @@
 ifndef NO_OPTIMIZE
-# CFLAGS += -O3
+CFLAGS += -O3
 endif
 
 EARLY_TARGETS += gc/lib/libgc.a
@@ -28,8 +28,10 @@ clean :
 	rm -f tl tl-pt
 
 bdwgc/.git/config : # Makefile
-	git clone git://github.com/ivmai/libatomic_ops.git
 	git clone git://github.com/ivmai/bdwgc.git
+	cd bdwgc;         git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
+	git clone git://github.com/ivmai/libatomic_ops.git
+	cd libatomic_ops; git checkout 7b6b6925359baac3c3535dae37996b10ec18d260
 	ln -s ../libatomic_ops bdwgc/libatomic_ops
 	set -ex ;\
 	cd bdwgc ;\
