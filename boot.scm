@@ -50,4 +50,27 @@
 (define io-flush (lambda port
   (tl_void (fflush (->FILE* (if (null? port) *stdout* (car port)))))))
 
-
+(define <fixnum> (tl_type 0))
+(define <character> (tl_type #\a))
+(define <symbol> (tl_type 'symbol))
+(define <string> (tl_type "string"))
+(define <null> (tl_type '()))
+(define <pair> (tl_type '(a b)))
+(define <type> (tl_type (tl_type '())))
+(define <environment> (tl_type *env*))
+(define <vector> (make-type "vector"))
+(define make-vector
+  (lambda (size)
+    ((lambda (o)
+       (tl_set_ivar o 0 size)
+       o
+       ) (tl_allocate <vector> (tl_I (* (+ size 1) *word-size*))))))
+(define vector-length
+  (lambda (o)
+    (tl_ivar o 0)))
+(define vector-ref
+  (lambda (o i)
+    (tl_ivar o (+ i 1))))
+(define vector-set!
+  (lambda (o i v)
+    (tl_set_ivar o (+ i 1) v)))
