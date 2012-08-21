@@ -116,7 +116,9 @@ tl tl_m_runtime(tl parent)
 #define tl_s__env tl_(59)
 #define tl_s__args tl_(60)
 #define tl_s__debug tl_(61)
-#define tl_s_apply tl_(62)
+#define tl_s__popargs tl_(62)
+
+#define tl_p_apply tl_(80)
 
   if ( parent ) {
     memcpy(tl_rt, parent, size);
@@ -162,7 +164,7 @@ tl tl_m_runtime(tl parent)
   tl_s__env = tl_m_symbol("&env");
   tl_s__args = tl_m_symbol("&args");
   tl_s__debug = tl_m_symbol("&debug");
-  tl_s_apply = tl_m_symbol("apply");
+  tl_s__popargs = tl_m_symbol("&popargs");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -547,6 +549,7 @@ tl tl_eval(tl exp, tl env)
   L(call);
   val = car(args);
   args = cdr(args);
+  L(apply);
   if ( val == tl_nil ) return tl_error("Cannot apply nil", val);
   if ( tl_type(val) == tl_t_prim ) G(callprim);
 
@@ -582,6 +585,12 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
   
   L(callprim);
+  if ( val == tl_p_apply ) {
+    // pop(val); // args.
+    val = car(args);
+    args = car(cdr(args));
+    G(apply);
+  }
   push(tl_env);
   tl_env = env;
   if ( args == tl_nil )
@@ -641,9 +650,13 @@ tl tl_eval(tl exp, tl env)
     G(setE_);
   abort();
 }
+tl tl_quote(tl x)
+{
+  return cons(tl_s_quote, cons(x, tl_nil));
+}
 tl tl_apply(tl f, tl args)
 {
-  return tl_eval(cons(f, args), tl_env);
+  return tl_eval(cons(tl_p_apply, cons(tl_quote(f), cons(tl_quote(args), tl_nil))), tl_env);
 }
 tl tl_eval_print(tl expr, tl env, tl out)
 {
@@ -666,15 +679,11 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 static void *tl_pthread_start(void *data)
 {
   tl *pt = data, proc;
-
-#if 0
-  {
-    struct GC_stack_base stack_base;
-    GC_get_stack_base(&stack_base);
-    GC_register_my_thread(&stack_base);
-  }
-#endif
-
+  // {
+  //   struct GC_stack_base stack_base;
+  //   GC_get_stack_base(&stack_base);
+  //   GC_register_my_thread(&stack_base);
+  // }
   pthread_setspecific(tl_rt_thread_key, pt);
   pt[0] = pthread_self();
   tl_rt = pt[1];
@@ -695,9 +704,7 @@ static void *tl_pthread_start(void *data)
   tl_write(pt[5], stderr);
   fprintf(stderr, "\n"); fflush(stderr);
 
-#if 0
-  GC_unregister_my_thread();
-#endif
+  // GC_unregister_my_thread();
 
   return tl_result; // pthread_exit(tl_result);
 }
@@ -797,7 +804,8 @@ ITYPE(tlsw,tlsw)
 #include "cops.h"
 tl tl_stdenv(tl env)
 {
-#define D(N,V) env = tl_let(tl_s(N), V, env)
+  tl v;
+#define D(N,V) env = tl_let(tl_s(N), v = (V), env)
   D(t, tl_s(t));
   D(nil, tl_nil);
 #define V(N) D(N,tl_##N)
@@ -812,7 +820,8 @@ tl tl_stdenv(tl env)
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons); 
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
-  P(tl_eval); P(tl_apply); P(tl_repl);
+  P(tl_eval); P(tl_repl);
+  P(tl_apply); tl_p_apply = v;
   P(fopen); P(fclose); P(fflush); P(fputs); P(tl_fputc); P(fgetc); P(fseek); 
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
