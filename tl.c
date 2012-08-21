@@ -16,25 +16,29 @@ typedef ssize_t tlsw;
 #define tl_realloc(P,S) GC_realloc(P,S)
 #ifdef tl_PTHREAD
 #include <pthread.h>
-static pthread_once_t tl_init_once;
+static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
 pthread_key_t tl_rt_thread_key;
-static void tl_init_pthread_()
+static void tl_init_()
 {
   pthread_key_create(&tl_rt_thread_key, 0);
-  // GC_allow_register_threads();
-  // GC_use_threads_discovery();
   GC_INIT();
+  // GC_use_threads_discovery();
+  // GC_allow_register_threads();
 }
-static void tl_init_pthread()
+static void tl_init()
 {
-  pthread_once(&tl_init_once, tl_init_pthread_);
+  pthread_once(&tl_init_once, tl_init_);
 }
 tl tl_m_thread(pthread_t rt, tl env, void *pt);
 tl* tl_rt_thread() {
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
-    tlp = tl_m_thread(pthread_self(), 0, 0);
+    tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
+    tlp[0] = 0;
+    ++ tlp; /* skip type */
     pthread_setspecific(tl_rt_thread_key, tlp);
+    memset(tlp, 0, sizeof(*tlp) * 16);
+    tlp[0] = pthread_self();
   }
   return tlp;
 }
@@ -42,7 +46,7 @@ tl* tl_rt_thread() {
 #define tl_rt tl_rt_thread()[1]
 #define tl_env tl_rt_thread()[2]
 #else
-static void tl_init_pthread()
+static void tl_init()
 {
   GC_INIT();
 }
@@ -69,7 +73,7 @@ tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
-  tl_init_pthread();
+  tl_init();
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
   tl_rt = tl_allocate(0, size);
@@ -116,7 +120,6 @@ tl tl_m_runtime(tl parent)
 #define tl_s__env tl_(59)
 #define tl_s__args tl_(60)
 #define tl_s__debug tl_(61)
-#define tl_s__popargs tl_(62)
 
 #define tl_p_apply tl_(80)
 
@@ -164,7 +167,6 @@ tl tl_m_runtime(tl parent)
   tl_s__env = tl_m_symbol("&env");
   tl_s__args = tl_m_symbol("&args");
   tl_s__debug = tl_m_symbol("&debug");
-  tl_s__popargs = tl_m_symbol("&popargs");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -586,6 +588,7 @@ tl tl_eval(tl exp, tl env)
   
   L(callprim);
   if ( val == tl_p_apply ) {
+    // tl_eval_debug = 1;
     // pop(val); // args.
     val = car(args);
     args = car(cdr(args));
@@ -680,9 +683,9 @@ static void *tl_pthread_start(void *data)
 {
   tl *pt = data, proc;
   // {
-  //   struct GC_stack_base stack_base;
-  //   GC_get_stack_base(&stack_base);
-  //   GC_register_my_thread(&stack_base);
+  //    struct GC_stack_base stack_base;
+  //    GC_get_stack_base(&stack_base);
+  //    GC_register_my_thread(&stack_base);
   // }
   pthread_setspecific(tl_rt_thread_key, pt);
   pt[0] = pthread_self();
@@ -726,6 +729,7 @@ tl tl_pthread_create(tl proc, tl env)
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
   pthread_attr_init(&attrs);
+  // pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED); // PTHREAD_CREATE_JOINABLE);
   result = pthread_create(&new_thread, &attrs, tl_pthread_start, pt);
   pthread_attr_destroy(&attrs);
 
@@ -735,16 +739,17 @@ tl tl_pthread_create(tl proc, tl env)
   fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
           result, pthread_self(), tl_rt, 
           new_thread, pt, rt);
+  // GC_dump();
   return pt;
 }
 tl tl_pthread_join(tl t)
 {
   void *value = 0;
   int result = pthread_join(tl_iv(t, 0), &value);
-  assert(value == tl_iv(t, 5));
+  // assert(value == tl_iv(t, 5));
   assert(tl_iv(t, 6) == tl_t);
-  tl_iv(t, 5) = 0;
-  return value;
+  // tl_iv(t, 5) = 0;
+  return tl_iv(t, 5);
 }
 #endif
 #define VALUE tl
