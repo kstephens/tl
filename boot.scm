@@ -46,4 +46,7 @@
   (tl_void (tl_fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port))))))
 (define read (lambda port
   (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
+(define io-flush (lambda port
+  (tl_void (fflush (->FILE* (if (null? port) *stdout* (car port)))))))
+
 
