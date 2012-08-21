@@ -846,9 +846,11 @@ tl tl_stdenv(tl env)
 
 int main(int argc, char **argv)
 {
+  FILE *out = stdout;
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
-  tl_repl(tl_env, stdin, stdout, stdout);
+  if ( ! isatty(0) ) out = 0;
+  tl_repl(tl_env, stdin, out, out);
   return 0;
 }
 
