@@ -420,14 +420,19 @@ tl tl_define(tl var, tl val, tl env)
     env = cdr(env);
   return tl_let(var, val, env);
 }
+#define _tl_b(x) ((x) ? tl_t : tl_f)
+#define _tl_B(x) ((x) != tl_f)
+tl tl_b(tlw i) { return _tl_b(i); }
+#define tl_b(x)_tl_b(x)
+tlw tl_B(tl i) { return _tl_B(i); }
+#define tl_B(x)_tl_B(x)
 tl tl_eqQ(tl x, tl y)
 {
-  return x == y ? tl_t : tl_f;
+  return tl_b(x == y);
 }
 tl tl_eqvQ(tl x, tl y)
 {
   if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
-#define tl_b(x) ((x) ? tl_t : tl_f)
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
 }
@@ -829,7 +834,7 @@ tl tl_stdenv(tl env)
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_void);
-  P(tl_i); P(tl_I); P(tl_c); P(tl_C);
+  P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons); 
