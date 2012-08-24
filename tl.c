@@ -846,6 +846,8 @@ tl tl_stdenv(tl env)
   P(tl_read); P(tl__write);
   P(GC_malloc); P(GC_realloc);
   P(memset); P(memcpy); P(memcmp);
+  P(exit); P(abort); 
+  P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp); P(execvP);
 #ifdef tl_PTHREAD
   P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
   P(pthread_join); P(pthread_cancel);
