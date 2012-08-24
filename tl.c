@@ -172,8 +172,10 @@ tl tl_m_runtime(tl parent)
   tl_eos = tl_allocate(tl_t_eos, 0);
 
   for ( int i = 0; i < 0x100; i ++ )
-#define tl_c(c) tl_iv(tl_rt, 128 + ((c) & 0xff))
-#define tl_C(o) (*(int*)(o))
+#define _tl_c(c) tl_iv(tl_rt, 128 + ((c) & 0xff))
+#define tl_c(c)_tl_c(c)
+#define _tl_C(o) (*(int*)(o))
+#define tl_C(o)_tl_C(o)
     *(int*) (tl_c(i) = tl_allocate(tl_t_character, sizeof(int))) = i;
 }
 
