@@ -61,7 +61,7 @@
 (define <string> (tl_type "string"))
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
 (define %string-len (lambda (s) (tl_ivar s 1)))
-(define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))
+(define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))))
 (define string-length (lambda (o) (tl_i (%string-len o))))
 (define string-ref
   (lambda (o i)
