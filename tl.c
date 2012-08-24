@@ -173,13 +173,14 @@ tl tl_m_runtime(tl parent)
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
 
-  for ( int i = 0; i < 0x100; i ++ )
+  {
+    int i;
+    for ( i = 0; i < 0x100; i ++ )
 #define _tl_c(c) tl_iv(tl_rt, 128 + ((c) & 0xff))
-#define tl_c(c)_tl_c(c)
 #define _tl_C(o) (*(int*)(o))
-#define tl_C(o)_tl_C(o)
-    *(int*) (tl_c(i) = tl_allocate(tl_t_character, sizeof(int))) = i;
-}
+      *(int*) (_tl_c(i) = tl_allocate(tl_t_character, sizeof(int))) = i;
+  }
+  }
 
   {
     tl rt = tl_rt;
@@ -187,6 +188,10 @@ tl tl_m_runtime(tl parent)
     return rt;
   }
 }
+tl tl_c(int c) { return _tl_c(c); }
+#define tl_c(c)_tl_c(c)
+int tl_C(tl o) { return _tl_C(o); }
+#define tl_C(o)_tl_C(o)
 tl tl_get_env() { return tl_env; }
 tl tl_type(tl o)
 {
@@ -793,7 +798,7 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 }
 #define ITYPE(T,N)                                                      \
   tl tl_##N##_get(tl ptr) { return (tl) (tlw) *(T*)ptr; }      \
-  tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (size_t)(T)word); } \
+  tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (T)(tlw)word); } \
   tl tl_##N##_sizeof(TLP0) { return tl_i((tlw) sizeof(T)); }
 #define FTYPE(T,N)
 // ITYPE(tl,tl)
@@ -805,15 +810,15 @@ ITYPE(tlsw,tlsw)
   tl tl_word_##N(tl x, tl y) { return (tl) (((tlw) x) O ((tlw) y)); }
 #define ROP(O,N)                                                        \
   tl tl_fixnum_##N(tl x, tl y) { return (tl_I(x) O tl_I(y)) ? tl_t : tl_f; } \
-  tl tl_word_##N(tl x, tl y) { return (tl) (((tlw) x) O ((tlw) y)); }
+  tl tl_word_##N(tl x, tl y) { return (tl) (tlw) (((tlw) x) O ((tlw) y)); }
 #define UOP(O,N) \
   tl tl_fixnum_##N(tl x) { return tl_i(O tl_I(x)); }  \
-  tl tl_word_##N(tl x) { return (tl) (O ((tlw) x)); }
+  tl tl_word_##N(tl x) { return (tl) (tlw) (O ((tlw) x)); }
 #include "cops.h"
 tl tl_stdenv(tl env)
 {
-  tl v;
-#define D(N,V) env = tl_let(tl_s(N), v = (V), env)
+  tl _v;
+#define D(N,V) env = tl_let(tl_s(N), _v = (V), env)
   D(t, tl_s(t));
   D(nil, tl_nil);
 #define V(N) D(N,tl_##N)
@@ -824,13 +829,13 @@ tl tl_stdenv(tl env)
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_typeSET);
   P(tl_void);
-  P(tl_i); P(tl_I);
+  P(tl_i); P(tl_I); P(tl_c); P(tl_C);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons); 
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval); P(tl_repl);
-  P(tl_apply); tl_p_apply = v;
+  P(tl_apply); tl_p_apply = _v;
   P(fopen); P(fclose); P(fflush); P(fputs); P(tl_fputc); P(fgetc); P(fseek); 
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
