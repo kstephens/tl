@@ -248,8 +248,9 @@ tl tl_set_ivar(tl o, tl i, tl v)
 }
 tl tl_m_string(void *x, size_t l)
 {
-  tl o = tl_allocate(tl_t_string, sizeof(x) + sizeof(l));
-  *(void**) o = x;
+  tl *o = tl_allocate(tl_t_string, sizeof(o) * 2);
+  o[0] = x;
+  o[1] = (tl) (tlw) l;
   return o;
 }
 #define tl_S(o) (*(void**) (o))
@@ -845,6 +846,7 @@ tl tl_stdenv(tl env)
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
   P(GC_malloc); P(GC_realloc);
+  P(memset); P(memcpy); P(memcmp);
 #ifdef tl_PTHREAD
   P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
   P(pthread_join); P(pthread_cancel);
