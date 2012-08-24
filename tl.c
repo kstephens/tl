@@ -352,12 +352,6 @@ tl tl_prim__write(tl o, tl p)
   return p;
 }
 tl tl__write(tl o, tl p, tl op);
-tl tl_fputc(tl o, tl p)
-{
-  fputc((int) (ssize_t) o, p);
-  return p;
-}
-
 tl tl_pair__write(tl o, tl p, tl op)
 {
   fwrite("(", 1, 1, FP);
@@ -847,7 +841,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval); P(tl_repl);
   P(tl_apply); tl_p_apply = _v;
-  P(fopen); P(fclose); P(fflush); P(fputs); P(tl_fputc); P(fgetc); P(fseek); 
+  P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write);
   P(GC_malloc); P(GC_realloc);

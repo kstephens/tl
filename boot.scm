@@ -48,8 +48,8 @@
   (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
   (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1)))))
-(define newline (lambda port)
-  (tl_void (tl_fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port))))))
+(define newline (lambda port
+  (tl_void (fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port)))))))
 (define read (lambda port
   (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
 (define io-flush (lambda port
