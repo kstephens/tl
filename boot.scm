@@ -16,6 +16,10 @@
 (define * tl_fixnum_MUL)
 (define / tl_fixnum_DIV)
 (define % tl_fixnum_MOD)
+(define not 
+  (lambda (x) 
+    (if (eq? x #f)
+      #t #f)))
 
 (define make-type 
   (lambda (n)
@@ -74,3 +78,35 @@
 (define vector-set!
   (lambda (o i v)
     (tl_set_ivar o (+ i 1) v)))
+(define vector-equal?
+  (lambda (a b)
+    (if (eq? (tl_type a) (tl_type b))
+      (if (eqv? (vector-length a) (vector-length b))
+        (vector-equal?2 a b 0)
+        #f)
+      #f)))
+(define vector-equal?2 
+  (lambda (a b i)
+    (if (eqv? (vector-length a) i)
+      #t
+      (if (equal? (vector-ref a i) (vector-ref b i))
+        (vector-equal?2 a b (+ i 1))
+        #f))))
+  
+(define equal?
+  (lambda (a b)
+    (if (eq? a b)
+      #t
+      (if (eq? (tl_type a) (tl_type b))
+        (if (eq? (tl_type a) <fixnum>)
+          (== a b)
+          (if (eq? (tl_type a) <character>)
+            (== (tl_C a) (tl_C b))
+            (if (eq? (tl_type <string>))
+              (string-equal? a b)
+              (if (eq? (tl_type <pair>))
+                (if (equal? (car a) (car b))
+                  (equal? (cdr b) (cdr b)) #f)
+                (if (eq? (tl_type <vector>))
+                  (vector-equal a b)
+                  #f)))))))))
