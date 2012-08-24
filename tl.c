@@ -72,9 +72,10 @@ tl tl_m_runtime(tl parent)
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
   tl_init();
+  tl_rt = tl_allocate(0, size);
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
-  tl_rt = tl_allocate(0, size);
+
 #define tl_t_type tl_(0)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
@@ -145,6 +146,7 @@ tl tl_m_runtime(tl parent)
   tl_t_lambda = tl_m_type("lambda");
   tl_t_thread = tl_m_type("thread");
 
+  tl_symtab = tl_nil;
   tl_s_quote = tl_m_symbol("quote");
   tl_s_quasiquote = tl_m_symbol("quasiquote");
   tl_s_unquote_splicing = tl_m_symbol("unquote-splicing");
@@ -264,7 +266,7 @@ tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = 
 tl tl_m_symbol(void *x)
 {
   tl l = tl_symtab;
-  while ( l ) {
+  while ( l != tl_nil ) {
     tl s = car(l);
 #define tl_symbol_name(o) (*(tl*) o)
     if ( strcmp(tl_S(tl_symbol_name(s)), x) == 0 )
