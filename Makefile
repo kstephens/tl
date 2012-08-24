@@ -1,6 +1,7 @@
 ifndef NO_OPTIMIZE
 CFLAGS += -O3
 endif
+CC=clang
 
 EARLY_TARGETS += gc/lib/libgc.a
 CFLAGS += -Igc/include
