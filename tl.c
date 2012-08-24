@@ -121,6 +121,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s__env tl_(59)
 #define tl_s__args tl_(60)
 #define tl_s__debug tl_(61)
+#define tl_s_list_TO_vector tl_(62)
 
 #define tl_p_apply tl_(80)
 
@@ -170,6 +171,7 @@ tl tl_m_runtime(tl parent)
   tl_s__env = tl_m_symbol("&env");
   tl_s__args = tl_m_symbol("&args");
   tl_s__debug = tl_m_symbol("&debug");
+  tl_s_list_TO_vector = tl_m_symbol("list->vector");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -796,7 +798,7 @@ tl tl_pthread_join(tl t)
 #define F tl_f
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_c(I)
-#define LIST_2_VECTOR(X) X
+#define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
 #define STRING(S,L) tl_m_string((S), (L))
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
