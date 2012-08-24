@@ -3,6 +3,7 @@
 #include <string.h>
 #include <inttypes.h> /* strtoll() */
 #include <unistd.h>
+#include <stdarg.h>
 #include <assert.h>
 #ifdef tl_PTHREAD
 #define GC_THREADS
@@ -102,7 +103,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_if tl_(41)
 #define tl_s_lambda tl_(42)
 #define tl_s__if2 tl_(43)
-#define tl_s__unbound tl_(44)
+#define tl_s_tl_object_write tl_(44)
 #define tl_s__closure tl_(45)
 #define tl_s__argval tl_(46)
 #define tl_s_cons tl_(47)
@@ -157,7 +158,7 @@ tl tl_m_runtime(tl parent)
   tl_s_if = tl_m_symbol("if");
   tl_s_lambda = tl_m_symbol("lambda");
   tl_s__if2 = tl_m_symbol("&if");
-  tl_s__unbound = tl_m_symbol("&unbound");
+  tl_s_tl_object_write = tl_m_symbol("tl_object_write");
   tl_s__closure = tl_m_symbol("&closure");
   tl_s__argval = tl_m_symbol("&argval");
   tl_s_cons = tl_m_symbol("cons");
@@ -370,6 +371,12 @@ tl tl_pair__write(tl o, tl p, tl op)
   fwrite(")", 1, 1, FP);
   return p;
 }
+tl tl_object_write(tl o, tl p, tl op)
+{
+  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
+  return p;
+}
+tl tl_call(tl s, int n, ...);
 tl tl__write(tl o, tl p, tl op)
 {
   if ( o == tl_nil )
@@ -388,8 +395,7 @@ tl tl__write(tl o, tl p, tl op)
     return tl_type__write(o, p);
   if ( tl_type(o) == tl_t_prim )
     return tl_prim__write(o, p);
-  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
-  return p;
+  return tl_call(tl_s_tl_object_write, 3, o, p, op);
 }
 tl tl_display(tl o, tl p) { return tl__write(o, p, (tl) 0); }
 tl tl_write(tl o, tl p) { return tl__write(o, p, (tl) 1); }
@@ -675,6 +681,16 @@ tl tl_apply(tl f, tl args)
 {
   return tl_eval(cons(tl_p_apply, cons(tl_quote(f), cons(tl_quote(args), tl_nil))), tl_env);
 }
+tl tl_call(tl s, int n, ...)
+{
+  tl args = tl_nil, *lp = &args;
+  va_list vap;
+  va_start(vap, n);
+  while ( n -- > 0 )
+    lp = &cdr(*lp = cons(va_arg(vap, tl), tl_nil));
+  va_end(vap);
+  return tl_eval(cons(tl_p_apply, cons(s, cons(tl_quote(args), tl_nil))), tl_env);
+}
 tl tl_eval_print(tl expr, tl env, tl out)
 {
   if ( out ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
@@ -843,7 +859,7 @@ tl tl_stdenv(tl env)
   P(tl_apply); tl_p_apply = _v;
   P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
-  P(tl_read); P(tl__write);
+  P(tl_read); P(tl__write); P(tl_object_write);
   P(GC_malloc); P(GC_realloc);
   P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); 
