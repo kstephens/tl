@@ -29,19 +29,23 @@
 (define ->char* (lambda (s) (tl_ivar s 0)))
 
 (define <port> (make-type "port"))
+(define make-port
+  (lambda (fp info)
+    (tl_typeSET (cons fp info) <port>)))
+(define port-info cdr)
 (define <-FILE*
-  (lambda (f)
-    (tl_typeSET (cons f #f) <port>)))
+  (lambda (f . rest)
+    (make-port f rest)))
 (define ->FILE* tl_car)
 (define open-file 
   (lambda (f m)
-    (<-FILE* (fopen (->char* f) (->char* m)))))
+    (<-FILE* (fopen (->char* f) (->char* m)) f)))
 (define close-file
   (lambda (f)
     (fclose (->FILE* f))))
-(define *stdin*  (<-FILE* _stdin))(set! _stdin #f)
-(define *stdout* (<-FILE* _stdout))(set! _stdout #f)
-(define *stderr* (<-FILE* _stderr))(set! _stderr #f)
+(define *stdin*  (<-FILE* _stdin '*stdin*))(set! _stdin #f)
+(define *stdout* (<-FILE* _stdout '*stdout*))(set! _stdout #f)
+(define *stderr* (<-FILE* _stderr '*stdin*))(set! _stderr #f)
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
