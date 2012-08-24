@@ -84,7 +84,12 @@
     (if (equal? (car a) (car b))
       (equal? (cdr a) (cdr b))
       #f)))
-
+(define list-length
+  (lambda (l) (list-length-2 l 0)))
+(define list-length-2
+  (lambda (l n)
+    (if (null? l) n
+      (list-length-2 (cdr l) (+ n 1)))))
 (define <type> (tl_type (tl_type '())))
 (define <environment> (tl_type *env*))
 (define <vector> (make-type "vector"))
@@ -117,7 +122,19 @@
       (if (equal? (vector-ref a i) (vector-ref b i))
         (vector-equal?2 a b (+ i 1))
         #f))))
-  
+(define list->vector
+  (lambda (l)
+    ((lambda (v)
+       (list->vector-3 l v 0)
+       v)
+      (make-vector (list-length l)))))
+(define list->vector-3 
+  (lambda (l v i)
+    (if (not (null? l))
+      ((lambda ()
+         (vector-set! v i (car l))
+         (list->vector-3 (cdr l) v (+ i 1)))))))
+
 (define equal?
   (lambda (a b)
     (if (eq? a b)
@@ -132,6 +149,6 @@
               (if (eq? (tl_type a) <pair>)
                 (pair-equal? a b)
                 (if (eq? (tl_type a) <vector>)
-                  (vector-equal a b)
+                  (vector-equal? a b)
                   #f)))))
         #f))))
