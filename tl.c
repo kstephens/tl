@@ -2,16 +2,58 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h> /* strtoll() */
+#include <unistd.h>
+#include <assert.h>
+#ifdef tl_PTHREAD
+#define GC_THREADS
+// #define GC_PTHREADS
+#endif
+#include "gc/gc.h"
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
+#define tl_malloc(S) GC_malloc(S)
+#define tl_realloc(P,S) GC_realloc(P,S)
+#ifdef tl_PTHREAD
+#include <pthread.h>
+static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
+pthread_key_t tl_rt_thread_key;
+static void tl_init_()
+{
+  pthread_key_create(&tl_rt_thread_key, 0);
+  GC_INIT();
+}
+static void tl_init()
+{
+  pthread_once(&tl_init_once, tl_init_);
+}
+tl tl_m_thread(pthread_t rt, tl env, void *pt);
+tl* tl_rt_thread() {
+  tl *tlp = pthread_getspecific(tl_rt_thread_key);
+  if ( ! tlp ) {
+    tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
+    tlp[0] = 0;
+    ++ tlp; /* skip type */
+    pthread_setspecific(tl_rt_thread_key, tlp);
+    memset(tlp, 0, sizeof(*tlp) * 16);
+    tlp[0] = pthread_self();
+  }
+  return tlp;
+}
+#define tl_pthread tl_rt_thread()[0]
+#define tl_rt tl_rt_thread()[1]
+#define tl_env tl_rt_thread()[2]
+#else
+static void tl_init()
+{
+  GC_INIT();
+}
 tl tl_rt; // runtime.
+tl tl_env; // environment.
+#endif
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
 #define tl_t tl_s_t
-#include "gc/gc.h"
-#define tl_malloc(S) GC_malloc(S)
-#define tl_realloc(P,S) GC_realloc(P,S)
 tl tl_allocate(tl type, size_t size)
 {
   tl o = tl_malloc(size + sizeof(type));
@@ -21,33 +63,40 @@ tl tl_allocate(tl type, size_t size)
   memset(o, 0, size);
   return o;
 }
+tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
+tl tl_runtime() { return tl_rt; }
 tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
-tl tl_m_port(FILE *x);
 tl tl_m_runtime(tl parent)
 {
+  tl tl_rt_save = tl_rt;
+  size_t size = sizeof(tl) * (128 + 256 /* characters */);
+  tl_init();
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
-  tl_rt = tl_allocate(0, sizeof(tl) * 100);
+  tl_rt = tl_allocate(0, size);
 #define tl_t_type tl_(0)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
 #define tl_t_fixnum tl_(3)
-#define tl_t_string tl_(4)
-#define tl_t_symbol tl_(5)
-#define tl_t_pair tl_(6)
-#define tl_t_prim tl_(7)
-#define tl_t_port tl_(8)
-#define tl_t_eos tl_(9)
-#define tl_t_lambda tl_(10)
+#define tl_t_character tl_(4)
+#define tl_t_string tl_(5)
+#define tl_t_symbol tl_(6)
+#define tl_t_null tl_(7)
+#define tl_t_pair tl_(8)
+#define tl_t_prim tl_(9)
+#define tl_t_eos tl_(10)
+#define tl_t_environment tl_(11)
+#define tl_t_lambda tl_(12)
+#define tl_t_thread tl_(13)
+
 #define tl_v tl_(20)
 #define tl_symtab tl_(21)
-#define tl__stdin tl_(22)
-#define tl__stdout tl_(23)
-#define tl__stderr tl_(24)
-#define tl_in_error tl_(25)
-#define tl_eos tl_(26)
-#define tl_env tl_(27)
+#define tl_in_error tl_(22)
+#define tl_eos tl_(23)
+#define tl_result tl_(24)
+#define tl_runtime_parent tl_(25)
+
 #define tl_s_quote tl_(40)
 #define tl_s_if tl_(41)
 #define tl_s_lambda tl_(42)
@@ -69,20 +118,32 @@ tl tl_m_runtime(tl parent)
 #define tl_s_setE tl_(58)
 #define tl_s__env tl_(59)
 #define tl_s__args tl_(60)
+#define tl_s__debug tl_(61)
 
+#define tl_p_apply tl_(80)
+
+  if ( parent ) {
+    memcpy(tl_rt, parent, size);
+    tl_runtime_parent = parent;
+    tl_t_(tl_rt) = tl_t_runtime;
+  } else {
+  tl_runtime_parent = parent;
   tl_t_type = tl_m_type("type");
   tl_t_(tl_t_type) = tl_t_type;
   tl_t_runtime = tl_m_type("runtime");
   tl_t_(tl_rt) = tl_t_runtime;
   tl_t_void = tl_m_type("void");
   tl_t_fixnum = tl_m_type("fixnum");
+  tl_t_character = tl_m_type("character");
   tl_t_string = tl_m_type("string");
   tl_t_symbol = tl_m_type("symbol");
+  tl_t_null   = tl_m_type("null");
   tl_t_pair   = tl_m_type("pair");
   tl_t_prim   = tl_m_type("prim");
-  tl_t_port   = tl_m_type("port");
   tl_t_eos    = tl_m_type("eos");
+  tl_t_environment = tl_m_type("environment");
   tl_t_lambda = tl_m_type("lambda");
+  tl_t_thread = tl_m_type("thread");
 
   tl_s_quote = tl_m_symbol("quote");
   tl_s_quasiquote = tl_m_symbol("quasiquote");
@@ -105,17 +166,29 @@ tl tl_m_runtime(tl parent)
   tl_s__stmt = tl_m_symbol("&stmt");
   tl_s__env = tl_m_symbol("&env");
   tl_s__args = tl_m_symbol("&args");
+  tl_s__debug = tl_m_symbol("&debug");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
-  tl__stdin = tl_m_port(stdin);
-  tl__stdout = tl_m_port(stdout);
-  tl__stderr = tl_m_port(stderr);
-  return tl_rt;
+
+  for ( int i = 0; i < 0x100; i ++ )
+#define _tl_c(c) tl_iv(tl_rt, 128 + ((c) & 0xff))
+#define tl_c(c)_tl_c(c)
+#define _tl_C(o) (*(int*)(o))
+#define tl_C(o)_tl_C(o)
+    *(int*) (tl_c(i) = tl_allocate(tl_t_character, sizeof(int))) = i;
 }
+
+  {
+    tl rt = tl_rt;
+    tl_rt = tl_rt_save;
+    return rt;
+  }
+}
+tl tl_get_env() { return tl_env; }
 tl tl_type(tl o)
 {
-#define _tl_type(o) (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o))
+#define _tl_type(o) ((o) == 0 ? tl_t_null : (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o)))
   return _tl_type(o);
 }
 #define tl_type(o)_tl_type(o)
@@ -136,13 +209,14 @@ tl tl_error(tl msg, tl obj)
   if ( tl_in_error != tl_nil ) abort();
   tl_in_error = tl_t;
   fprintf(stderr, "\nERROR: %s: %s @%p : ", (char*)msg, (char*) tl_iv(tl_type(obj), 0), obj);
-  tl_write(obj, tl__stderr);
+  tl_write(obj, stderr);
   fprintf(stderr, "\n");
   abort(); return 0;
 }
+tl tl_void(tl o) { return tl_v; }
 #if 0
-#define tl_i(x) ((tl) ((((tlsw) (x)) << 1) & 1))
-#define tl_I(o) (((tlsw) (o)) >> 1)
+#define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) & 1))
+#define _tl_I(o) (((tlsw) (o)) >> 1)
 #else
 tl tl_m_fixnum(tlsw x)
 {
@@ -150,9 +224,21 @@ tl tl_m_fixnum(tlsw x)
   *(tlsw*) o = x;
   return o;
 }
-#define tl_i(x) tl_m_fixnum(x)
-#define tl_I(o) (*(tlsw*) (o))
+#define _tl_i(x) tl_m_fixnum(x)
+#define _tl_I(o) (*(tlsw*) (o))
 #endif
+tl tl_i(tlsw x) { return _tl_i(x); }
+tlsw tl_I(tl o) { return _tl_I(o); }
+#define tl_i(x)_tl_i(x)
+#define tl_I(o)_tl_I(o)
+tl tl_ivar(tl o, tl i)
+{
+  return ((tl*) o)[tl_I(i)];
+}
+tl tl_set_ivar(tl o, tl i, tl v)
+{
+  return ((tl*) o)[tl_I(i)] = v;
+}
 tl tl_m_string(void *x, size_t l)
 {
   tl o = tl_allocate(tl_t_string, sizeof(x) + sizeof(l));
@@ -160,20 +246,21 @@ tl tl_m_string(void *x, size_t l)
   return o;
 }
 #define tl_S(o) (*(void**) (o))
-tl tl_m_pair(tl a, tl d)
+tl tl_type_cons(tl t, tl a, tl d)
 {
-  tl o = tl_allocate(tl_t_pair, sizeof(tl) * 2);
+  tl o = tl_allocate(t, sizeof(tl) * 2);
 #define car(o) ((tl*) (o))[0]
 #define cdr(o) ((tl*) (o))[1]
   car(o) = a;
   cdr(o) = d;
   return o;
 }
+tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 #define cadr(o) car(cdr(o))
 #define cddr(o) cdr(cdr(o))
-tl tl_car(tl o) { return car(o); }
-tl tl_cdr(tl o) { return cdr(o); }
-#define cons(a, r) tl_m_pair(a, r)
+tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
+tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
+#define cons tl_cons
 tl tl_m_symbol(void *x)
 {
   tl l = tl_symtab;
@@ -210,25 +297,12 @@ tl tl_string__intern(tl o)
 }
 tl tl_m_prim(void *f, const char *name)
 {
-  tl o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
 #define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
-  *(void**) (o + 0) = f;
-  *(void**) (o + sizeof(f)) = (void*) name;
+  o[0] = f; o[1] = (tl) name;
   return o;
 }
-tl tl_m_port(FILE *x)
-{
-  tl p = tl_allocate(tl_t_port, sizeof(x));
-#define FP *(FILE**)p
-  FP = x;
-  return p;
-}
-tl tl_puts(tl p, void *s)
-{
-  fwrite(s, strlen(s), 1, FP);
-  fflush(FP);
-  return p;
-}
+#define FP ((FILE*)p)
 tl tl_port__write(tl p, tl s, tl l)
 {
   fwrite(tl_S(s), tl_I(l), 1, FP);
@@ -238,10 +312,6 @@ tl tl_port__read(tl p, tl s, tl l)
 {
   ssize_t c = fread(tl_S(s), tl_I(l), 1, FP);
   return tl_i((long) c);
-}
-tl tl_newline(tl p)
-{
-  return tl_puts(p, "\n");
 }
 tl tl_string__display(tl o, tl p)
 {
@@ -274,6 +344,12 @@ tl tl_prim__write(tl o, tl p)
   return p;
 }
 tl tl__write(tl o, tl p, tl op);
+tl tl_fputc(tl o, tl p)
+{
+  fputc((int) (ssize_t) o, p);
+  return p;
+}
+
 tl tl_pair__write(tl o, tl p, tl op)
 {
   fwrite("(", 1, 1, FP);
@@ -302,6 +378,8 @@ tl tl__write(tl o, tl p, tl op)
     return (op != tl_nil ? tl_string__write : tl_string__display)(o, p);
   if ( tl_type(o) == tl_t_symbol )
     return tl_symbol__write(o, p);
+  if ( tl_type(o) == tl_t_character )
+    { fprintf(FP, "#\\%c", tl_C(o)); return p; }
   if ( tl_type(o) == tl_t_pair )
     return tl_pair__write(o, p, op);
   if ( tl_type(o) == tl_t_type )
@@ -317,12 +395,13 @@ tl tl_write(tl o, tl p) { return tl__write(o, p, (tl) 1); }
 tl tl_bind(tl vars, tl args, tl env)
 {
   // if ( length(vars) != length(args) ) error
-  return cons(cons(vars, args), env);
+  // if ( vars == tl_nil ) return env;
+  return cons(tl_typeSET(cons(vars, args), tl_t_environment), env);
 }
 tl tl_let(tl var, tl val, tl env)
 {
-  if ( ! env )
-    env = cons(cons(tl_nil, tl_nil), env);
+  if ( env == tl_nil )
+    env = tl_bind(tl_nil, tl_nil, env);
   tl vv = car(env);
   car(vv) = cons(var, car(vv));
   cdr(vv) = cons(val, cdr(vv));
@@ -356,7 +435,7 @@ tl tl_lookup(tl name, tl env)
       if ( car(vars) == name )
         return vals;
       vars = cdr(vars);
-      vals = cdr(vals);
+      vals = vals == tl_nil ? vals : cdr(vals);
     }
     env = cdr(env);
   }
@@ -376,18 +455,18 @@ tl tl_setE(tl name, tl val, tl env)
     return tl_error("unbound", name);
   return car(slot) = val;
 }
-int tl_eval_debug;
-#define tl_eval_debug 0
 tl tl_eval(tl exp, tl env)
 {
+  int tl_eval_debug = 0;
+  // #define tl_eval_debug 0
   tl val = tl_nil, args = tl_nil, clink = tl_nil;
   if ( tl_eval_debug ) {
     fprintf(stderr, "\n  eval:");
     fprintf(stderr, "\n    env => ");
-    tl_write(env, tl__stderr);
+    tl_write(env, stderr);
     fprintf(stderr, "\n    exp => ");
-    tl_write(exp, tl__stderr);
-    tl_write(tl_type(exp), tl__stderr);
+    tl_write(exp, stderr);
+    tl_write(tl_type(exp), stderr);
     fprintf(stderr, "\n");
   }
 #define pop(x)  x = car(clink); clink = cdr(clink)
@@ -396,15 +475,15 @@ tl tl_eval(tl exp, tl env)
   if ( tl_eval_debug ) {                  \
   fprintf(stderr, "    %s:", #N);         \
   fprintf(stderr, "\n      exp   => ");   \
-  tl_write(exp, tl__stderr);            \
+  tl_write(exp, stderr);            \
   fprintf(stderr, "\n      val   => ");   \
-  tl_write(val, tl__stderr);            \
+  tl_write(val, stderr);            \
   fprintf(stderr, "\n      args  => ");   \
-  tl_write(args, tl__stderr);           \
+  tl_write(args, stderr);           \
   fprintf(stderr, "\n      clink => ");   \
-  tl_write(clink, tl__stderr);          \
+  tl_write(clink, stderr);          \
   fprintf(stderr, "\n      env   => ");   \
-  tl_write(env, tl__stderr);            \
+  tl_write(env, stderr);            \
   fprintf(stderr, "\n");                  \
   }
 #define G(N) do {                             \
@@ -450,8 +529,8 @@ tl tl_eval(tl exp, tl env)
   if ( car(exp) == tl_s_lambda ) G(closure);
   if ( car(exp) == tl_s_define ) G(define);
   if ( car(exp) == tl_s_setE ) G(setE);
-  //  if ( car(exp) == tl__s("&debug") )
-  //   { tl_eval_debug = 1; G(rtn); }
+  if ( car(exp) == tl_s__debug )
+    { tl_eval_debug ^= 1; G(rtn); }
   L(args);
   push(args);
   args = cons(tl_nil, tl_nil);
@@ -461,7 +540,7 @@ tl tl_eval(tl exp, tl env)
   val = cdr(exp);
   push(val);
   push(tl_s__argval);
-  exp = car(exp); 
+  exp = car(exp);
   G(eval);
 
   L(argval);
@@ -474,6 +553,8 @@ tl tl_eval(tl exp, tl env)
   L(call);
   val = car(args);
   args = cdr(args);
+  L(apply);
+  if ( val == tl_nil ) return tl_error("Cannot apply nil", val);
   if ( tl_type(val) == tl_t_prim ) G(callprim);
 
   L(callclosure);
@@ -508,6 +589,15 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
   
   L(callprim);
+  if ( val == tl_p_apply ) {
+    // tl_eval_debug = 1;
+    // pop(val); // args.
+    val = car(args);
+    args = cadr(args);
+    G(apply);
+  }
+  push(tl_env);
+  tl_env = env;
   if ( args == tl_nil )
     val = tl_FP(val,tl,())();
   else if ( cdr(args) == tl_nil )
@@ -520,6 +610,7 @@ tl tl_eval(tl exp, tl env)
     val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
   else
     tl_error("too many args", val);
+  pop(tl_env);
   pop(args);
   G(rtn);
 
@@ -564,17 +655,108 @@ tl tl_eval(tl exp, tl env)
     G(setE_);
   abort();
 }
+tl tl_quote(tl x)
+{
+  return cons(tl_s_quote, cons(x, tl_nil));
+}
+tl tl_apply(tl f, tl args)
+{
+  return tl_eval(cons(tl_p_apply, cons(tl_quote(f), cons(tl_quote(args), tl_nil))), tl_env);
+}
 tl tl_eval_print(tl expr, tl env, tl out)
 {
-  if ( out != tl_f ) { tl_write(expr, tl__stdout); fprintf(stdout, " => \n"); }
+  if ( out ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
   tl val = tl_eval(expr, env);
-  if ( out != tl_f ) { tl_write(val, tl__stdout); fprintf(stdout, "\n"); }
+  if ( out && val != tl_v ) { tl_write(val, stdout); fprintf(stdout, "\n"); }
   return val;
 }
+tl tl_stdenv(tl env);
+#ifdef tl_PTHREAD
+tl tl_m_thread(pthread_t pt, tl rt, tl env)
+{
+  tl *o = tl_allocate(tl_t_thread, sizeof(*o) * 16);
+  memset(o, 0, sizeof(*o) * 16);
+  o[0] = pt;
+  o[1] = rt;
+  o[2] = env;
+  return o;
+}
+static void *tl_pthread_start(void *data)
+{
+  tl *pt = data, proc;
+
+  pthread_setspecific(tl_rt_thread_key, pt);
+  pt[0] = pthread_self();
+  tl_rt = pt[1];
+  tl_env = pt[2];
+  proc = pt[10];
+  pt[10] = 0;
+
+#if 0
+  fprintf(stderr, "\n  pthread %p object %p in rt %p applying ", pthread_self(), pt, tl_rt);
+  tl_write(proc, stderr);
+  fprintf(stderr, " in env ");
+  tl_write(tl_env, stderr);
+  fprintf(stderr, "\n"); fflush(stderr);
+#endif
+
+  pt[5] = tl_apply(proc, tl_nil);
+  pt[6] = tl_t;      // result is ready.
+
+#if 0
+  fprintf(stderr, "\n  pthread %p object %p in rt %p returning ", pthread_self(), pt, tl_rt);
+  tl_write(pt[5], stderr);
+  fprintf(stderr, "\n"); fflush(stderr);
+#endif
+  return tl_result; // pthread_exit(tl_result);
+}
+tl tl_pthread_create(tl proc, tl env)
+{
+  pthread_t new_thread = 0;
+  int result = 0;
+  tl *pt;
+  tl tl_rt_save = tl_rt;       // save current runtime.
+  tl rt = tl_m_runtime(tl_rt); // create new runtime.
+  tl_rt = rt;                  // use new runtime.
+  env = tl_env;
+  tl_rt = tl_rt_save;          // restore current runtime
+
+  pt = tl_m_thread(0, rt, env); // new thread object.
+  pt[5] = tl_nil; pt[6] = tl_f; // result.
+  pt[10] = proc;                // pass proc to tl_pthread_start.
+
+  result = pthread_create(&new_thread, 0, tl_pthread_start, pt);
+  while ( ! (pt[0] == new_thread && pt[10] == 0) ) 
+    ;                          // wait for thread to start.
+
+#if 0
+  fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
+          result, pthread_self(), tl_rt, 
+          new_thread, pt, rt);
+#endif
+  return pt;
+}
+tl tl_pthread_self()
+{
+  tl *tp = tl_rt_thread();
+  if ( ! tp[-1] ) tp[-1] = tl_t_thread;
+  if ( ! tp[1] ) tp[1] = tl_rt;
+  return tp;
+}
+tl tl_pthread_join(tl t)
+{
+  void *value = 0;
+  int result = pthread_join(tl_iv(t, 0), &value);
+  // assert(value == tl_iv(t, 5));
+  assert(tl_iv(t, 6) == tl_t);
+  // tl_iv(t, 5) = 0;
+  return tl_iv(t, 5);
+}
+#endif
 #define VALUE tl
 #define READ_DECL tl tl_read(tl stream)
 #define READ_CALL() tl_read(stream)
-#define FP(stream) tl_iv(stream, 0)
+#define FP(stream) ((FILE*)stream)
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))
@@ -585,7 +767,7 @@ tl tl_eval_print(tl expr, tl env, tl out)
 #define T tl_t
 #define F tl_f
 #define SET_CDR(C,R) cdr(C) = (R)
-#define MAKE_CHAR(I) tl_i(I)
+#define MAKE_CHAR(I) tl_c(I)
 #define LIST_2_VECTOR(X) X
 #define STRING(S,L) tl_m_string((S), (L))
 #define SYMBOL_DOT tl_s_DOT
@@ -599,10 +781,9 @@ tl tl_eval_print(tl expr, tl env, tl out)
 tl tl_repl(tl env, tl in, tl out, tl prompt)
 {
   tl expr, val;
-  tl port = tl__stdin;
  again:
-  if ( prompt != tl_f ) tl_puts(prompt, "> ");
-  if ( (expr = tl_read(port)) != tl_eos ) {
+  if ( prompt ) fputs("> ", (FILE*)prompt);
+  if ( (expr = tl_read(in)) != tl_eos ) {
     val = tl_eval_print(expr, env, out);
     goto again;
   }
@@ -613,6 +794,9 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
   tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (size_t)(T)word); } \
   tl tl_##N##_sizeof(TLP0) { return tl_i((tlw) sizeof(T)); }
 #define FTYPE(T,N)
+// ITYPE(tl,tl)
+ITYPE(tlw,tlw)
+ITYPE(tlsw,tlsw)
 #include "ctypes.h"
 #define BOP(O,N) \
   tl tl_fixnum_##N(tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
@@ -626,39 +810,60 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 #include "cops.h"
 tl tl_stdenv(tl env)
 {
-#define D(N,V) env = tl_let(tl_s(N), V, env)
+  tl v;
+#define D(N,V) env = tl_let(tl_s(N), v = (V), env)
   D(t, tl_s(t));
   D(nil, tl_nil);
 #define V(N) D(N,tl_##N)
   V(eos);
-  V(_stdin); V(_stdout); V(_stderr);
+  D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
+  P(tl_allocate);
+  P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
+  P(tl_m_type); P(tl_type); P(tl_typeSET);
+  P(tl_void);
+  P(tl_i); P(tl_I);
+  P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
-  P(tl_m_pair); P(tl_car); P(tl_cdr);
-  P(tl_eval);  P(tl_repl);
-  P(fopen); P(fclose);
-  P(tl_read); P(tl_newline), P(tl__write);
+  P(tl_type_cons); P(tl_cons); 
+  P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
+  P(tl_eval); P(tl_repl);
+  P(tl_apply); tl_p_apply = v;
+  P(fopen); P(fclose); P(fflush); P(fputs); P(tl_fputc); P(fgetc); P(fseek); 
+  P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
+  P(tl_read); P(tl__write);
+  P(GC_malloc); P(GC_realloc);
+#ifdef tl_PTHREAD
+  P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
+  P(pthread_join); P(pthread_cancel);
+  P(tl_pthread_create); P(tl_pthread_self); P(tl_pthread_join);
+#endif
 #define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
 #define FTYPE(T,N)
+ITYPE(tlw,tlw)
+ITYPE(tlsw,tlsw)
 #include "ctypes.h"
 #define BOP(O,N) P(tl_fixnum_##N); P(tl_word_##N);
 #define UOP(O,N) BOP(O,N)
 #define ROP(O,N) BOP(O,N)
 #include "cops.h"
+  {
+    FILE *fp;
+    if ( (fp = fopen("boot.scm", "r")) ) {
+      tl_repl(env, fp, 0, 0); 
+      fclose(fp);
+    }
+  }
   return env;
 }
 
 int main(int argc, char **argv)
 {
-  tl tl_rt = tl_m_runtime(0);
-  tl env = tl_stdenv(tl_nil);
-  fprintf(stdout, "env =>\n  "); tl_write(env, tl__stdout); fprintf(stdout, "\n");
-  tl expr, val;
-
-  tl_repl(env, tl__stdin, tl__stdout, tl__stdout);
-  /*
-   */
+  FILE *out = stdout;
+  tl_rt = tl_m_runtime(0);
+  tl_env = tl_stdenv(tl_nil);
+  if ( ! isatty(0) ) out = 0;
+  tl_repl(tl_env, stdin, out, out);
   return 0;
 }
-
 
