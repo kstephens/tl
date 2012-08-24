@@ -17,6 +17,10 @@
 (define / tl_fixnum_DIV)
 (define % tl_fixnum_MOD)
 (define = tl_word_EQ)
+(define < tl_fixnum_LT)
+(define > tl_fixnum_GT)
+(define >= tl_fixnum_GE)
+(define <= tl_fixnum_LE)
 (define not 
   (lambda (x) 
     (if (eq? x #f)
@@ -64,6 +68,7 @@
 (define <symbol> (tl_type 'symbol))
 (define <string> (tl_type "string"))
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
+(define tl_S %string-ptr)
 (define %string-len (lambda (s) (tl_ivar s 1)))
 (define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))))
 (define string-length (lambda (o) (tl_i (%string-len o))))
@@ -116,28 +121,50 @@
   (lambda (a b)
     (if (eq? (tl_type a) (tl_type b))
       (if (eqv? (vector-length a) (vector-length b))
-        (vector-equal?2 a b 0)
+        (vector-equal?-2 a b 0)
         #f)
       #f)))
-(define vector-equal?2 
+(define vector-equal?-2 
   (lambda (a b i)
     (if (eqv? (vector-length a) i)
       #t
       (if (equal? (vector-ref a i) (vector-ref b i))
-        (vector-equal?2 a b (+ i 1))
+        (vector-equal?-2 a b (+ i 1))
         #f))))
 (define list->vector
   (lambda (l)
     ((lambda (v)
-       (list->vector-3 l v 0)
+       (list->vector-2 l v 0)
        v)
       (make-vector (list-length l)))))
-(define list->vector-3 
+(define list->vector-2 
   (lambda (l v i)
     (if (not (null? l))
       ((lambda ()
          (vector-set! v i (car l))
-         (list->vector-3 (cdr l) v (+ i 1)))))))
+         (list->vector-2 (cdr l) v (+ i 1)))))))
+(define tl_vector_write
+  (lambda (o p op)
+    (fputs (tl_S "#(") p)
+    (tl_vector_write-2 o p op 0)
+    (fputs (tl_S ")") p)
+    p))
+(define tl_vector_write-2
+  (lambda (o p op i)
+    (if (>= i (vector-length o))
+      o
+      ((lambda ()
+         (if (> i 0) (fputs (tl_S " ") p))
+         (tl__write (vector-ref o i) p op)
+         (tl_vector_write-2 o p op (+ i 1))
+         )))))
+(define tl_object_write
+  ((lambda (f)
+     (lambda (o p op)
+       (if (eq? (tl_type o) <vector>)
+         (tl_vector_write o p op)
+         (f o p op))))
+    tl_object_write))
 
 (define equal?
   (lambda (a b)

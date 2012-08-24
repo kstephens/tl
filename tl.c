@@ -859,7 +859,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval); P(tl_repl);
   P(tl_apply); tl_p_apply = _v;
-  P(fopen); P(fclose); P(fflush); P(fputs); P(fputc); P(fgetc); P(fseek); 
+  P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl__write); P(tl_object_write);
   P(GC_malloc); P(GC_realloc);
