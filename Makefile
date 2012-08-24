@@ -11,7 +11,7 @@ CFLAGS += -g -I/opt/local/include
 LDFLAGS += -L/opt/local/lib -lgc
 
 ifndef NO_PTHREADS
-CFLAGS += -Dtl_PTHREAD=1
+CFLAGS += -pthread -Dtl_PTHREAD=1
 LDFLAGS += -lpthread
 endif
 
@@ -21,6 +21,9 @@ tl : tl.c
 
 tl.s : tl.c
 	$(CC) $(CFLAGS) -S -o $@ tl.c
+
+run : tl
+	rlwrap ./tl
 
 debug : tl
 	gdb --args tl
