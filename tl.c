@@ -415,10 +415,32 @@ tl tl_let(tl var, tl val, tl env)
   cdr(vv) = cons(val, cdr(vv));
   return env;
 }
+tl tl_lookup(tl name, tl env)
+{
+  while ( env ) {
+    tl vv = car(env);
+    tl vars = car(vv), vals = cdr(vv);
+    while ( vars ) {
+      if ( vars == name )
+        return cons(vals, tl_nil); // restarg hack.
+      if ( car(vars) == name )
+        return vals;
+      vars = cdr(vars);
+      vals = vals == tl_nil ? vals : cdr(vals);
+    }
+    env = cdr(env);
+  }
+  return tl_nil;
+}
 tl tl_define(tl var, tl val, tl env)
 {
+  tl slot;
   while ( env && cdr(env) )
     env = cdr(env);
+  if ( (slot = tl_lookup(var, env)) != tl_nil ) {
+    car(slot) = val;
+    return var; 
+  }
   return tl_let(var, val, env);
 }
 #define _tl_b(x) ((x) ? tl_t : tl_f)
@@ -437,34 +459,17 @@ tl tl_eqvQ(tl x, tl y)
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
 }
-tl tl_lookup(tl name, tl env)
-{
-  while ( env ) {
-    tl vv = car(env);
-    tl vars = car(vv), vals = cdr(vv);
-    while ( vars ) {
-      if ( vars == name )
-        return cons(vals, tl_nil); // restarg hack.
-      if ( car(vars) == name )
-        return vals;
-      vars = cdr(vars);
-      vals = vals == tl_nil ? vals : cdr(vals);
-    }
-    env = cdr(env);
-  }
-  return tl_s__unbound;
-}
 tl tl_value(tl name, tl env)
 {
   tl slot = tl_lookup(name, env);
-  if ( slot == tl_s__unbound )
+  if ( slot == tl_nil )
     return tl_error("unbound", name);
   return car(slot);
 }
 tl tl_setE(tl name, tl val, tl env)
 {
   tl slot = tl_lookup(name, env);
-  if ( slot == tl_s__unbound )
+  if ( slot == tl_nil )
     return tl_error("unbound", name);
   return car(slot) = val;
 }
