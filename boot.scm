@@ -16,6 +16,7 @@
 (define * tl_fixnum_MUL)
 (define / tl_fixnum_DIV)
 (define % tl_fixnum_MOD)
+(define = tl_word_EQ)
 (define not 
   (lambda (x) 
     (if (eq? x #f)
@@ -58,6 +59,24 @@
 (define <character> (tl_type #\a))
 (define <symbol> (tl_type 'symbol))
 (define <string> (tl_type "string"))
+(define %string-ptr (lambda (s) (tl_tlw_get s)))
+(define %string-len (lambda (s) (tl_ivar s 1)))
+(define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))
+(define string-length (lambda (o) (tl_i (%string-len o))))
+(define string-ref
+  (lambda (o i)
+    (tl_c (tl_uchar_get (%string-ref o i)))))
+(define string-set!
+  (lambda (o i c)
+    (tl_c (tl_uchar_set (%string-ref o i) (tl_C c)))))
+(define string-equal?
+  (lambda (a b)
+    (if (eq? a b)
+      #t
+      (if (= (string-length a) (string-length b))
+        (not (tl_b (memcmp (%string-ptr a) (%string-ptr b) (%string-len a))))
+        #f))))
+
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define <type> (tl_type (tl_type '())))
@@ -99,9 +118,9 @@
       #t
       (if (eq? (tl_type a) (tl_type b))
         (if (eq? (tl_type a) <fixnum>)
-          (== a b)
+          (eqv? a b)
           (if (eq? (tl_type a) <character>)
-            (== (tl_C a) (tl_C b))
+            (tl_b (tl_word_EQ (tl_C a) (tl_C b)))
             (if (eq? (tl_type <string>))
               (string-equal? a b)
               (if (eq? (tl_type <pair>))
