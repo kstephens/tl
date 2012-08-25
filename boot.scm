@@ -70,7 +70,17 @@
 (define <symbol> (tl_type 'symbol))
 (define <string> (tl_type "string"))
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
+(define %make-string
+  (lambda (ptr size)
+    ((lambda (o)
+       (tl_set_ivar o 0 ptr)
+       (tl_set_ivar o 1 (tl_I size))
+       o
+       ) (tl_allocate <string> (tl_I (* 2 *word-size*))))))
 (define tl_S %string-ptr)
+(define tl_s
+  (lambda (ptr)
+    (%make-string ptr (strlen ptr))))
 (define %string-len (lambda (s) (tl_ivar s 1)))
 (define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))))
 (define string-length (lambda (o) (tl_i (%string-len o))))
@@ -91,11 +101,9 @@
 (define make-string
   (lambda (size)
     ((lambda (o)
-       (tl_set_ivar o 0 (GC_malloc (tl_I (+ size 1))))
-       (tl_set_ivar o 1 (tl_I size))
        (memset (%string-ptr o) (tl_I 0) (tl_I (+ size 1)))
        o
-       ) (tl_allocate <string> (tl_I (* 2 *word-size*))))))
+       ) (%make-string (GC_malloc (tl_I (+ size 1))) size))))
 
 (define %string-set
   (lambda (ptr strs)
