@@ -7,7 +7,7 @@ ifeq "$(UNAME_S)" "Linux"
 CC=gcc
 #NO_OPTIMIZE=1
 NO_GC=1
-NO_PTHREADS=1
+#NO_PTHREADS=1
 endif
 
 ifndef NO_OPTIMIZE
