@@ -1,6 +1,8 @@
 ((lambda (a b) (tl_cons a b)) 1 2) ;; test
 (let ((a 1) (b 2)) (tl_cons a b))  ;; test
-
+(let ((a 1) (b 2))
+  (let ((c (tl_cons a b)))
+    c))
 (define *env* &env)
 (define *word-size* (tl_tlw_sizeof))
 (define environment-vars (lambda (x) (car (car x))))
@@ -71,6 +73,7 @@
   (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
 (define io-flush (lambda port
   (tl_void (fflush (->FILE* (if (null? port) *stdout* (car port)))))))
+;; (write (environment-vars *env*))(newline)
 
 (define <fixnum> (tl_type 0))
 (define <character> (tl_type #\a))
@@ -187,18 +190,10 @@
     (let ((o (%allocate <vector> (* (+ size 1) *word-size*))))
        (tl_set_ivar o 0 size)
        o)))
-(define vector
-  (lambda l
-    (list->vector l)))
-(define vector-length
-  (lambda (o)
-    (tl_ivar o 0)))
-(define vector-ref
-  (lambda (o i)
-    (tl_ivar o (+ i 1))))
-(define vector-set!
-  (lambda (o i v)
-    (tl_set_ivar o (+ i 1) v)))
+(define vector (lambda l (list->vector l)))
+(define vector-length (lambda (o) (tl_ivar o 0)))
+(define vector-ref (lambda (o i) (tl_ivar o (+ i 1))))
+(define vector-set! (lambda (o i v) (tl_set_ivar o (+ i 1) v)))
 (define vector-equal?
   (lambda (a b)
     (if (eq? (tl_type a) (tl_type b))
@@ -215,7 +210,7 @@
         #f))))
 (define list->vector
   (lambda (l)
-    (let ((v) (make-vector (list-length l)))
+    (let ((v (make-vector (list-length l))))
        ;; (&debug 2)
        (list->vector-2 l v 0)
        ;; (&debug 0)
@@ -226,6 +221,7 @@
       (begin
         (vector-set! v i (car l))
         (list->vector-2 (cdr l) v (+ i 1))))))
+(list->vector '(1 2 3 4))
 (define tl_vector_write
   (lambda (o p op)
     (fputs (tl_S "#(") p)
@@ -241,12 +237,15 @@
          (tl_write_2 (vector-ref o i) p op)
          (tl_vector_write-2 o p op (+ i 1))
          ))))
+;; (tl_vector_write (list->vector '(1 2 3 4)) (->FILE* *stdout*) (tl_I 0))(newline)
+;; (write tl_object_write)(newline)
 (define tl_object_write
   (let ((f tl_object_write))
     (lambda (o p op)
       (if (eq? (tl_type o) <vector>)
         (tl_vector_write o p op)
         (f o p op)))))
+;; (write tl_object_write)(newline)
 
 (define equal?
   (lambda (a b)
@@ -266,4 +265,4 @@
                   #f)))))
         #f))))
 
-(list->vector '(1 2 3 4))
+
