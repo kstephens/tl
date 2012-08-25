@@ -19,18 +19,19 @@ char *GC_strdup(const char *x)
 {
   return strcpy(GC_malloc(strlen(x) + 1), x);
 }
+#define ASSERT_ZERO(x) ((x) == 0 ? 0 : assert(! #x))
 #ifdef tl_PTHREAD
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
 pthread_key_t tl_rt_thread_key;
 static void tl_init_()
 {
-  pthread_key_create(&tl_rt_thread_key, 0);
+  ASSERT_ZERO(pthread_key_create(&tl_rt_thread_key, 0));
   GC_INIT();
 }
 static void tl_init()
 {
-  pthread_once(&tl_init_once, tl_init_);
+  ASSERT_ZERO(pthread_once(&tl_init_once, tl_init_));
 }
 tl tl_m_thread(pthread_t rt, tl env, void *pt);
 tl* tl_rt_thread() {
@@ -39,7 +40,7 @@ tl* tl_rt_thread() {
     tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
     tlp[0] = 0;
     ++ tlp; /* skip type */
-    pthread_setspecific(tl_rt_thread_key, tlp);
+    ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, tlp));
     memset(tlp, 0, sizeof(*tlp) * 16);
     tlp[0] = (tl) pthread_self();
   }
@@ -77,7 +78,6 @@ tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
-  tl_init();
   tl_rt = tl_allocate(0, size);
 #define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
@@ -781,7 +781,7 @@ static void *tl_pthread_start(void *data)
 {
   tl *pt = data, proc;
 
-  pthread_setspecific(tl_rt_thread_key, pt);
+  ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, pt));
   pt[0] = (tl) pthread_self();
   tl_rt = pt[1];
   tl_env = pt[2];
@@ -821,7 +821,7 @@ tl tl_pthread_create(tl proc, tl env)
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
-  result = pthread_create(&new_thread, 0, tl_pthread_start, pt);
+  ASSERT_ZERO(result = pthread_create(&new_thread, 0, tl_pthread_start, pt));
   while ( ! ((pthread_t) pt[0] == new_thread && pt[10] == 0) ) 
     ;                          // wait for thread to start.
 
@@ -842,7 +842,8 @@ tl tl_pthread_self()
 tl tl_pthread_join(tl t)
 {
   void *value = 0;
-  int result = pthread_join((pthread_t) tl_iv(t, 0), &value);
+  int result;
+  ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 0), &value));
   // assert(value == tl_iv(t, 5));
   assert(tl_iv(t, 6) == tl_t);
   // tl_iv(t, 5) = 0;
@@ -962,6 +963,7 @@ ITYPE(tlsw,tlsw)
 int main(int argc, char **argv)
 {
   FILE *out = stdout;
+  tl_init();
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   if ( ! isatty(0) && ! getenv("TL_PROMPT") ) out = 0;
