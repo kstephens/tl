@@ -138,6 +138,18 @@
     (if (null? (cdr l))
       (car l)
       (f (car l) (reduce f (cdr l))))))
+(define assf
+  (lambda (f x l)
+    (if (null? l) #f
+      (if (f x (car (car l)))
+        (car l)
+        (assf f x (cdr l))))))
+(define assq 
+  (lambda (x l) (assf eq? x l)))
+(define assv
+  (lambda (x l) (assf eqv? x l)))
+(define assoc
+  (lambda (x l) (assf equal? x l)))
 (define pair-equal?
   (lambda (a b)
     (if (equal? (car a) (car b))
@@ -164,6 +176,9 @@
        (tl_set_ivar o 0 size)
        o
        ) (tl_allocate <vector> (tl_I (* (+ size 1) *word-size*))))))
+(define vector
+  (lambda l
+    (list->vector l)))
 (define vector-length
   (lambda (o)
     (tl_ivar o 0)))
