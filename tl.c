@@ -643,6 +643,7 @@ tl tl_eval(tl exp, tl env)
     args = cons(cadr(car(val)), args);
     val = cdr(val);
   }
+  val = exp;
   exp = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
   G(eval);
 
@@ -702,7 +703,7 @@ tl tl_eval(tl exp, tl env)
 
   L(define_);
   pop(exp);
-  env = tl_define(exp, val, env);
+  tl_define(exp, val, env);
   val = exp;
   G(rtn);
 
