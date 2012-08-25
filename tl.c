@@ -569,16 +569,6 @@ tl tl_eval(tl exp, tl env)
   L(proc);
   val = tl_type_cons(tl_t_closure, cdr(exp), env); 
   G(rtn);
-
-  L(let);
-  args = argp = nil; val = car(exp);
-  while ( val != nil ) {
-    argp = cons(car(car(val)), argp);
-    args = cons(cadr(car(val)), args);
-    val = cdr(val);
-  }
-  exp = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
-  G(eval);
   
   L(if1);
   val = cddr(exp);
@@ -645,6 +635,16 @@ tl tl_eval(tl exp, tl env)
   else
     args = argp = cons(val, tl_nil);
   G(evcom1);
+
+  L(let);
+  args = argp = nil; val = car(exp);
+  while ( val != nil ) {
+    argp = cons(car(car(val)), argp);
+    args = cons(cadr(car(val)), args);
+    val = cdr(val);
+  }
+  env = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
+  G(eval);
 
   L(call); // tl_eval_debug = 1;
   val = car(args); // = ((formals . body) . env) or #<prim>
