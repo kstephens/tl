@@ -41,7 +41,7 @@ tl* tl_rt_thread() {
     ++ tlp; /* skip type */
     pthread_setspecific(tl_rt_thread_key, tlp);
     memset(tlp, 0, sizeof(*tlp) * 16);
-    tlp[0] = pthread_self();
+    tlp[0] = (tl) pthread_self();
   }
   return tlp;
 }
@@ -772,7 +772,7 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 {
   tl *o = tl_allocate(tl_t_thread, sizeof(*o) * 16);
   memset(o, 0, sizeof(*o) * 16);
-  o[0] = pt;
+  o[0] = (tl) pt;
   o[1] = rt;
   o[2] = env;
   return o;
@@ -782,7 +782,7 @@ static void *tl_pthread_start(void *data)
   tl *pt = data, proc;
 
   pthread_setspecific(tl_rt_thread_key, pt);
-  pt[0] = pthread_self();
+  pt[0] = (tl) pthread_self();
   tl_rt = pt[1];
   tl_env = pt[2];
   proc = pt[10];
@@ -822,7 +822,7 @@ tl tl_pthread_create(tl proc, tl env)
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
   result = pthread_create(&new_thread, 0, tl_pthread_start, pt);
-  while ( ! (pt[0] == new_thread && pt[10] == 0) ) 
+  while ( ! ((pthread_t) pt[0] == new_thread && pt[10] == 0) ) 
     ;                          // wait for thread to start.
 
 #if 0
@@ -842,7 +842,7 @@ tl tl_pthread_self()
 tl tl_pthread_join(tl t)
 {
   void *value = 0;
-  int result = pthread_join(tl_iv(t, 0), &value);
+  int result = pthread_join((pthread_t) tl_iv(t, 0), &value);
   // assert(value == tl_iv(t, 5));
   assert(tl_iv(t, 6) == tl_t);
   // tl_iv(t, 5) = 0;
@@ -934,7 +934,7 @@ tl tl_stdenv(tl env)
   P(strlen); P(strcpy);
   P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); P(getenv); P(setenv);
-  P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp); P(execvP);
+  P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
 #ifdef tl_PTHREAD
   P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
   P(pthread_join); P(pthread_cancel);
