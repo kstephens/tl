@@ -1,4 +1,5 @@
-((lambda (a b) (tl_cons a b)) 1 2)
+((lambda (a b) (tl_cons a b)) 1 2) ;; test
+(let ((a 1) (b 2)) (tl_cons a b))  ;; test
 
 (define *env* &env)
 (define *word-size* (tl_tlw_sizeof))
@@ -14,6 +15,7 @@
 (define eval tl_eval)
 (define repl tl_repl)
 (define + tl_fixnum_ADD)
+(define %+ tl_word_ADD)
 (define - tl_fixnum_SUB)
 (define * tl_fixnum_MUL)
 (define / tl_fixnum_DIV)
@@ -27,7 +29,12 @@
   (lambda (x) 
     (if (eq? x #f)
       #t #f)))
-
+(define %malloc
+  (lambda (size)
+    (GC_malloc (tl_I size))))
+(define %allocate
+  (lambda (type size)
+    (tl_allocate type (tl_I size))))
 (define make-type 
   (lambda (n)
     (tl_m_type (->char* n))))
@@ -72,17 +79,22 @@
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
 (define %make-string
   (lambda (ptr size)
-    ((lambda (o)
+    (let ((o (%allocate <string> (* 2 *word-size*))))
        (tl_set_ivar o 0 ptr)
        (tl_set_ivar o 1 (tl_I size))
-       o
-       ) (tl_allocate <string> (tl_I (* 2 *word-size*))))))
+       o)))
 (define tl_S %string-ptr)
 (define tl_s
   (lambda (ptr)
     (%make-string ptr (strlen ptr))))
 (define %string-len (lambda (s) (tl_ivar s 1)))
-(define %string-ref (lambda (s i) (tl_word_ADD (%string-ptr s) (tl_I i))))
+(define %string-ref (lambda (s i) (%+ (%string-ptr s) (tl_I i))))
+(define %string-set
+  (lambda (ptr strs)
+    (if (null? strs) strs
+      (begin
+        (memcpy ptr (%string-ptr (car strs)) (%string-len (car strs)))
+        (%string-set (%+ ptr (%string-len (car strs))) (cdr strs))))))
 (define string-length (lambda (o) (tl_i (%string-len o))))
 (define string-ref
   (lambda (o i)
@@ -97,26 +109,26 @@
       (if (= (string-length a) (string-length b))
         (not (tl_b (memcmp (%string-ptr a) (%string-ptr b) (%string-len a))))
         #f))))
-
 (define make-string
   (lambda (size)
-    ((lambda (o)
+    (let ((o (%make-string (%malloc (+ size 1)) size)))
        (memset (%string-ptr o) (tl_I 0) (tl_I (+ size 1)))
-       o
-       ) (%make-string (GC_malloc (tl_I (+ size 1))) size))))
-
-(define %string-set
-  (lambda (ptr strs)
-    (if (null? strs) strs
-      (begin
-        (memcpy ptr (%string-ptr (car strs)) (%string-len (car strs)))
-        (%string-set (tl_word_ADD ptr (%string-len (car strs))) (cdr strs))))))
+       o)))
+(define string-copy
+  (lambda (s)
+    (let ((o (make-string (string-length s))))
+       (memcpy (%string-ptr o) (%string-ptr s) (tl_I (+ (string-length s) 1)))
+       o)))
+(define substring
+  (lambda (s i n)
+    (let ((o (%make-string (%malloc (+ n 1)) n)))
+       (memcpy (%string-ptr o) (%+ (%string-ptr s) (tl_I i)) (tl_I n)) 
+       o)))
 (define string-append
   (lambda strs
-    ((lambda (s)
+    (let ((s (make-string (reduce + (map string-length strs)))))
        (%string-set (%string-ptr s) strs)
-       s)
-      (make-string (reduce + (map string-length strs))))))
+       s)))
 
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
@@ -172,10 +184,9 @@
 (define <vector> (make-type "vector"))
 (define make-vector
   (lambda (size)
-    ((lambda (o)
+    (let ((o (%allocate <vector> (* (+ size 1) *word-size*))))
        (tl_set_ivar o 0 size)
-       o
-       ) (tl_allocate <vector> (tl_I (* (+ size 1) *word-size*))))))
+       o)))
 (define vector
   (lambda l
     (list->vector l)))
@@ -204,12 +215,11 @@
         #f))))
 (define list->vector
   (lambda (l)
-    ((lambda (v)
+    (let ((v) (make-vector (list-length l)))
        ;; (&debug 2)
        (list->vector-2 l v 0)
        ;; (&debug 0)
-       v)
-      (make-vector (list-length l)))))
+       v)))
 (define list->vector-2 
   (lambda (l v i)
     (if (not (null? l))
@@ -232,12 +242,11 @@
          (tl_vector_write-2 o p op (+ i 1))
          ))))
 (define tl_object_write
-  ((lambda (f)
-     (lambda (o p op)
-       (if (eq? (tl_type o) <vector>)
-         (tl_vector_write o p op)
-         (f o p op))))
-    tl_object_write))
+  (let ((f tl_object_write))
+    (lambda (o p op)
+      (if (eq? (tl_type o) <vector>)
+        (tl_vector_write o p op)
+        (f o p op)))))
 
 (define equal?
   (lambda (a b)
