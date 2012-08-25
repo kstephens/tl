@@ -53,9 +53,9 @@
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
-  (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0)))))
+  (tl_void (tl_write_2 obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
-  (tl_void (tl__write obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1)))))
+  (tl_void (tl_write_2 obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1)))))
 (define newline (lambda port
   (tl_void (fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port)))))))
 (define read (lambda port
@@ -155,7 +155,7 @@
       o
       ((lambda ()
          (if (> i 0) (fputs (tl_S " ") p))
-         (tl__write (vector-ref o i) p op)
+         (tl_write_2 (vector-ref o i) p op)
          (tl_vector_write-2 o p op (+ i 1))
          )))))
 (define tl_object_write

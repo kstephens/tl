@@ -343,21 +343,21 @@ tl tl_prim__write(tl o, tl p)
   fprintf(FP, "#<prim %s @%p @%p>", (char*) tl_iv(o, 1), o, tl_iv(o, 0));
   return p;
 }
-tl tl__write(tl o, tl p, tl op);
+tl tl_write_2(tl o, tl p, tl op);
 tl tl_pair__write(tl o, tl p, tl op)
 {
   fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
   if ( tl_type(o) == tl_t_pair ) {
-    tl__write(car(o), p, op);
+    tl_write_2(car(o), p, op);
     o = cdr(o);
     if ( ! o ) goto rtn;
     fwrite(" ", 1, 1, FP);
     goto again;
   }
   fwrite(". ", 2, 1, FP);
-  tl__write(o, p, op);
+  tl_write_2(o, p, op);
  rtn:
   fwrite(")", 1, 1, FP);
   return p;
@@ -368,28 +368,30 @@ tl tl_object_write(tl o, tl p, tl op)
   return p;
 }
 tl tl_call(tl s, int n, ...);
-tl tl__write(tl o, tl p, tl op)
+tl tl_write_2(tl o, tl p, tl op)
 {
+  tl t;
   if ( o == tl_nil )
     return tl_pair__write(o, p, op);
-  if ( tl_type(o) == tl_t_fixnum )
+  t = tl_type(o);
+  if ( t == tl_t_fixnum )
     return tl_fixnum__write(o, p);
-  if ( tl_type(o) == tl_t_string )
+  if ( t == tl_t_string )
     return (op != tl_nil ? tl_string__write : tl_string__display)(o, p);
-  if ( tl_type(o) == tl_t_symbol )
+  if ( t == tl_t_symbol )
     return tl_symbol__write(o, p);
-  if ( tl_type(o) == tl_t_character )
+  if ( t == tl_t_character )
     { fprintf(FP, "#\\%c", tl_C(o)); return p; }
-  if ( tl_type(o) == tl_t_pair )
+  if ( t == tl_t_pair )
     return tl_pair__write(o, p, op);
-  if ( tl_type(o) == tl_t_type )
+  if ( t == tl_t_type )
     return tl_type__write(o, p);
-  if ( tl_type(o) == tl_t_prim )
+  if ( t == tl_t_prim )
     return tl_prim__write(o, p);
   return tl_call(tl_s_tl_object_write, 3, o, p, op);
 }
-tl tl_display(tl o, tl p) { return tl__write(o, p, (tl) 0); }
-tl tl_write(tl o, tl p) { return tl__write(o, p, (tl) 1); }
+tl tl_display(tl o, tl p) { return tl_write_2(o, p, (tl) 0); }
+tl tl_write(tl o, tl p) { return tl_write_2(o, p, (tl) 1); }
 #undef FP
 tl tl_bind(tl vars, tl args, tl env)
 {
@@ -850,7 +852,7 @@ tl tl_stdenv(tl env)
   P(tl_apply); tl_p_apply = _v;
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
-  P(tl_read); P(tl__write); P(tl_object_write);
+  P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc);
   P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); 
