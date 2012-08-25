@@ -15,6 +15,10 @@ typedef size_t tlw;
 typedef ssize_t tlsw;
 #define tl_malloc(S) GC_malloc(S)
 #define tl_realloc(P,S) GC_realloc(P,S)
+char *GC_strdup(const char *x)
+{
+  return strcpy(GC_malloc(strlen(x) + 1), x);
+}
 #ifdef tl_PTHREAD
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
@@ -288,7 +292,7 @@ tl tl_m_symbol(void *x)
     l = cdr(l);
   }
   tl o = tl_allocate(tl_t_symbol, sizeof(tl));  
-  tl_symbol_name(o) = tl_m_string(strdup(x), strlen(x));
+  tl_symbol_name(o) = tl_m_string(GC_strdup(x), strlen(x));
   tl_symtab = cons(o, tl_symtab);
   return o;
 }
@@ -899,7 +903,8 @@ tl tl_stdenv(tl env)
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
-  P(GC_malloc); P(GC_realloc);
+  P(GC_malloc); P(GC_realloc); P(GC_strdup);
+  P(strlen); P(strcpy);
   P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); 
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp); P(execvP);
