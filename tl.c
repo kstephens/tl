@@ -761,7 +761,7 @@ tl tl_call(tl s, int n, ...)
 }
 tl tl_eval_print(tl expr, tl env, tl out)
 {
-  if ( out ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
+  if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
   tl val = tl_eval(expr, env);
   if ( out && val != tl_v ) { tl_write(val, stdout); fprintf(stdout, "\n"); }
   return val;
