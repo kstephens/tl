@@ -41,17 +41,18 @@ tl* tl_rt_thread() {
   }
   return tlp;
 }
-#define tl_pthread tl_rt_thread()[0]
-#define tl_rt tl_rt_thread()[1]
-#define tl_env tl_rt_thread()[2]
+#define tl_pthread (tl_rt_thread()[0])
+#define tl_rt_ (tl_rt_thread()[1])
+#define tl_env (tl_rt_thread()[2])
 #else
 static void tl_init()
 {
   GC_INIT();
 }
-tl tl_rt; // runtime.
+tl tl_rt_; // runtime.
 tl tl_env; // environment.
 #endif
+#define tl_rt tl_rt_
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
 #define tl_t tl_s_t
@@ -469,7 +470,12 @@ tl tl_setE(tl name, tl val, tl env)
 tl tl_eval(tl exp, tl env)
 {
   int tl_eval_debug = 0;
-  // #define tl_eval_debug 0
+  tl rt = tl_rt;
+#undef tl_rt
+#define tl_rt rt
+#ifdef tl_NO_DEBUG
+#define tl_eval_debug 0
+#endif
   tl val = tl_nil, args = tl_nil, clink = tl_nil;
   if ( tl_eval_debug ) {
     fprintf(stderr, "\n  eval:");
@@ -665,6 +671,8 @@ tl tl_eval(tl exp, tl env)
   if ( exp == tl_s_setE )
     G(setE_);
   abort();
+#undef tl_rt
+#define tl_rt tl_rt_
 }
 tl tl_quote(tl x)
 {
