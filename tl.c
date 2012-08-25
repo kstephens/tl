@@ -571,14 +571,12 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
 
   L(let);
-  args = argp = nil;
-  val = car(exp);
+  args = argp = nil; val = car(exp);
   while ( val != nil ) {
     argp = cons(car(car(val)), argp);
     args = cons(cadr(car(val)), args);
     val = cdr(val);
   }
-  // tl_eval_debug = 1;
   exp = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
   G(eval);
   
