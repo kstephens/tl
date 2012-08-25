@@ -149,6 +149,12 @@
   (lambda (l n)
     (if (null? l) n
       (list-length-2 (cdr l) (+ n 1)))))
+(define reverse
+  (lambda (l) (%list-reverse-2 l '())))
+(define %list-reverse-2
+  (lambda (l e)
+    (if (null? l) e
+      (%list-reverse-2 (cdr l) (cons (car l) e)))))
 (define <type> (tl_type (tl_type '())))
 (define <environment> (tl_type *env*))
 (define <vector> (make-type "vector"))
