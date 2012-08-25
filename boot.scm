@@ -90,6 +90,24 @@
 
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
+(define %map-1
+  (lambda (f l)
+    (if (null? l) l
+      (cons (f (car l)) (%map-1 f (cdr l))))))
+(define %map
+  (lambda (f lists)
+    (if (null? (car lists)) '()
+      (cons 
+        (apply f (%map-1 car lists))
+        (%map f (%map-1 cdr lists))))))
+(define map
+  (lambda (f . lists)
+    (%map f lists)))
+(define reduce 
+  (lambda (f l)
+    (if (null? (cdr l))
+      (car l)
+      (f (car l) (reduce f (cdr l))))))
 (define pair-equal?
   (lambda (a b)
     (if (equal? (car a) (car b))
