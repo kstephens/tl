@@ -546,8 +546,8 @@ tl tl_eval(tl exp, tl env)
   if ( car(exp) == tl_s_lambda ) G(closure);
   if ( car(exp) == tl_s_define ) G(define);
   if ( car(exp) == tl_s_setE ) G(setE);
-  if ( car(exp) == tl_s__debug )
-    { tl_eval_debug ^= 1; G(rtn); }
+  //if ( car(exp) == tl_s__debug )
+  //  { tl_eval_debug ^= 1; G(rtn); }
   L(args);
   push(args);
   args = cons(tl_nil, tl_nil);
