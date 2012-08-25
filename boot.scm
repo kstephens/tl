@@ -197,11 +197,11 @@
   (lambda (o p op i)
     (if (>= i (vector-length o))
       o
-      ((lambda ()
+      (begin
          (if (> i 0) (fputs (tl_S " ") p))
          (tl_write_2 (vector-ref o i) p op)
          (tl_vector_write-2 o p op (+ i 1))
-         )))))
+         ))))
 (define tl_object_write
   ((lambda (f)
      (lambda (o p op)
