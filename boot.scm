@@ -37,7 +37,7 @@
 (define <port> (make-type "port"))
 (define make-port
   (lambda (fp info)
-    (tl_typeSET (cons fp info) <port>)))
+    (tl_set_type (cons fp info) <port>)))
 (define port-info cdr)
 (define <-FILE*
   (lambda (f . rest)

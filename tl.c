@@ -222,7 +222,7 @@ tl tl_m_type(tl x)
   *(void**) o = x;
   return o;
 }
-tl tl_typeSET(tl o, tl t)
+tl tl_set_type(tl o, tl t)
 {
   tl_t_(o) = t;
   return o;
@@ -423,7 +423,7 @@ tl tl_bind(tl vars, tl args, tl env)
 {
   // if ( length(vars) != length(args) ) error
   // if ( vars == tl_nil ) return env;
-  return cons(tl_typeSET(cons(vars, args), tl_t_environment), env);
+  return cons(tl_set_type(cons(vars, args), tl_t_environment), env);
 }
 tl tl_let(tl var, tl val, tl env)
 {
@@ -888,7 +888,7 @@ tl tl_stdenv(tl env)
 #define P(N) D(N, tl_m_prim(N, #N))
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
-  P(tl_m_type); P(tl_type); P(tl_typeSET);
+  P(tl_m_type); P(tl_type); P(tl_set_type);
   P(tl_void);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_ivar); P(tl_set_ivar);
