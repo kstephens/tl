@@ -201,7 +201,7 @@ tl tl_type(tl o)
 #define _tl_type(o) ((o) == 0 ? tl_t_null : (((tlsw) (o)) & 1 ? tl_t_fixnum : tl_t_(o)))
   return _tl_type(o);
 }
-#define tl_type(o)_tl_type(o)
+//#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl x)
 {
   tl o = tl_allocate(tl_t_type, sizeof(x));
@@ -224,19 +224,8 @@ tl tl_error(tl msg, tl obj)
   abort(); return 0;
 }
 tl tl_void(tl o) { return tl_v; }
-#if 0
-#define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) & 1))
+#define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) | 1))
 #define _tl_I(o) (((tlsw) (o)) >> 1)
-#else
-tl tl_m_fixnum(tlsw x)
-{
-  tl o = tl_allocate(tl_t_fixnum, sizeof(x));
-  *(tlsw*) o = x;
-  return o;
-}
-#define _tl_i(x) tl_m_fixnum(x)
-#define _tl_I(o) (*(tlsw*) (o))
-#endif
 tl tl_i(tlsw x) { return _tl_i(x); }
 tlsw tl_I(tl o) { return _tl_I(o); }
 #define tl_i(x)_tl_i(x)
