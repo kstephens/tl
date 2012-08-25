@@ -1,14 +1,27 @@
+UNAME_S:=$(shell uname -s 2>/dev/null)#
+
+CC=clang
+ifeq "$(UNAME_S)" "Linux"
+CC=gcc
+endif
+
 ifndef NO_OPTIMIZE
 CFLAGS += -O3
 endif
-CC=clang
 
+ifeq "$(UNAME_S)" "Darwin"
+CFLAGS += -I/opt/local/include #
+LDFLAGS += -L/opt/local/lib #
+endif
+
+CFLAGS += -g #
+
+ifndef NO_GC
 EARLY_TARGETS += gc/lib/libgc.a
 CFLAGS += -Igc/include
 LDFLAGS += -Lgc/lib 
-
-CFLAGS += -g -I/opt/local/include
-LDFLAGS += -L/opt/local/lib -lgc
+endif
+LDFLAGS += -lgc #
 
 ifndef NO_PTHREADS
 CFLAGS += -pthread -Dtl_PTHREAD=1
@@ -20,7 +33,7 @@ all : $(EARLY_TARGETS) tl
 tl : tl.c
 
 tl-prof : tl.c Makefile
-	gcc-apple-4.2 --verbose $(CFLAGS) -Dtl_NO_DEBUG=1 -o $@ tl.c $(LDFLAGS) -pg
+	$(CC) --verbose $(CFLAGS) -Dtl_NO_DEBUG=1 -o $@ tl.c $(LDFLAGS) -pg
 
 tl.s : tl.c ./clang-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./clang-source > $@ 
