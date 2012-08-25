@@ -20,7 +20,7 @@ all : $(EARLY_TARGETS) tl
 tl : tl.c
 
 tl.s : tl.c
-	$(CC) $(CFLAGS) -S -o $@ tl.c
+	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o $@ tl.c
 
 run : tl
 	rlwrap ./tl
