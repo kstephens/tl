@@ -102,18 +102,19 @@ tl tl_m_runtime(tl parent)
 #define tl_t_define tl_(17)
 #define tl_t_setE tl_(18)
 #define tl_t_begin tl_(19)
+#define tl_t_form tl_(20)
 
-#define tl_v tl_(20)
-#define tl_symtab tl_(21)
-#define tl_in_error tl_(22)
-#define tl_eos tl_(23)
-#define tl_result tl_(24)
-#define tl_runtime_parent tl_(25)
+#define tl_v tl_(30)
+#define tl_symtab tl_(31)
+#define tl_in_error tl_(32)
+#define tl_eos tl_(33)
+#define tl_result tl_(34)
+#define tl_runtime_parent tl_(35)
 
 #define tl_s_quote tl_(40)
 #define tl_s_if tl_(41)
 #define tl_s_lambda tl_(42)
-  // #define XXXX tl_(43)
+#define tl_s_let tl_(43)
 #define tl_s_tl_object_write tl_(44)
   // #define tl_s__closure tl_(45)
   // #define tl_s__argval tl_(46)
@@ -157,6 +158,7 @@ tl tl_m_runtime(tl parent)
   tl_t_eos    = tl_m_type("eos");
   tl_t_environment = tl_m_type("environment");
   tl_t_closure = tl_m_type("closure");
+  tl_t_form   = tl_m_type("form");
   tl_t_thread = tl_m_type("thread");
 
   tl_t_if2 = tl_m_type("if2");
@@ -176,7 +178,7 @@ tl tl_m_runtime(tl parent)
   tl_s_setE = tl_m_symbol("set!");
   tl_s_if = tl_m_symbol("if");
   tl_s_lambda = tl_m_symbol("lambda");
-  //  tl_s__if2 = tl_m_symbol("&if");
+  tl_s_let = tl_m_symbol("let");
   tl_s_tl_object_write = tl_m_symbol("tl_object_write");
   //  tl_s__closure = tl_m_symbol("&closure");
   //  tl_s__argval = tl_m_symbol("&argval");
@@ -222,7 +224,7 @@ tl tl_type(tl o)
 //#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl x)
 {
-  tl o = tl_allocate(tl_t_type, sizeof(x));
+  tl o = tl_allocate(tl_t_type, sizeof(x) * 8);
   *(void**) o = x;
   return o;
 }
@@ -505,6 +507,7 @@ tl tl_eval(tl exp, tl env)
 #undef cdr
 #define car(o)((o) == tl_nil ? tl_nil : car_(o))
 #define cdr(o)((o) == tl_nil ? tl_nil : cdr_(o))
+#define nil tl_nil
 #ifdef tl_NO_DEBUG
 #define tl_eval_debug 0
 #endif
@@ -566,6 +569,18 @@ tl tl_eval(tl exp, tl env)
   L(proc);
   val = tl_type_cons(tl_t_closure, cdr(exp), env); 
   G(rtn);
+
+  L(let);
+  args = argp = nil;
+  val = car(exp);
+  while ( val != nil ) {
+    argp = cons(car(car(val)), argp);
+    args = cons(cadr(car(val)), args);
+    val = cdr(val);
+  }
+  // tl_eval_debug = 1;
+  exp = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
+  G(eval);
   
   L(if1);
   val = cddr(exp);
@@ -584,10 +599,20 @@ tl tl_eval(tl exp, tl env)
   G(eval);
 
   L(evexp);
+  val = tl_lookup(car(exp), env);
+#if 0
+  if ( tl_type(val) == tl_t_form ) {
+    val = car(val);
+    args = cons(exp, tl_nil);
+    tpush(tl_t_form, exp);
+    G(apply);
+  }
+#endif
   if ( car(exp) == tl_s_quote )
     { val = cadr(exp); G(rtn); }
   if ( car(exp) == tl_s_if ) G(if1);
   if ( car(exp) == tl_s_lambda ) G(proc);
+  if ( car(exp) == tl_s_let ) { exp = cdr(exp); G(let); }
   if ( car(exp) == tl_s_define ) G(define);
   if ( car(exp) == tl_s_setE ) G(setE);
   if ( car(exp) == tl_s_begin ) 
@@ -706,11 +731,14 @@ tl tl_eval(tl exp, tl env)
     G(define_);
   if ( tl_t_(clink) == tl_t_setE )
     G(setE_);
+  if ( tl_t_(clink) == tl_t_form )
+    { pop(exp); G(eval); }
   tl_error("tl_eval: invalid clink", clink); abort();
 #undef tl_rt
 #define tl_rt tl_rt_
 #undef car
 #undef cdr
+#undef nil
 #define car(o)car_(o)
 #define cdr(o)cdr_(o)
 }
