@@ -413,7 +413,6 @@ tl tl_write_2(tl o, tl p, tl op)
     return tl_prim__write(o, p);
   if ( t == tl_t_closure )
     return tl_closure_write(o, p);
-  return tl_object_write(o, p, op);
   return tl_call(tl_s_tl_object_write, 3, o, p, op);
 }
 tl tl_display(tl o, tl p) { return tl_write_2(o, p, (tl) 0); }
