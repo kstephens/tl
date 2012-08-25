@@ -19,8 +19,11 @@ all : $(EARLY_TARGETS) tl
 
 tl : tl.c
 
-tl.s : tl.c
-	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o $@ tl.c
+tl-prof : tl.c Makefile
+	gcc-apple-4.2 --verbose $(CFLAGS) -Dtl_NO_DEBUG=1 -o $@ tl.c $(LDFLAGS) -pg
+
+tl.s : tl.c ./clang-source
+	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./clang-source > $@ 
 
 run : tl
 	rlwrap ./tl
@@ -29,7 +32,7 @@ debug : tl
 	gdb --args tl
 
 clean :
-	rm -f tl tl-pt
+	rm -f tl tl-pt tl-prof
 
 test : tl
 	set -xe; for f in t/*.scm; do \
