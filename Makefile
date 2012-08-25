@@ -1,12 +1,17 @@
 UNAME_S:=$(shell uname -s 2>/dev/null)#
 
 CC=clang
+CC_OPTIMIZE=-O3 #
+
 ifeq "$(UNAME_S)" "Linux"
 CC=gcc
+#NO_OPTIMIZE=1
+NO_GC=1
+NO_PTHREADS=1
 endif
 
 ifndef NO_OPTIMIZE
-CFLAGS += -O3
+CFLAGS += $(CC_OPTIMIZE)#
 endif
 
 ifeq "$(UNAME_S)" "Darwin"
@@ -43,6 +48,10 @@ run : tl
 
 debug : tl
 	gdb --args tl
+
+profile : tl-prof
+	./tl-prof < t/test.scm
+	gprof -l ./tl-prof | less
 
 clean :
 	rm -f tl tl-pt tl-prof
