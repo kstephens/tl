@@ -88,6 +88,28 @@
         (not (tl_b (memcmp (%string-ptr a) (%string-ptr b) (%string-len a))))
         #f))))
 
+(define make-string
+  (lambda (size)
+    ((lambda (o)
+       (tl_set_ivar o 0 (GC_malloc (tl_I (+ size 1))))
+       (tl_set_ivar o 1 (tl_I size))
+       (memset (%string-ptr o) (tl_I 0) (tl_I (+ size 1)))
+       o
+       ) (tl_allocate <string> (tl_I (* 2 *word-size*))))))
+
+(define %string-set
+  (lambda (ptr strs)
+    (if (null? strs) strs
+      (begin
+        (memcpy ptr (%string-ptr (car strs)) (%string-len (car strs)))
+        (%string-set (tl_word_ADD ptr (%string-len (car strs))) (cdr strs))))))
+(define string-append
+  (lambda strs
+    ((lambda (s)
+       (%string-set (%string-ptr s) strs)
+       s)
+      (make-string (reduce + (map string-length strs))))))
+
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define %map-1
