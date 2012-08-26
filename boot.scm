@@ -12,6 +12,8 @@
 (define eqv? tl_eqvQ)
 (define car tl_car)
 (define cdr tl_cdr)
+(define set-car! tl_set_carE)
+(define set-cdr! tl_set_cdrE)
 (define cons tl_cons)
 (define apply tl_apply)
 (define eval tl_eval)
