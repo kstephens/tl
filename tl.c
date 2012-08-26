@@ -27,9 +27,8 @@ pthread_key_t tl_rt_thread_key;
 static void tl_init_()
 {
   ASSERT_ZERO(pthread_key_create(&tl_rt_thread_key, 0));
-  GC_INIT();
 }
-static void tl_init()
+static void tl_init_th()
 {
   ASSERT_ZERO(pthread_once(&tl_init_once, tl_init_));
 }
@@ -50,13 +49,19 @@ tl* tl_rt_thread() {
 #define tl_rt_ (tl_rt_thread()[1])
 #define tl_env (tl_rt_thread()[2])
 #else
-static void tl_init()
+static void tl_init_th()
 {
-  GC_INIT();
 }
 tl tl_rt_; // runtime.
 tl tl_env; // environment.
 #endif
+FILE *tl_stdin, *tl_stdout, *tl_stderr;
+static void tl_init()
+{
+  tl_stdin = stdin; tl_stdout = stdout; tl_stderr = stderr;
+  GC_INIT();
+  tl_init_th();
+}
 #define tl_rt tl_rt_
 #define tl_nil ((tl) 0)
 #define tl_f tl_nil
@@ -918,6 +923,7 @@ tl tl_stdenv(tl env)
 #define V(N) D(N,tl_##N)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
+  D(tl_stdin,tl_stdin); D(tl_stdout,tl_stdout); D(tl_stderr,tl_stderr);
 #define P(N) D(N, tl_m_prim(N, #N))
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
