@@ -692,6 +692,8 @@ tl tl_eval(tl exp, tl env)
     val = tl_FP(val,tl,(tl,tl,tl))(car(args), cadr(args), car(cddr(args)));
   else if ( cdr(cdr(cddr(args))) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
+  else if ( cdr(cdr(cdr(cddr(args)))) == tl_nil )
+    val = tl_FP(val,tl,(tl,tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))), car(cdr(cdr(cddr(args)))));
   else
     tl_error("too many args", val);
   G(rtn);
