@@ -33,12 +33,19 @@
   (lambda (x) 
     (if (eq? x #f)
       #t #f)))
+(define %NULL (tl_I 0))
 (define %malloc
   (lambda (size)
     (GC_malloc (tl_I size))))
 (define %allocate
   (lambda (type size)
     (tl_allocate type (tl_I size))))
+(define %register-finalizer
+  (lambda (obj func)
+    (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
+    (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
+    obj))
+
 (define make-type 
   (lambda (n)
     (tl_m_type (->char* n))))
@@ -56,25 +63,33 @@
 (define ->FILE* tl_car)
 (define open-file 
   (lambda (f m)
-    (<-FILE* (fopen (->char* f) (->char* m)) f)))
-(define close-file
-  (lambda (f)
-    (fclose (->FILE* f))))
-(define *stdin*  (<-FILE* _stdin '*stdin*))(set! _stdin #f)
-(define *stdout* (<-FILE* _stdout '*stdout*))(set! _stdout #f)
-(define *stderr* (<-FILE* _stderr '*stdin*))(set! _stderr #f)
+    (%register-finalizer 
+      (<-FILE* (fopen (->char* f) (->char* m)) f)
+      close-port)))
+(define close-port
+  (lambda (p)
+    (display "close-port ")(write p)(newline)
+    (if (not (eq? (->FILE* p) #f))
+      (begin
+        (display "close-port: fclose")(newline)
+        (fclose (->FILE* p))))
+    (set-car! p #f)
+    p))
+(set! tl_stdin  (<-FILE* tl_stdin 'tl_stdin))
+(set! tl_stdout (<-FILE* tl_stdout 'tl_stdout))
+(set! tl_stderr (<-FILE* tl_stderr 'tl_stderr))
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
-  (tl_void (tl_write_2 obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 0)))))
+  (tl_void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
-  (tl_void (tl_write_2 obj (->FILE* (if (null? port) *stdout* (car port))) (tl_I 1)))))
+  (tl_void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 1)))))
 (define newline (lambda port
-  (tl_void (fputc (tl_I 10) (->FILE* (if (null? port) *stdout* (car port)))))))
+  (tl_void (fputc (tl_I 10) (->FILE* (if (null? port) tl_stdout (car port)))))))
 (define read (lambda port
-  (tl_read (->FILE* (if (null? port) *stdin* (car port))))))
+  (tl_read (->FILE* (if (null? port) tl_stdin (car port))))))
 (define io-flush (lambda port
-  (tl_void (fflush (->FILE* (if (null? port) *stdout* (car port)))))))
+  (tl_void (fflush (->FILE* (if (null? port) tl_stdout (car port)))))))
 ;; (write (environment-vars *env*))(newline)
 
 (define <fixnum> (tl_type 0))
