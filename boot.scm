@@ -3,6 +3,7 @@
 (let ((a 1) (b 2))
   (let ((c (tl_cons a b)))
     c))
+(define %void (lambda x tl_v))
 (define *env* &env)
 (define *word-size* (tl_tlw_sizeof))
 (define environment-vars (lambda (x) (car (car x))))
@@ -92,15 +93,15 @@
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
-  (tl_void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 0)))))
+  (%void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
-  (tl_void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 1)))))
+  (%void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 1)))))
 (define newline (lambda port
-  (tl_void (fputc (tl_I 10) (->FILE* (if (null? port) tl_stdout (car port)))))))
+  (%void (fputc (tl_I 10) (->FILE* (if (null? port) tl_stdout (car port)))))))
 (define read (lambda port
   (tl_read (->FILE* (if (null? port) tl_stdin (car port))))))
 (define io-flush (lambda port
-  (tl_void (fflush (->FILE* (if (null? port) tl_stdout (car port)))))))
+  (%void (fflush (->FILE* (if (null? port) tl_stdout (car port)))))))
 ;; (write (environment-vars *env*))(newline)
 
 (define <fixnum> (tl_type 0))
