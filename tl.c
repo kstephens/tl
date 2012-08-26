@@ -721,7 +721,9 @@ tl tl_eval(tl exp, tl env)
 
   L(setE_);
   pop(exp);
+  // fprintf(stderr, "set! "); tl_write(exp, stderr); fprintf(stderr, " = ");tl_write(val, stderr); fprintf(stderr, "\n");
   tl_setE(exp, val, env);
+  // fprintf(stderr, " result = "); tl_write(tl_value(exp, env), stderr); fprintf(stderr, "\n");
   G(rtn);
 
   L(rtn);
@@ -923,9 +925,11 @@ ITYPE(tlsw,tlsw)
 tl tl_stdenv(tl env)
 {
   tl _v;
+#define Ds(N,V) env = tl_let(tl__s(N), _v = (V), env)
 #define D(N,V) env = tl_let(tl_s(N), _v = (V), env)
   D(t, tl_s(t));
   D(nil, tl_nil);
+  Ds("tl_v", tl_v);
 #define V(N) D(N,tl_##N)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
