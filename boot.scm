@@ -15,6 +15,7 @@
 (define set-car! tl_set_carE)
 (define set-cdr! tl_set_cdrE)
 (define cons tl_cons)
+(define list (lambda l l))
 (define apply tl_apply)
 (define eval tl_eval)
 (define repl tl_repl)
@@ -53,18 +54,28 @@
 (define ->char* (lambda (s) (tl_ivar s 0)))
 
 (define <port> (make-type "port"))
-(define make-port
+(define %make-port
   (lambda (fp info)
     (tl_set_type (cons fp info) <port>)))
 (define port-info cdr)
-(define <-FILE*
-  (lambda (f . rest)
-    (make-port f rest)))
+(define tl_port_write
+  (lambda (o p op)
+    (fprintf p (tl_S "#<port @%p ") o)
+    (tl_write_2 (port-info o) p op)
+    (fputs (tl_S ">") p)
+    p))
+(define tl_object_write
+  (let ((f tl_object_write))
+    (lambda (o p op)
+      (if (eq? (tl_type o) <port>)
+        (tl_port_write o p op)
+        (f o p op)))))
+(define <-FILE* (lambda (f) (%make-port f '())))
 (define ->FILE* tl_car)
 (define open-file 
   (lambda (f m)
     (%register-finalizer 
-      (<-FILE* (fopen (->char* f) (->char* m)) f)
+      (%make-port (fopen (->char* f) (->char* m)) (list f m))
       close-port)))
 (define close-port
   (lambda (p)
@@ -75,9 +86,9 @@
         (fclose (->FILE* p))))
     (set-car! p #f)
     p))
-(set! tl_stdin  (<-FILE* tl_stdin 'tl_stdin))
-(set! tl_stdout (<-FILE* tl_stdout 'tl_stdout))
-(set! tl_stderr (<-FILE* tl_stderr 'tl_stderr))
+(set! tl_stdin  (%make-port tl_stdin 'tl_stdin))
+(set! tl_stdout (%make-port tl_stdout 'tl_stdout))
+(set! tl_stderr (%make-port tl_stderr 'tl_stderr))
 
 (define null? (lambda (x) (eq? x '())))
 (define display (lambda (obj . port)
