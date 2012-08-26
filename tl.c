@@ -339,45 +339,45 @@ tl tl_port__read(tl p, tl s, tl l)
   ssize_t c = fread(tl_S(s), tl_I(l), 1, FP);
   return tl_i((long) c);
 }
-tl tl_string__display(tl o, tl p)
+tl tl_string_display(tl o, tl p)
 {
   return tl_port__write(p, o, tl_i(strlen(tl_S(o))));
 }
-tl tl_string__write(tl o, tl p)
+tl tl_string_write(tl o, tl p)
 {
   fwrite("\"", 1, 1, FP);
-  tl_string__display(o, p);
+  tl_string_display(o, p);
   fwrite("\"", 1, 1, FP);
   return p;
 }
-tl tl_fixnum__write(tl o, tl p)
+tl tl_fixnum_write(tl o, tl p)
 {
   fprintf(FP, "%lld", (long long) tl_I(o));
   return p;
 }
-tl tl_symbol__write(tl o, tl p)
+tl tl_symbol_write(tl o, tl p)
 {
-  return tl_string__display(tl_symbol_name(o), p);
+  return tl_string_display(tl_symbol_name(o), p);
 }
-tl tl_type__write(tl o, tl p)
+tl tl_type_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s %s @%p>", (char*) tl_iv(tl_type(o), 0), (char*) tl_iv(o, 0), o);
+  fprintf(FP, "#<%s @%p %s>", (char*) tl_iv(tl_type(o), 0), o, (char*) tl_iv(o, 0));
   return p;
 }
-tl tl_prim__write(tl o, tl p)
+tl tl_prim_write(tl o, tl p)
 {
-  fprintf(FP, "#<prim %s @%p @%p>", (char*) tl_iv(o, 1), o, tl_iv(o, 0));
+  fprintf(FP, "#<%s @%p %s @%p>", (char*) tl_iv(tl_type(o), 0), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
   return p;
 }
 tl tl_closure_write(tl o, tl p)
 {
-  fprintf(FP, "#<closure ");
-  tl_write(car(o), p);
+  fprintf(FP, "#<%s @%p ", (char*) tl_iv(tl_type(o), 0), o);
+  tl_write(car(car(o)), p);
   fprintf(FP, " >");
   return p;
 }
 tl tl_write_2(tl o, tl p, tl op);
-tl tl_pair__write(tl o, tl p, tl op)
+tl tl_pair_write(tl o, tl p, tl op)
 {
   fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
@@ -405,22 +405,22 @@ tl tl_write_2(tl o, tl p, tl op)
 {
   tl t;
   if ( o == tl_nil )
-    return tl_pair__write(o, p, op);
+    return tl_pair_write(o, p, op);
   t = tl_type(o);
   if ( t == tl_t_fixnum )
-    return tl_fixnum__write(o, p);
+    return tl_fixnum_write(o, p);
   if ( t == tl_t_string )
-    return (op != tl_nil ? tl_string__write : tl_string__display)(o, p);
+    return (op != tl_nil ? tl_string_write : tl_string_display)(o, p);
   if ( t == tl_t_symbol )
-    return tl_symbol__write(o, p);
+    return tl_symbol_write(o, p);
   if ( t == tl_t_character )
     { fprintf(FP, "#\\%c", tl_C(o)); return p; }
   if ( t == tl_t_pair )
-    return tl_pair__write(o, p, op);
+    return tl_pair_write(o, p, op);
   if ( t == tl_t_type )
-    return tl_type__write(o, p);
+    return tl_type_write(o, p);
   if ( t == tl_t_prim )
-    return tl_prim__write(o, p);
+    return tl_prim_write(o, p);
   if ( t == tl_t_closure )
     return tl_closure_write(o, p);
   return tl_call(tl_s_tl_object_write, 3, o, p, op);
