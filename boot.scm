@@ -42,8 +42,8 @@
     (tl_allocate type (tl_I size))))
 (define %register-finalizer
   (lambda (obj func)
-    (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
-    (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
+    ;; (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
+    ;; (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
     obj))
 
 (define make-type 
