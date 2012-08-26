@@ -756,6 +756,12 @@ tl tl_apply(tl f, tl args)
 {
   return tl_eval(cons(tl_p_apply, cons(tl_quote(f), cons(tl_quote(args), tl_nil))), tl_env);
 }
+tl tl_apply_2(tl obj, tl closure)
+{
+  fprintf(stderr, "\n  tl_apply_2(%p, %p)\n", obj, closure);
+  tl_apply(closure, cons(obj, tl_nil));
+  return tl_v;
+}
 tl tl_call(tl s, int n, ...)
 {
   tl args = tl_nil, *lp = &args;
@@ -935,11 +941,11 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons); 
   P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval); P(tl_repl);
-  P(tl_apply); tl_p_apply = _v;
+  P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
-  P(GC_malloc); P(GC_realloc); P(GC_strdup);
+  P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(strlen); P(strcpy);
   P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); P(getenv); P(setenv);
@@ -976,6 +982,9 @@ int main(int argc, char **argv)
   tl_env = tl_stdenv(tl_nil);
   if ( ! isatty(0) && ! getenv("TL_PROMPT") ) out = 0;
   tl_repl(tl_env, stdin, out, out);
+  tl_env = tl_nil;
+  GC_gcollect();
+  GC_invoke_finalizers();
   return 0;
 }
 
