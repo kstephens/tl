@@ -68,10 +68,10 @@
       close-port)))
 (define close-port
   (lambda (p)
-    (display "close-port ")(write p)(newline)
+    ;; (display "close-port ")(write p)(newline)
     (if (not (eq? (->FILE* p) #f))
       (begin
-        (display "close-port: fclose")(newline)
+        ;; (display "close-port: fclose")(newline)
         (fclose (->FILE* p))))
     (set-car! p #f)
     p))
