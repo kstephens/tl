@@ -59,18 +59,20 @@
   (lambda (fp info)
     (tl_set_type (cons fp info) <port>)))
 (define port-info cdr)
-(define tl_port_write
+(define %object-writer
+  (lambda (type f)
+    (set! tl_object_write
+      (let ((old-f tl_object_write))
+        (lambda (o p op)
+          (if (eq? (tl_type o) type)
+            (f o p op)
+            (old-f o p op)))))))
+(%object-writer <port>
   (lambda (o p op)
     (fprintf p (tl_S "#<port @%p ") o)
     (tl_write_2 (port-info o) p op)
     (fputs (tl_S ">") p)
     p))
-(define tl_object_write
-  (let ((f tl_object_write))
-    (lambda (o p op)
-      (if (eq? (tl_type o) <port>)
-        (tl_port_write o p op)
-        (f o p op)))))
 (define <-FILE* (lambda (f) (%make-port f '())))
 (define ->FILE* tl_car)
 (define open-file 
@@ -268,12 +270,7 @@
          ))))
 ;; (tl_vector_write (list->vector '(1 2 3 4)) (->FILE* *stdout*) (tl_I 0))(newline)
 ;; (write tl_object_write)(newline)
-(define tl_object_write
-  (let ((f tl_object_write))
-    (lambda (o p op)
-      (if (eq? (tl_type o) <vector>)
-        (tl_vector_write o p op)
-        (f o p op)))))
+(%object-writer <vector> tl_vector_write)
 ;; (write tl_object_write)(newline)
 
 (define equal?
