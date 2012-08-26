@@ -248,7 +248,6 @@ tl tl_error(tl msg, tl obj)
   fprintf(stderr, "\n");
   abort(); return 0;
 }
-tl tl_void(tl o) { return tl_v; }
 #define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) | 1))
 #define _tl_I(o) (((tlsw) (o)) >> 1)
 tl tl_i(tlsw x) { return _tl_i(x); }
@@ -938,7 +937,6 @@ tl tl_stdenv(tl env)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
-  P(tl_void);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
