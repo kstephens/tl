@@ -55,6 +55,7 @@
 (define ->char* (lambda (s) (tl_ivar s 0)))
 
 (define <port> (make-type "port"))
+(define port? (lambda (x) (eq? (tl_type x) <port>)))
 (define %make-port
   (lambda (fp info)
     (tl_set_type (cons fp info) <port>)))
@@ -94,6 +95,7 @@
 (set! tl_stderr (%make-port tl_stderr 'tl_stderr))
 
 (define null? (lambda (x) (eq? x '())))
+
 (define display (lambda (obj . port)
   (%void (tl_write_2 obj (->FILE* (if (null? port) tl_stdout (car port))) (tl_I 0)))))
 (define write (lambda (obj . port)
@@ -108,6 +110,7 @@
 
 (define <fixnum> (tl_type 0))
 (define <character> (tl_type #\a))
+(define character? (lambda (x) (eq? (tl_type x) <character>)))
 (define <symbol> (tl_type 'symbol))
 (define symbol? (lambda (x) (eq? (tl_type x) <symbol>)))
 (define make-symbol (lambda (s) 
@@ -115,6 +118,7 @@
     (tl_set_ivar o 0 s)
     o)))
 (define <string> (tl_type "string"))
+(define string? (lambda (x) (eq? (tl_type x) <string>)))
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
 (define %make-string
   (lambda (ptr size)
@@ -171,6 +175,7 @@
 
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
+(define pair? (lambda (x) (eq? (tl_type x) <pair>)))
 (define %map-1
   (lambda (f l)
     (if (null? l) l
@@ -230,8 +235,10 @@
     (if (null? l) e
       (%list-reverse-2 (cdr l) (cons (car l) e)))))
 (define <type> (tl_type (tl_type '())))
+(define type? (lambda (x) (eq? (tl_type x) <type>)))
 (define <environment> (tl_type *env*))
 (define <vector> (make-type "vector"))
+(define vector? (lambda (x) (eq? (tl_type x) <vector>)))
 (define make-vector
   (lambda (size)
     (let ((o (%allocate <vector> (* (+ size 1) *word-size*))))
