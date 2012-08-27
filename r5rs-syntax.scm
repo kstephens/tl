@@ -71,7 +71,7 @@
         (set-car! c (cons (cdr stmt) (car c)))
         (set-cdr! c (cons stmt (cdr c))))
       (%body-defines (cdr b) c))))
-(define-macro (&body . b)
+(define-macro (&body . b) ;; must return a (begin ...) expr.
   (let* ((defines-and-stmts (%body-defines b (cons '() '())))
           (defines (car defines-and-stmts))
           (stmts (cdr defines-and-stmts)))
