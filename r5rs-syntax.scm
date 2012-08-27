@@ -45,6 +45,21 @@
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
      ,@body))
 
+(define (%body-defines b c)
+  (if (null? b) c
+    (let ((stmt (car b)))
+      (if (and (pair? stmt) (eq? 'define (car stmt)))
+        (set-car! c (cons stmt (car c)))
+        (set-cdr! c (cons stmt (cdr c))))
+      (%body-defines (cdr b) c))))
+(define-macro (&body . b)
+  (let* ((defines-and-stmts (%body-defines b (cons '() '())))
+          (defines (car defines-and-stmts))
+          (stmts (cdr defines-and-stmts)))
+    (if (null? defines)
+      (cons 'begin b)
+      `(letrec ,defines ,@stmts))))
+        
 (define-macro (case val-expr . cases)
   (letrec ((val (make-symbol #f))
 	   (%case 
