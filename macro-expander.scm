@@ -64,7 +64,7 @@
       #f)
     ))
 (define (macro-environment-expand-body self b)
-  (cdr (macro-environment-expand-expr self (cons '&body b))))
+  (macro-environment-expand-args self (cdr (macro-environment-expand-expr self (cons '&body b)))))
 (define (macro-environment-expand-expr self e)
   (if *macro-expand-trace*
     (begin

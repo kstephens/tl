@@ -6,20 +6,34 @@
 |#
 
 (define-macro (or . cases)
+  (if (null? cases) #f
+    (if (null? (cdr cases)) (car cases)
+      (let ((tmp (make-symbol #f)))
+        `(let ((,tmp #f))
+           (&or-tmp ,tmp ,@cases))))))
+(define-macro (&or-tmp tmp . cases)
   (if (null? cases)
     #f
-    (let ((tmp (make-symbol #f)))
-      `(let ((,tmp ,(car cases)))
-         (if ,tmp ,tmp (or ,@(cdr cases)))))))
+    `(begin
+       (set! ,tmp ,(car cases))
+       (if ,tmp ,tmp (&or-tmp ,tmp ,@(cdr cases))))))
 
 (define-macro (and . cases)
-  (if (null? cases)
-    #t
-    (if (cdr cases)
+  (if (null? cases) #t
+    (if (null? (cdr cases)) (car cases)
       (let ((tmp (make-symbol #f)))
         `(let ((,tmp ,(car cases)))
-           (if (not ,tmp) ,tmp (and ,@(cdr cases)))))
-      (car cases))))
+           (if (not ,tmp) ,tmp (and ,@(cdr cases))))))))
+#|
+        `(let ((,tmp #f))
+           (&and-tmp ,tmp ,@cases))))))
+|#
+(define-macro (&and-tmp tmp . cases)
+  (if (null? cases)
+    #f
+    `(begin
+       (set! ,tmp ,(car cases))
+       (if (not ,tmp) ,tmp (&and-tmp ,tmp ,@(cdr cases))))))
 
 (define-macro (cond case . cases)
   (if (null? cases)
