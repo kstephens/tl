@@ -314,4 +314,17 @@
                   #f)))))
         #f))))
 
+(define load
+  (lambda (name . opts)
+    (let ((verbose (not (null? opts))))
+      (let ((in (open-file name "r"))
+            (result #f))
+        (display "load: ")(display name)(newline)
+        (set! result
+          (tl_repl *env* (->FILE* in) 
+            (if verbose (->FILE* tl_stdout) %NULL)
+            (if verbose (->FILE* tl_stdout) %NULL)))
+        (display "load: ")(display name)(display " : DONE.")(newline)
+        (close-port in)
+        result))))
 
