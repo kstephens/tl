@@ -1,13 +1,5 @@
 (load "map.scm")
 
-;; Hack
-(define or (lambda x (%or x)))
-(define %or 
-  (lambda (l)
-    (if (null? l) #f
-      (if (car l) (car l)
-        (%or (cdr l))))))
-
 (define *macro-define-trace* #f)
 (define *macro-expand-trace* #f)
 (define <macro-environment> (make-type "macro-environment"))
