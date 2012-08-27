@@ -467,13 +467,11 @@ tl tl_lookup(tl name, tl env)
 tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
-  if ( (slot = tl_lookup(var, env)) != tl_nil ) {
-    // fprintf(stderr, ";; redefining %s @%p\n", tl_S(tl_ivar(var, 0)), val);
+  if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
+  if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
-  } else {
-    // fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val);
+  else
     tl_let(var, val, env);
-  }
   return var;
 }
 tl tl_define(tl var, tl val, tl env)
