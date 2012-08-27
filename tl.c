@@ -79,6 +79,7 @@ tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
 tl tl_runtime() { return tl_rt; }
 tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
+tl tl_cons(tl a, tl d);
 tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
@@ -172,7 +173,7 @@ tl tl_m_runtime(tl parent)
   tl_t_setE = tl_m_type("set!");
   tl_t_evlist = tl_m_type("evlist");
 
-  tl_symtab = tl_nil;
+  tl_symtab = tl_cons(tl_nil, tl_nil);
   tl_s_quote = tl_m_symbol("quote");
   tl_s_quasiquote = tl_m_symbol("quasiquote");
   tl_s_unquote_splicing = tl_m_symbol("unquote-splicing");
@@ -289,7 +290,7 @@ tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = 
 #define cons tl_cons
 tl tl_m_symbol(void *x)
 {
-  tl l = tl_symtab;
+  tl l = car(tl_symtab);
   while ( l != tl_nil ) {
     tl s = car(l);
 #define tl_symbol_name(o) (*(tl*) o)
@@ -299,7 +300,7 @@ tl tl_m_symbol(void *x)
   }
   tl o = tl_allocate(tl_t_symbol, sizeof(tl));  
   tl_symbol_name(o) = tl_m_string(GC_strdup(x), strlen(x));
-  tl_symtab = cons(o, tl_symtab);
+  car(tl_symtab) = cons(o, car(tl_symtab));
   return o;
 }
 #define tl__s(S) tl_m_symbol(S)
