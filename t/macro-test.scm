@@ -31,4 +31,13 @@
   (dc 'C 5)
   (display "  e => ")(write e)(newline)
   (de '(define (x y) (+ C y 1)))
+
+  (dm 'set!
+    (lambda (n . b)
+      (if (pair? n)
+        `((setter ,(car n)) ,@(cdr n) ,@b)
+        `(set! ,n ,@b))))
+  (display "  e => ")(write e)(newline)
+  (de '(set! a 1))
+  (de '(set! (car l) 2))
 )
