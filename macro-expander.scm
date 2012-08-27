@@ -15,7 +15,7 @@
   (define (macro-environment-new)
     (set! id (+ id 1))
     ;; (tl_set_type 
-    (vector '<struct> #f #f id #f (map-new))
+    (vector '<struct> #f #f id #f (map-new) (map-new))
     ;; <vector>) ;; fixme
     ))
 (define (macro-environment-id self) (vector-ref self 3))
@@ -23,8 +23,7 @@
 (define (macro-environment-parent= self v)
   (vector-set! self 4 v) self)
 (define (macro-environment-bindings self) (vector-ref self 5))
-(define (macro-environment-bindings= self v)
-  (vector-set! self 5 v) self)
+(define (macro-environment-constants self) (vector-ref self 6))
 (define (macro-environment-write self port op)
   (display "#<macro-environment " port)
   (write (macro-environment-id self) port)
@@ -39,6 +38,17 @@
     (if (null? x)
       (if (macro-environment-parent self)
         (macro-environment-get-transformer (macro-environment-parent self) car-expr)
+        x)
+      x)))
+(define (macro-environment-define-constant self symbol const)
+  (map-set (macro-environment-constants self) symbol (cons const #f))
+  ;; (display "\n\n  ### set-macro ")(write symbol)(write transformer)(display "\n\n")
+  self)
+(define (macro-environment-get-constant self expr)
+  (let ((x (map-get (macro-environment-constants self) expr)))
+    (if (null? x)
+      (if (macro-environment-parent self)
+        (macro-environment-get-constant (macro-environment-parent self) expr)
         x)
       x)))
 (define (macro-environment-define-transformer self symbol transformer)
@@ -86,10 +96,14 @@
                   (if (null? transformer)
                     (macro-environment-expand-args self e)
                     (macro-environment-apply-transformer self transformer e)))))))))
-    e))
+    (let ((const (macro-environment-get-constant self e)))
+      (if (null? const)
+        e 
+        (car const)))
+    ))
 (define (macro-environment-expand-args self e)
   (if (pair? e)
-    (let ()
+    (begin
       ;; (display "      expand-args ")(write (car e))(newline)
       (cons
         (macro-environment-expand-expr self (car e))
@@ -98,19 +112,21 @@
 
 (define (macro-environment-expand self e)
   (let ((e-next (macro-environment-expand-expr self e)))
-    (if (not (equal? e-next e))
-      (let ()
+    (if (equal? e-next e)
+      (begin
+        ;; (display " e      = ")(write e)(newline)
+        ;; (display " e-next = ")(write e-next)(newline)
         (if *macro-expand-trace*
-          (let ()
+          (begin (display " result = ")(write e-next)(newline)))
+        e-next)
+      (begin
+        (if *macro-expand-trace*
+          (begin
             (display " e      = ")(write e)(newline)
             (display " e-next = ")(write e-next)(newline)
             ))
         (macro-environment-expand self e-next))
-      (let ()
-        (if *macro-expand-trace*
-          (let ()
-            (display " result = ")(write e-next)(newline)))
-        e-next))))
+      )))
 
 (define *top-level-macro-environment* (macro-environment-new))
 (define (&macro-environment) *top-level-macro-environment*)
