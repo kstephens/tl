@@ -264,27 +264,28 @@
                 #f)))))
       #f)))
 
+(define *load-verbose* #f)
 (define (load name . opts)
   (let ((verbose (not (null? opts))))
     (let ((in (open-file name "r"))
            (result #f))
-      (display "load: ")(display name)(newline)
+      (if *load-verbose* (begin (display "load: ")(display name)(newline)))
       (set! result
         (tl_repl *env* (->FILE* in) 
           (if verbose (->FILE* tl_stdout) %NULL)
           (if verbose (->FILE* tl_stdout) %NULL)))
-      (display "load: ")(display name)(display " : DONE.")(newline)
+      (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
       (close-port in)
       result)))
 
-(load "macro-expander.scm" 'verbose #t)
+(load "macro-expander.scm")
 (define (tl_macro_expand exp env)
   (macro-environment-expand *top-level-macro-environment* exp))
 
-(load "caxr.scm" 'verbose #t)
-(load "quasiquote.scm" 'verbose #t)
+(load "caxr.scm")
+(load "quasiquote.scm")
 (define-macro quasiquote &quasiquote)
-(load "r5rs-syntax.scm" 'verbose #t)
+(load "r5rs-syntax.scm")
 
 (display "Ready!")(newline)
 'ok
