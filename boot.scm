@@ -109,6 +109,11 @@
 (define <fixnum> (tl_type 0))
 (define <character> (tl_type #\a))
 (define <symbol> (tl_type 'symbol))
+(define symbol? (lambda (x) (eq? (tl_type x) <symbol>)))
+(define make-symbol (lambda (s) 
+  (let ((o (%allocate <symbol> (* 1 *word-size*))))
+    (tl_set_ivar o 0 s)
+    o)))
 (define <string> (tl_type "string"))
 (define %string-ptr (lambda (s) (tl_tlw_get s)))
 (define %make-string
