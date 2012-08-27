@@ -95,7 +95,7 @@
   (%void (fputc (tl_I 10) (->FILE* (if (null? port) tl_stdout (car port))))))
 (define (read . port)
   (tl_read (->FILE* (if (null? port) tl_stdin (car port)))))
-(define (io-flush port)
+(define (io-flush . port)
   (%void (fflush (->FILE* (if (null? port) tl_stdout (car port))))))
 ;; (write (environment-vars *env*))(newline)
 
