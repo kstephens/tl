@@ -340,6 +340,11 @@ tl tl_port__read(tl p, tl s, tl l)
   ssize_t c = fread(tl_S(s), tl_I(l), 1, FP);
   return tl_i((long) c);
 }
+tl tl_object_write(tl o, tl p, tl op)
+{
+  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
+  return p;
+}
 tl tl_string_display(tl o, tl p)
 {
   return tl_port__write(p, o, tl_i(strlen(tl_S(o))));
@@ -358,6 +363,8 @@ tl tl_fixnum_write(tl o, tl p)
 }
 tl tl_symbol_write(tl o, tl p)
 {
+  if ( tl_symbol_name(o) == tl_f )
+    return tl_object_write(o, p, 0);
   return tl_string_display(tl_symbol_name(o), p);
 }
 tl tl_type_write(tl o, tl p)
@@ -394,11 +401,6 @@ tl tl_pair_write(tl o, tl p, tl op)
   tl_write_2(o, p, op);
  rtn:
   fwrite(")", 1, 1, FP);
-  return p;
-}
-tl tl_object_write(tl o, tl p, tl op)
-{
-  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
   return p;
 }
 tl tl_call(tl s, int n, ...);
