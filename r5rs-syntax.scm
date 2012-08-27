@@ -5,6 +5,11 @@
       `(let () ,@body))))
 |#
 
+(define-macro (define n . b)
+  (if (pair? n)
+    `(define ,(car n) (lambda ,(cdr n) ,@b))
+    `(define ,n ,@b)))
+
 (define-macro (or . cases)
   (if (null? cases) #f
     (if (null? (cdr cases)) (car cases)
@@ -63,7 +68,7 @@
   (if (null? b) c
     (let ((stmt (car b)))
       (if (and (pair? stmt) (eq? 'define (car stmt)))
-        (set-car! c (cons stmt (car c)))
+        (set-car! c (cons (cdr stmt) (car c)))
         (set-cdr! c (cons stmt (cdr c))))
       (%body-defines (cdr b) c))))
 (define-macro (&body . b)
@@ -72,7 +77,7 @@
           (stmts (cdr defines-and-stmts)))
     (if (null? defines)
       (cons 'begin b)
-      `(letrec ,defines ,@stmts))))
+      `(begin (letrec ,defines ,@stmts)))))
         
 (define-macro (case val-expr . cases)
   (letrec ((val (make-symbol #f))
@@ -87,13 +92,4 @@
 			,(%case (cdr cases)))))))))
     `(let ((,val ,val-expr))
        ,(%case cases))))
-
-(define-macro (let-and* bindings . body)
-  (if (null? bindings)
-    `(begin ,@body)
-    `(let (,(car bindings))
-       (if ,(caar bindings)
-	 (let-and ,(cdr bindings) ,@body)
-	 #f))))
-
 

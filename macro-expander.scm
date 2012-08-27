@@ -64,27 +64,39 @@
       #f)
     ))
 (define (macro-environment-expand-body self b)
-  (macro-environment-expand-args self (cdr (macro-environment-expand-expr self (cons '&body b)))))
+  (if *macro-expand-trace*
+    (begin (display "      expand-body ")(write b)(newline)))
+  (cdr
+    (macro-environment-expand-expr self
+      (cons '&body 
+        (macro-environment-expand-list self b)))
+    )
+  )
 (define (macro-environment-expand-expr self e)
   (if *macro-expand-trace*
-    (begin
-      (display "    expand-expr ")(write e)(newline)))
+    (begin (display "    expand-expr ")(write e)(newline)))
   (if (pair? e)
     (let ((head (car e)))
       (if (eq? 'quote head)
         e
         (if (macro-environment-skip-first-arg? self e)
-          (cons (car e) (cons (car (cdr e)) (macro-environment-expand-args self (cdr (cdr e)))))
+          (cons (car e) 
+            (cons
+              (car (cdr e))
+              (macro-environment-expand-body self (cdr (cdr e)))))
           (if (eq? 'let head)
-            (cons (car e) (cons
-                            (map (lambda (b) (cons (car b) (macro-environment-expand-args self (cdr b))))
-                              (car (cdr e)))
-                            (macro-environment-expand-body self (cdr (cdr e)))))
+            (cons (car e)
+              (cons
+                (map (lambda (b) (cons
+                                   (car b)
+                                   (macro-environment-expand-list self (cdr b))))
+                  (car (cdr e)))
+                (macro-environment-expand-body self (cdr (cdr e)))))
             (if (eq? '&macro-scope head) ;; (&macro-scope (quote env) . body)
-              (let ((args (macro-environment-expand-args self (cdr e))))
+              (let ((args (macro-environment-expand-list self (cdr e))))
                 (cons '&macro-scope
                   (cons (car args)
-                    (macro-environment-expand-args (car (cdr (car args))) (cdr args)))))
+                    (macro-environment-expand-list (car (cdr (car args))) (cdr args)))))
               (if (eq? '&macro-environment head) ;; (&macro-environment)
                 (cons 'quote (cons self '()))
                 (if (eq? 'begin head)
@@ -92,21 +104,18 @@
                   (let ((transformer (macro-environment-get-transformer self head)))
                     ;; (display "  macro for ")(display (car e))(display " = ")(write transformer)(newline)
                     (if (null? transformer)
-                      (macro-environment-expand-args self e)
+                      (macro-environment-expand-list self e)
                       (macro-environment-apply-transformer self transformer e))))))))))
     (let ((const (macro-environment-get-constant self e)))
       (if (null? const)
         e 
         (car const)))
     ))
-(define (macro-environment-expand-args self e)
-  (if (pair? e)
-    (begin
-      ;; (display "      expand-args ")(write (car e))(newline)
-      (cons
-        (macro-environment-expand-expr self (car e))
-        (macro-environment-expand-args self (cdr e))))
-    e))
+(define (macro-environment-expand-list self e)
+  (if (null? e) e
+    (cons
+      (macro-environment-expand-expr self (car e))
+      (macro-environment-expand-list self (cdr e)))))
 
 (define (macro-environment-expand self e)
   (let ((e-next (macro-environment-expand-expr self e)))
