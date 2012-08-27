@@ -52,7 +52,7 @@
   (apply transformer (cdr e)))
 (define (macro-environment-skip-first-arg? self e)
   (let ((head (car e)))
-    (if (eq? 'lambda! head) #t
+    (if (eq? 'lambda head) #t
       (if (pair? (cdr e))
         (if (symbol? (car (cdr e)))
           (if (eq? 'set! head) #t
