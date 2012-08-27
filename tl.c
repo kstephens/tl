@@ -601,14 +601,6 @@ tl tl_eval(tl exp, tl env)
 
   L(evexp);
   val = tl_lookup(car(exp), env);
-#if 0
-  if ( tl_type(val) == tl_t_form ) {
-    val = car(val);
-    args = cons(exp, tl_nil);
-    tpush(tl_t_form, exp);
-    G(apply);
-  }
-#endif
   if ( car(exp) == tl_s_quote )
     { val = cadr(exp); G(rtn); }
   if ( car(exp) == tl_s_if ) G(if1);
