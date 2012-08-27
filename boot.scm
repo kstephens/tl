@@ -41,6 +41,7 @@
     (GC_malloc (tl_I size))))
 (define %allocate
   (lambda (type size)
+    (set! size (* (/ (+ size (- *word-size* 1)) *word-size*) *word-size*))
     (tl_allocate type (tl_I size))))
 (define %register-finalizer
   (lambda (obj func)
