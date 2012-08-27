@@ -328,3 +328,15 @@
         (close-port in)
         result))))
 
+(load "macro-expander.scm" 'verbose #t)
+(define tl_macro_expand
+  (lambda (exp env)
+    (macro-environment-expand *top-level-macro-environment* exp)))
+
+(load "caxr.scm" 'verbose #t)
+(load "quasiquote.scm" 'verbose #t)
+(define-macro quasiquote &quasiquote)
+(load "r5rs-syntax.scm" 'verbose #t)
+
+(display "Ready!")(newline)
+'ok
