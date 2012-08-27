@@ -189,6 +189,17 @@
     (if (null? (cdr l))
       (car l)
       (f (car l) (reduce f (cdr l))))))
+(define %append-2
+  (lambda (a b)
+    (if (null? a)
+      b
+      (cons (car a) (%append-2 (cdr a) b)))))
+(define %append-3
+  (lambda (l lists)
+    (if (null? lists)
+      l
+      (%append-3 (%append-2 l (car lists)) (cdr lists)))))
+(define append (lambda (l . lists) (%append-3 l lists)))
 (define assf
   (lambda (f x l)
     (if (null? l) #f
