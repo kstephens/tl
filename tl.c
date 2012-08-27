@@ -703,7 +703,12 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
 
   L(define);
-  tpush(tl_t_define, cadr(exp));
+  val = cadr(exp);
+  if ( tl_type(val) == tl_t_pair ) {
+    exp = cons(tl_s_define, cons(car(val), cons(cons(tl_s_lambda, cons(cdr(val), cddr(exp))), nil)));
+    G(eval);
+  }
+  tpush(tl_t_define, val);
   exp = cadr(cdr(exp));
   G(eval);
 
