@@ -122,7 +122,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_lambda tl_(42)
 #define tl_s_let tl_(43)
 #define tl_s_tl_object_write tl_(44)
-  // #define tl_s__closure tl_(45)
+#define tl_s_tl_macro_expand tl_(45)
   // #define tl_s__argval tl_(46)
 #define tl_s_cons tl_(47)
 #define tl_s_car tl_(48)
@@ -186,6 +186,7 @@ tl tl_m_runtime(tl parent)
   tl_s_lambda = tl_m_symbol("lambda");
   tl_s_let = tl_m_symbol("let");
   tl_s_tl_object_write = tl_m_symbol("tl_object_write");
+  tl_s_tl_macro_expand = tl_m_symbol("tl_macro_expand");
   //  tl_s__closure = tl_m_symbol("&closure");
   //  tl_s__argval = tl_m_symbol("&argval");
   tl_s_cons = tl_m_symbol("cons");
@@ -463,16 +464,23 @@ tl tl_lookup(tl name, tl env)
   }
   return tl_nil;
 }
-tl tl_define(tl var, tl val, tl env)
+tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
+  if ( (slot = tl_lookup(var, env)) != tl_nil ) {
+    // fprintf(stderr, ";; redefining %s @%p\n", tl_S(tl_ivar(var, 0)), val);
+    car(slot) = val;
+  } else {
+    // fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val);
+    tl_let(var, val, env);
+  }
+  return var;
+}
+tl tl_define(tl var, tl val, tl env)
+{
   while ( env && cdr(env) )
     env = cdr(env);
-  if ( (slot = tl_lookup(var, env)) != tl_nil ) {
-    car(slot) = val;
-    return env;
-  }
-  return tl_let(var, val, env);
+  return tl_define_here(var, val, env);
 }
 #define _tl_b(x) ((x) ? tl_t : tl_f)
 #define _tl_B(x) ((x) != tl_f)
@@ -757,6 +765,12 @@ tl tl_eval(tl exp, tl env)
 #define car(o)car_(o)
 #define cdr(o)cdr_(o)
 }
+tl tl_macro_expand(tl exp, tl env) { return exp; }
+tl tl_eval_top_level(tl exp, tl env)
+{
+  exp = tl_call(tl_s_tl_macro_expand, 2, exp, env);
+  return tl_eval(exp, env);
+}
 tl tl_quote(tl x)
 {
   return cons(tl_s_quote, cons(x, tl_nil));
@@ -784,7 +798,7 @@ tl tl_call(tl s, int n, ...)
 tl tl_eval_print(tl expr, tl env, tl out)
 {
   if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
-  tl val = tl_eval(expr, env);
+  tl val = tl_eval_top_level(expr, env);
   if ( out && val != tl_v ) { tl_write(val, stdout); fprintf(stdout, "\n"); }
   return val;
 }
@@ -904,8 +918,8 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
   if ( prompt ) fputs("> ", (FILE*)prompt);
   if ( (expr = tl_read(in)) != tl_eos ) {
     result = tl_eval_print(expr, env, out);
-    tl_define(tl__s("*repl-expr*"), expr, env);
-    tl_define(tl__s("*repl-result*"), result, env);
+    tl_define_here(tl__s("*repl-expr*"), expr, env);
+    tl_define_here(tl__s("*repl-result*"), result, env);
     goto again;
   }
   return result;
@@ -932,8 +946,9 @@ ITYPE(tlsw,tlsw)
 tl tl_stdenv(tl env)
 {
   tl _v;
-#define Ds(N,V) env = tl_let(tl__s(N), _v = (V), env)
-#define D(N,V) env = tl_let(tl_s(N), _v = (V), env)
+  tl_env = env = tl_let(tl__s("tl_rt"), tl_rt, env);
+#define Ds(N,V) tl_define_here(tl__s(N), _v = (V), env)
+#define D(N,V) tl_define_here(tl_s(N), _v = (V), env)
   D(t, tl_s(t));
   D(nil, tl_nil);
   Ds("tl_v", tl_v);
@@ -948,9 +963,10 @@ tl tl_stdenv(tl env)
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_ivar); P(tl_set_ivar);
   P(tl_eqQ); P(tl_eqvQ);
-  P(tl_type_cons); P(tl_cons); 
-  P(tl_car); P(tl_cdr);  P(tl_set_carE); P(tl_set_cdrE);
-  P(tl_eval); P(tl_repl);
+  P(tl_type_cons); P(tl_cons);
+  P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
+  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl);
+  P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
