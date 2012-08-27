@@ -63,6 +63,8 @@
         #f)
       #f)
     ))
+(define (macro-environment-expand-body self b)
+  (cdr (macro-environment-expand-expr self (cons '&body b))))
 (define (macro-environment-expand-expr self e)
   (if *macro-expand-trace*
     (begin
@@ -77,7 +79,7 @@
             (cons (car e) (cons
                             (map (lambda (b) (cons (car b) (macro-environment-expand-args self (cdr b))))
                               (car (cdr e)))
-                            (macro-environment-expand-args self (cdr (cdr e)))))
+                            (macro-environment-expand-body self (cdr (cdr e)))))
             (if (eq? '&macro-scope head) ;; (&macro-scope (quote env) . body)
               (let ((args (macro-environment-expand-args self (cdr e))))
                 (cons '&macro-scope
@@ -85,11 +87,13 @@
                     (macro-environment-expand-args (car (cdr (car args))) (cdr args)))))
               (if (eq? '&macro-environment head) ;; (&macro-environment)
                 (cons 'quote (cons self '()))
-                (let ((transformer (macro-environment-get-transformer self head)))
-                  ;; (display "  macro for ")(display (car e))(display " = ")(write transformer)(newline)
-                  (if (null? transformer)
-                    (macro-environment-expand-args self e)
-                    (macro-environment-apply-transformer self transformer e)))))))))
+                (if (eq? 'begin head)
+                  (cons 'begin (macro-environment-expand-body self (cdr e)))
+                  (let ((transformer (macro-environment-get-transformer self head)))
+                    ;; (display "  macro for ")(display (car e))(display " = ")(write transformer)(newline)
+                    (if (null? transformer)
+                      (macro-environment-expand-args self e)
+                      (macro-environment-apply-transformer self transformer e))))))))))
     (let ((const (macro-environment-get-constant self e)))
       (if (null? const)
         e 
