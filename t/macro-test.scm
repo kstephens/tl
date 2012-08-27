@@ -13,17 +13,12 @@
           (set! *macro-expand-trace* #t)
           ))
     )
+  (macro-environment-parent= e (&macro-environment))
   (display "  e => ")(write e)(newline)
   (dm 'foo (lambda args 23))
   (de '(if a b c))
   (de '(if (foo) b c))
 
-  (dm 'define
-    (lambda (n . b)
-      (if (pair? n)
-        `(define ,(car n) (lambda ,(cdr n) ,@b))
-        `(define ,n ,@b))
-      ))
   (de '(define x 5))
   (de '(define (x y) (+ y 1)))
   (de '(define (foo y) (+ y 2)))
@@ -40,4 +35,12 @@
   (display "  e => ")(write e)(newline)
   (de '(set! a 1))
   (de '(set! (car l) 2))
+  
+  (de '
+(define (f x)
+  (define (g x) (+ x 1))
+  (define (h x) (* (g x) 2))
+  (h x)
+))
+
 )
