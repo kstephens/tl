@@ -1,0 +1,8 @@
+((lambda (f)
+   (set! f (open-file "/dev/null" "r"))
+   (display "test: opened file ")(write f)(newline)
+   (display "test: closing file ")(write f)(newline)
+   (close-port f)
+   (close-port f)
+  )
+  (open-file "/dev/null" "r"))
