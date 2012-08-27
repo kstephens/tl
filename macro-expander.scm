@@ -48,15 +48,26 @@
 (define (macro-environment-apply-transformer self transformer e)
   ;; (display "  apply-macro ")(write transformer)(display " to ")(write e)(newline)
   (apply transformer (cdr e)))
+(define (macro-environment-skip-first-arg? self e)
+  (let ((head (car e)))
+    (if (eq? 'lambda! head) #t
+      (if (symbol? head)
+        (if (eq? 'set! head) #t
+          (if (eq? 'define head) #t
+            #f)
+          #f)
+        #f)
+      #f)
+    ))
 (define (macro-environment-expand-expr self e)
   (if *macro-expand-trace*
-    (let ()
+    (begin
       (display "    expand-expr ")(write e)(newline)))
   (if (pair? e)
     (let ((head (car e)))
       (if (eq? 'quote head)
         e
-        (if (or (eq? 'set! head) (eq? 'lambda head))
+        (if (macro-environment-skip-first-arg? self e)
           (cons (car e) (cons (car (cdr e)) (macro-environment-expand-args self (cdr (cdr e)))))
           (if (eq? 'let head)
             (cons (car e) (cons
