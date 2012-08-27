@@ -791,6 +791,7 @@ tl tl_call(tl s, int n, ...)
   while ( n -- > 0 )
     lp = &cdr(*lp = cons(va_arg(vap, tl), tl_nil));
   va_end(vap);
+  if ( tl_type(s) != tl_t_symbol ) s = tl_quote(s);
   return tl_eval(cons(tl_p_apply, cons(s, cons(tl_quote(args), tl_nil))), tl_env);
 }
 tl tl_eval_print(tl expr, tl env, tl out)
