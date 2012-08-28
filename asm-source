@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-class ClangSource
+class AsmSource
   def initialize
     @lines = { }
     @files = { }
@@ -47,4 +47,4 @@ class ClangSource
     self
   end
 end
-ClangSource.new.run!
+AsmSource.new.run!
