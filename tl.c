@@ -692,37 +692,37 @@ tl tl_eval(tl exp, tl env)
     G(apply);
   }
   if ( val == tl_p__catch ) {
-    tl *jb = car(args);
+    tl *c = car(args);
     int result;
-    jb[1] = GC_malloc(sizeof(jmp_buf));
-    jb[2] = jb[3] = jb[4] = jb[5] = tl_f; // live, result-ok, result, setjmp-result
-    jb[6] = tl_f;
-    jb[7] = cadr(args); jb[8] = car(cddr(args));
-    jb[9] = exp; jb[10] = env; jb[11] = val; jb[12] = args; jb[13] = argp;
-    if ( (result = setjmp(*(jmp_buf*) jb[1])) == 0 ) {
-      val = jb[7];
-      args = cons(jb, nil);
+    c[1] = GC_malloc(sizeof(jmp_buf));
+    c[2] = c[3] = c[4] = c[5] = tl_f; // live, result-ok, result, setjmp-result
+    c[6] = tl_f;
+    c[7] = cadr(args); c[8] = car(cddr(args));
+    c[9] = exp; c[10] = env; c[11] = val; c[12] = args; c[13] = argp;
+    if ( (result = setjmp(*(jmp_buf*) c[1])) == 0 ) {
+      val = c[7];
+      args = cons(c, nil);
       G(apply);
     }
-    jb[1] = tl_nil; 
-    jb[2] = tl_f; // dead
-    jb[5] = tl_i(result);
-    exp = jb[9]; env = jb[10]; val = jb[11]; args = jb[12]; argp = jb[13];
+    c[1] = tl_nil;
+    c[2] = tl_f; // dead
+    c[5] = tl_i(result);
+    exp = c[9]; env = c[10]; val = c[11]; args = c[12]; argp = c[13];
     pop(exp); // evcom2
     pop(argp);
     pop(args);
     pop(env);
-    val = jb[3] != tl_f ? jb[4] : jb[5];
-    if ( jb[8] == tl_f ) G(rtn);
-    args = cons(jb, cons(val, nil));
-    val = jb[8];
+    val = c[3] != tl_f ? c[4] : c[5];
+    if ( c[8] == tl_f ) G(rtn);
+    args = cons(c, cons(val, nil));
+    val = c[8];
     G(apply);
   }
   if ( val == tl_p__throw ) {
-    tl *jb = car(args);
-    jb[3] = tl_t;
-    jb[4] = cadr(args);
-    longjmp(*(jmp_buf*) jb[1], 1);
+    tl *c = car(args);
+    c[3] = tl_t;
+    c[4] = cadr(args);
+    longjmp(*(jmp_buf*) c[1], 1);
     abort();
   }
   if ( args == tl_nil )
