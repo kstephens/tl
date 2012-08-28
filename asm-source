@@ -17,11 +17,8 @@ class AsmSource
     lineno -= 1
     line = file_lines(file)[lineno]
     if line =~ /^\{/
-      lineno -= 1
-      line = file_lines(file)[lineno]
-      o.write " # "; o.write line
-      lineno += 1
-      line = file_lines(file)[lineno]
+      line1 = file_lines(file)[lineno - 1]
+      o.write " # "; o.write line1
     end
     o.write " # "; o.write line
     if pos && pos > 0
