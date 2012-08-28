@@ -40,8 +40,8 @@ tl : tl.c
 tl-prof : tl.c Makefile
 	$(CC) --verbose $(CFLAGS) -Dtl_NO_DEBUG=1 -o $@ tl.c $(LDFLAGS) -pg
 
-tl.s : tl.c ./clang-source
-	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./clang-source > $@ 
+tl.s : tl.c ./asm-source
+	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./asm-source > $@ 
 
 run : tl
 	rlwrap ./tl
