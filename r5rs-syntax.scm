@@ -68,8 +68,10 @@
   (if (null? b) c
     (let ((stmt (car b)))
       (if (and (pair? stmt) (eq? 'define (car stmt)))
-        (set-car! c (cons (cdr stmt) (car c)))
-        (set-cdr! c (cons stmt (cdr c))))
+        (let ((var (cadr stmt)) (val (caddr stmt)))
+          (set-car! c (cons `(,var #f) (car c)))
+          (set! stmt `(set! ,var ,val))))
+      (set-cdr! c (cons stmt (cdr c)))
       (%body-defines (cdr b) c))))
 (define-macro (&body . b) ;; must return a (begin ...) expr.
   (let* ((defines-and-stmts (%body-defines b (cons '() '())))
