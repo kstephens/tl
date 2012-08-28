@@ -19,10 +19,11 @@
     (catch
       (lambda (_c)
         (set! c _c)
-        (display "catch = ")(write c)(newline)
+        (display "catch = ")(write _c)(newline)
         (g 100))
-      (lambda (v)
-        (display "aborted with ")(write v)(newline))))
+      (lambda (_c v)
+        (display "catch ")(write _c)(display " aborted with ")(write v)(newline)
+        v)))
 
   (display "catch returned ")(write v)(newline)
   )
