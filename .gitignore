@@ -1,2 +1,9 @@
+bdwgc/
+gc/
+libatomic_ops/
 tl
-tl.dSYM
+*.dSYM
+*.o
+*.a
+tl.s
+
