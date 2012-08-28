@@ -703,25 +703,20 @@ tl tl_eval(tl exp, tl env)
       val = jb[7];
       args = cons(jb, nil);
       G(apply);
-    } else {
-      jb[1] = tl_nil; 
-      jb[2] = tl_f; // dead
-      jb[5] = tl_i(result);
-      exp = jb[9]; env = jb[10]; val = jb[11]; args = jb[12]; argp = jb[13];
-      pop(exp);
-      pop(argp);
-      pop(args);
-      pop(env);
-      if ( jb[3] != tl_f ) {
-        val = jb[4]; G(rtn);
-        val = jb[8];
-        args = cons(jb[4], nil);
-        G(apply);
-      } else {
-        val = jb[5];
-        G(rtn);
-      }
     }
+    jb[1] = tl_nil; 
+    jb[2] = tl_f; // dead
+    jb[5] = tl_i(result);
+    exp = jb[9]; env = jb[10]; val = jb[11]; args = jb[12]; argp = jb[13];
+    pop(exp); // evcom2
+    pop(argp);
+    pop(args);
+    pop(env);
+    val = jb[3] != tl_f ? jb[4] : jb[5];
+    if ( jb[8] == tl_f ) G(rtn);
+    args = cons(jb, cons(val, nil));
+    val = jb[8];
+    G(apply);
   }
   if ( val == tl_p__throw ) {
     tl *jb = car(args);
