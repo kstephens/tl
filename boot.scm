@@ -286,6 +286,6 @@
 (load "quasiquote.scm")
 (define-macro quasiquote &quasiquote)
 (load "r5rs-syntax.scm")
-
+(load "lib/tl/catch.scm")
 (display "Ready!")(newline)
 'ok

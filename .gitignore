@@ -1,7 +1,7 @@
-bdwgc/
-gc/
-libatomic_ops/
-tl
+bdwgc
+gc
+libatomic_ops
+./tl
 *.dSYM
 *.o
 *.a
