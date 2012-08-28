@@ -709,23 +709,23 @@ tl tl_eval(tl exp, tl env)
     exp = cons(tl_s_define, cons(car(val), cons(cons(tl_s_lambda, cons(cdr(val), cddr(exp))), nil)));
     G(eval);
   }
-  tpush(tl_t_define, val);
+  push(env); tpush(tl_t_define, val);
   exp = cadr(cdr(exp));
   G(eval);
 
   L(define_);
-  pop(exp);
+  pop(exp); pop(env);
   tl_define(exp, val, env);
   val = exp;
   G(rtn);
 
   L(setE);
-  tpush(tl_t_setE, cadr(exp));
+  push(env); tpush(tl_t_setE, cadr(exp));
   exp = cadr(cdr(exp));
   G(eval);
 
   L(setE_);
-  pop(exp);
+  pop(exp); pop(env);
   // fprintf(stderr, "set! "); tl_write(exp, stderr); fprintf(stderr, " = ");tl_write(val, stderr); fprintf(stderr, "\n");
   tl_setE(exp, val, env);
   // fprintf(stderr, " result = "); tl_write(tl_value(exp, env), stderr); fprintf(stderr, "\n");
