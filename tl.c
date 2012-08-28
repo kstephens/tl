@@ -4,6 +4,7 @@
 #include <inttypes.h> /* strtoll() */
 #include <unistd.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include <assert.h>
 #ifdef tl_PTHREAD
 #define GC_THREADS
@@ -142,6 +143,8 @@ tl tl_m_runtime(tl parent)
 #define tl_s_list_TO_vector tl_(62)
 
 #define tl_p_apply tl_(80)
+#define tl_p__catch tl_(81)
+#define tl_p__throw tl_(82)
 
   if ( parent ) {
     memcpy(tl_rt, parent, size);
@@ -673,6 +676,7 @@ tl tl_eval(tl exp, tl env)
   push(env);
   tpush(tl_t_evlist, val);
   G(eval);
+
   L(evlist_); 
   pop(exp);
   pop(env);
@@ -686,6 +690,45 @@ tl tl_eval(tl exp, tl env)
     val = car(args);
     args = cadr(args);
     G(apply);
+  }
+  if ( val == tl_p__catch ) {
+    tl *jb = car(args);
+    int result;
+    jb[1] = GC_malloc(sizeof(jmp_buf));
+    jb[2] = jb[3] = jb[4] = jb[5] = tl_f; // live, result-ok, result, setjmp-result
+    jb[6] = tl_f;
+    jb[7] = cadr(args); jb[8] = car(cddr(args));
+    jb[9] = exp; jb[10] = env; jb[11] = val; jb[12] = args; jb[13] = argp;
+    if ( (result = setjmp(*(jmp_buf*) jb[1])) == 0 ) {
+      val = jb[7];
+      args = cons(jb, nil);
+      G(apply);
+    } else {
+      jb[1] = tl_nil; 
+      jb[2] = tl_f; // dead
+      jb[5] = tl_i(result);
+      exp = jb[9]; env = jb[10]; val = jb[11]; args = jb[12]; argp = jb[13];
+      pop(exp);
+      pop(argp);
+      pop(args);
+      pop(env);
+      if ( jb[3] != tl_f ) {
+        val = jb[4]; G(rtn);
+        val = jb[8];
+        args = cons(jb[4], nil);
+        G(apply);
+      } else {
+        val = jb[5];
+        G(rtn);
+      }
+    }
+  }
+  if ( val == tl_p__throw ) {
+    tl *jb = car(args);
+    jb[3] = tl_t;
+    jb[4] = cadr(args);
+    longjmp(*(jmp_buf*) jb[1], 1);
+    abort();
   }
   if ( args == tl_nil )
     val = tl_FP(val,tl,())();
@@ -761,6 +804,7 @@ tl tl_eval_top_level(tl exp, tl env)
   exp = tl_call(tl_s_tl_macro_expand, 2, exp, env);
   return tl_eval(exp, env);
 }
+tl tl_identity(tl x) { return x; }
 tl tl_quote(tl x)
 {
   return cons(tl_s_quote, cons(x, tl_nil));
@@ -947,7 +991,8 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
   D(tl_stdin,tl_stdin); D(tl_stdout,tl_stdout); D(tl_stderr,tl_stderr);
-#define P(N) D(N, tl_m_prim(N, #N))
+#define Pf(N, F) D(N, tl_m_prim((F), #N))
+#define P(N) Pf(N, N)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
@@ -959,6 +1004,7 @@ tl tl_stdenv(tl env)
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
+  Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
