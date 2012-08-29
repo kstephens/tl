@@ -455,15 +455,15 @@ tl tl_let(tl var, tl val, tl env)
   cdr(vv) = cons(val, cdr(vv));
   return env;
 }
-tl tl_lookup(tl name, tl env)
+tl tl_lookup(tl var, tl env)
 {
   while ( env ) {
     tl vv = car(env);
     tl vars = car(vv), vals = cdr(vv);
     while ( vars ) {
-      if ( vars == name )
+      if ( vars == var )
         return cons(vals, tl_nil); // restarg hack.
-      if ( car(vars) == name )
+      if ( car(vars) == var )
         return vals;
       vars = cdr(vars);
       vals = vals == tl_nil ? vals : cdr(vals);
@@ -475,6 +475,7 @@ tl tl_lookup(tl name, tl env)
 tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
+  if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
   if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
   if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
@@ -504,18 +505,20 @@ tl tl_eqvQ(tl x, tl y)
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
 }
-tl tl_value(tl name, tl env)
+tl tl_value(tl var, tl env)
 {
-  tl slot = tl_lookup(name, env);
+  tl slot = tl_lookup(var, env);
   if ( slot == tl_nil )
-    return tl_error("unbound", name);
+    return tl_error("unbound", var);
   return car(slot);
 }
-tl tl_setE(tl name, tl val, tl env)
+tl tl_setE(tl var, tl val, tl env)
 {
-  tl slot = tl_lookup(name, env);
+  tl slot;
+  if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
+  slot = tl_lookup(var, env);
   if ( slot == tl_nil )
-    return tl_error("unbound", name);
+    return tl_error("unbound", var);
   return car(slot) = val;
 }
 int tl_eval_debug = 0;
@@ -1002,7 +1005,7 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl);
-  P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE);
+  P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
