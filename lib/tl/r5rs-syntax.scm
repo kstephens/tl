@@ -17,8 +17,7 @@
         `(let ((,tmp #f))
            (&or-tmp ,tmp ,@cases))))))
 (define-macro (&or-tmp tmp . cases)
-  (if (null? cases)
-    #f
+  (if (null? cases) #f
     `(begin
        (set! ,tmp ,(car cases))
        (if ,tmp ,tmp (&or-tmp ,tmp ,@(cdr cases))))))
@@ -34,8 +33,7 @@
            (&and-tmp ,tmp ,@cases))))))
 |#
 (define-macro (&and-tmp tmp . cases)
-  (if (null? cases)
-    #f
+  (if (null? cases) #f
     `(begin
        (set! ,tmp ,(car cases))
        (if (not ,tmp) ,tmp (&and-tmp ,tmp ,@(cdr cases))))))
@@ -60,7 +58,7 @@
        ,@body))))
 
 (define-macro (letrec bindings . body)
-  `(let ,(map (lambda (b) `(,(car b) #f)) bindings)
+  `(let ,(map (lambda (b) `(,(car b) %unspec)) bindings)
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
      ,@body))
 
@@ -69,7 +67,7 @@
     (let ((stmt (car b)))
       (if (and (pair? stmt) (eq? 'define (car stmt)))
         (let ((var (cadr stmt)) (val (caddr stmt)))
-          (set-car! c (cons `(,var #f) (car c)))
+          (set-car! c (cons `(,var %unspec) (car c)))
           (set! stmt `(set! ,var ,val))))
       (set-cdr! c (cons stmt (cdr c)))
       (%body-defines (cdr b) c))))
