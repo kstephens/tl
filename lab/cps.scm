@@ -1,8 +1,6 @@
 (define (T-k expr k)
   (cond
-    ((and
-       (pair? expr)
-       (eq? 'lambda (car expr)))
+    ((and (pair? expr) (eq? 'lambda (car expr)))
       (k (M expr)))
     ((symbol? expr)
       (k (M expr)))
