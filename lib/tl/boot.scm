@@ -20,7 +20,6 @@
 (define (list . l) l)
 (define apply tl_apply)
 (define eval tl_eval)
-(define repl tl_repl)
 (define + tl_fixnum_ADD)
 (define %+ tl_word_ADD)
 (define - tl_fixnum_SUB)
@@ -42,6 +41,9 @@
   ;; (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
   ;; (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
   obj)
+
+(define (error msg . args)
+  (tl_error (tl_S msg) args))
 
 (define (make-type n) (tl_m_type (->char* n)))
 
@@ -100,6 +102,12 @@
 ;; (write (environment-vars %env))(newline)
 
 (define <fixnum> (tl_type 0))
+(define (fixnum? x) (eq? (tl_type x) <fixnum>))
+(define integer? fixnum?)
+(define rational? integer?)
+(define real? integer?)
+(define complex? rational?)
+(define number? fixnum?)
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
 (define <symbol> (tl_type 'symbol))
@@ -108,6 +116,7 @@
   (let ((o (%allocate <symbol> (* 1 %word-size))))
     (tl_set_ivar o 0 s)
     o))
+(define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
 (define (%string-ptr s) (tl_tlw_get s))
@@ -260,12 +269,21 @@
                 #f)))))
       #f)))
 
-(define *load-verbose* #f)
+
+(define %getenv getenv)
+(define (getenv s)
+  (if (symbol? s) (set! s (tl_car s)))
+  (let ((sp (%getenv (tl_S s))))
+    (if (eq? sp %NULL) #f (tl_s sp))))
+
+(define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
+(define *load-debug* (getenv "TL_LOAD_DEBUG"))
 (define (load name . opts)
   (let ((verbose (not (null? opts))))
+    (if *load-debug* (set! verbose #t))
     (let ((in (open-file name "r"))
            (result #f))
-      (if (not in) (tl_error "cannot load" name)
+      (if (not in) (error "cannot load" name)
         (begin
           (if *load-verbose* (begin (display "load: ")(display name)(newline)))
           (set! result
@@ -295,6 +313,7 @@
 (define-macro quasiquote &quasiquote)
 (load "lib/tl/r5rs-syntax.scm")
 (load "lib/tl/catch.scm")
+(load "lib/tl/r5rs-math.scm" 'verbose 5)
 
 (display "Ready!")(newline)
 
