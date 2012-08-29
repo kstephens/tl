@@ -107,7 +107,7 @@
     (let ((const (macro-environment-get-constant self e)))
       (if (null? const)
         e 
-        (car const)))
+        (list 'quote (car const))))
     ))
 (define (macro-environment-expand-list self e)
   (if (null? e) e
@@ -138,6 +138,10 @@
 (define (%define-macro name transformer)
   (macro-environment-define-transformer (&macro-environment) name transformer)
   name)
+(define (%define-constant name value)
+  (macro-environment-define-constant (&macro-environment) name value)
+  name)
+
 
 (%define-macro 'define-macro
   (lambda (name . body)
@@ -147,5 +151,14 @@
     (if (pair? name)
       (list '%define-macro (list 'quote (car name)) (cons 'lambda (cons (cdr name) body)))
       (cons '%define-macro (cons (list 'quote name) body)))))
+
+(%define-macro 'define-constant
+  (lambda (name . body)
+    (if *macro-define-trace*
+      (begin
+        (display "  ;; define-constant ")(write name)(newline)))
+    (if (pair? name)
+      (list '%define-constant (list 'quote (car name)) (cons 'lambda (cons (cdr name) body)))
+      (cons '%define-constant (cons (list 'quote name) body)))))
 
 'ok
