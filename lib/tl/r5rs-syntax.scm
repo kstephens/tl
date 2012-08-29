@@ -79,7 +79,7 @@
           (stmts (cdr defines-and-stmts)))
     (if (null? defines)
       (cons 'begin b)
-      `(begin (letrec ,(reverse defines) ,@(reverse stmts))))))
+      `(begin (let ,(reverse defines) ,@(reverse stmts))))))
         
 (define-macro (case val-expr . cases)
   (letrec ((val (make-symbol #f))
