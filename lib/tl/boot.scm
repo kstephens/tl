@@ -116,6 +116,7 @@
   (let ((o (%allocate <symbol> (* 1 %word-size))))
     (tl_set_ivar o 0 s)
     o))
+(define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
 (define (%string-ptr s) (tl_tlw_get s))
@@ -269,9 +270,17 @@
       #f)))
 
 
-(define *load-verbose* #f)
+(define %getenv getenv)
+(define (getenv s)
+  (if (symbol? s) (set! s (tl_car s)))
+  (let ((sp (%getenv (tl_S s))))
+    (if (eq? sp %NULL) #f (tl_s sp))))
+
+(define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
+(define *load-debug* (getenv "TL_LOAD_DEBUG"))
 (define (load name . opts)
   (let ((verbose (not (null? opts))))
+    (if *load-debug* (set! verbose #t))
     (let ((in (open-file name "r"))
            (result #f))
       (if (not in) (error "cannot load" name)
