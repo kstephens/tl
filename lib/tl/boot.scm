@@ -102,6 +102,12 @@
 ;; (write (environment-vars %env))(newline)
 
 (define <fixnum> (tl_type 0))
+(define (fixnum? x) (eq? (tl_type x) <fixnum>))
+(define integer? fixnum?)
+(define rational? integer?)
+(define real? integer?)
+(define complex? rational?)
+(define number? fixnum?)
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
 (define <symbol> (tl_type 'symbol))
@@ -298,6 +304,7 @@
 (define-macro quasiquote &quasiquote)
 (load "lib/tl/r5rs-syntax.scm")
 (load "lib/tl/catch.scm")
+(load "lib/tl/r5rs-math.scm" 'verbose 5)
 
 (display "Ready!")(newline)
 
