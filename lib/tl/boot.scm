@@ -20,7 +20,6 @@
 (define (list . l) l)
 (define apply tl_apply)
 (define eval tl_eval)
-(define repl tl_repl)
 (define + tl_fixnum_ADD)
 (define %+ tl_word_ADD)
 (define - tl_fixnum_SUB)
@@ -42,6 +41,9 @@
   ;; (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
   ;; (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
   obj)
+
+(define (error msg . args)
+  (tl_error (tl_S msg) args))
 
 (define (make-type n) (tl_m_type (->char* n)))
 
@@ -260,12 +262,13 @@
                 #f)))))
       #f)))
 
+
 (define *load-verbose* #f)
 (define (load name . opts)
   (let ((verbose (not (null? opts))))
     (let ((in (open-file name "r"))
            (result #f))
-      (if (not in) (tl_error "cannot load" name)
+      (if (not in) (error "cannot load" name)
         (begin
           (if *load-verbose* (begin (display "load: ")(display name)(newline)))
           (set! result
