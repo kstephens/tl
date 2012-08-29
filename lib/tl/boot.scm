@@ -70,14 +70,16 @@
 (define (<-FILE* f) (%make-port f '()))
 (define ->FILE* tl_car)
 (define (open-file f m)
-  (%register-finalizer 
-    (%make-port (fopen (->char* f) (->char* m)) (list f m))
-    close-port))
+  (let ((fp (fopen (->char* f) (->char* m))))
+    (if (eq? fp %NULL) #f
+      (%register-finalizer
+        (%make-port fp (list f m))
+        close-port))))
 (define (close-port p)
   ;; (display "close-port ")(write p)(newline)
   (if (not (eq? (->FILE* p) #f))
     (begin
-      ;; (display "close-port: fclose")(newline)
+      (display "close-port: fclose ")(write p)(newline)
       (fclose (->FILE* p))))
   (set-car! p #f)
   p)
@@ -131,8 +133,7 @@
 (define (string-set! o i c)
   (tl_c (tl_uchar_set (%string-ref o i) (tl_C c))))
 (define (string-equal? a b)
-  (if (eq? a b)
-    #t
+  (if (eq? a b) #t
     (if (= (string-length a) (string-length b))
       (not (tl_b (memcmp (%string-ptr a) (%string-ptr b) (%string-len a))))
       #f)))
@@ -170,12 +171,10 @@
     (car l)
     (f (car l) (reduce f (cdr l)))))
 (define (%append-2 a b)
-  (if (null? a)
-    b
+  (if (null? a) b
     (cons (car a) (%append-2 (cdr a) b))))
 (define (%append-3 l lists)
-  (if (null? lists)
-    l
+  (if (null? lists) l
     (%append-3 (%append-2 l (car lists)) (cdr lists))))
 (define (append l . lists) (%append-3 l lists))
 (define (assf f x l)
@@ -238,8 +237,7 @@
   (fputs (tl_S ")") p)
     p)
 (define (tl_vector_write-2 o p op i)
-  (if (>= i (vector-length o))
-    o
+  (if (>= i (vector-length o)) o
     (begin
       (if (> i 0) (fputs (tl_S " ") p))
       (tl_write_2 (vector-ref o i) p op)
@@ -269,23 +267,28 @@
   (let ((verbose (not (null? opts))))
     (let ((in (open-file name "r"))
            (result #f))
-      (if *load-verbose* (begin (display "load: ")(display name)(newline)))
-      (set! result
-        (tl_repl *env* (->FILE* in) 
-          (if verbose (->FILE* tl_stdout) %NULL)
-          (if verbose (->FILE* tl_stdout) %NULL)))
-      (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
-      (close-port in)
-      result)))
+      (if (not in) (tl_error "cannot load" name)
+        (begin
+          (if *load-verbose* (begin (display "load: ")(display name)(newline)))
+          (set! result
+            (tl_repl *env* (->FILE* in) 
+              (if verbose (->FILE* tl_stdout) %NULL)
+              (if verbose (->FILE* tl_stdout) %NULL)))
+          (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
+          ;; (close-port in) ;; FIXME: fclose() free() ERROR?
+          result)))))
 
-(load "macro-expander.scm")
+(load "lib/tl/map.scm")
+(load "lib/tl/macro-expander.scm")
 (define (tl_macro_expand exp env)
   (macro-environment-expand *top-level-macro-environment* exp))
 
-(load "caxr.scm")
-(load "quasiquote.scm")
+(load "lib/tl/caxr.scm")
+(load "lib/tl/quasiquote.scm")
 (define-macro quasiquote &quasiquote)
-(load "r5rs-syntax.scm")
+(load "lib/tl/r5rs-syntax.scm")
 (load "lib/tl/catch.scm")
+
 (display "Ready!")(newline)
+
 'ok

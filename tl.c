@@ -20,7 +20,7 @@ char *GC_strdup(const char *x)
 {
   return strcpy(GC_malloc(strlen(x) + 1), x);
 }
-#define ASSERT_ZERO(x) ((x) == 0 ? 0 : assert(! #x))
+#define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
 #ifdef tl_PTHREAD
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
@@ -244,11 +244,16 @@ tl tl_set_type(tl o, tl t)
   return o;
 }
 tl tl_write(tl o, tl p);
-tl tl_error(tl msg, tl obj)
+tl tl_error(tl msg, tl obj, ...)
 {
+  va_list vap;
   if ( tl_in_error != tl_nil ) abort();
   tl_in_error = tl_t;
-  fprintf(stderr, "\nERROR: %s: %s @%p : ", (char*)msg, (char*) tl_iv(tl_type(obj), 0), obj);
+  fprintf(stderr, "\nERROR: ");
+  va_start(vap, obj);
+  vfprintf(stderr, msg, vap);
+  va_end(vap);
+  fprintf(stderr, " : type:%s object-word:@%p object:", (char*) tl_iv(tl_type(obj), 0), obj);
   tl_write(obj, stderr);
   fprintf(stderr, "\n");
   abort(); return 0;
@@ -937,7 +942,7 @@ tl tl_pthread_join(tl t)
 #define SYMBOL(N) tl_s_##N
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) tl_string__intern(s)
-#define ERROR(msg,args...) tl_error(msg, #args)
+#define ERROR(msg,args...) tl_error(msg, stream, #args)
 #define MALLOC(S) tl_malloc(S)
 #define REALLOC(P,S) tl_realloc(P,S)
 #include "lispread.c"
@@ -1024,9 +1029,13 @@ ITYPE(tlsw,tlsw)
 #include "cops.h"
   {
     FILE *fp;
-    if ( (fp = fopen("boot.scm", "r")) ) {
+    const char *boot_scm = getenv("TL_BOOT_SCM");
+    boot_scm = boot_scm && *boot_scm ? boot_scm : "lib/tl/boot.scm";
+    if ( (fp = fopen(boot_scm, "r")) ) {
       tl_repl(env, fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0); 
       fclose(fp);
+    } else {
+      tl_error("FATAL: Cannot open boot.scm: %s", tl_rt, boot_scm);
     }
   }
   return env;

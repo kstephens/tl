@@ -1,5 +1,3 @@
-(load "map.scm")
-
 (define *macro-define-trace* #f)
 (define *macro-expand-trace* #f)
 (define <macro-environment> (make-type "macro-environment"))

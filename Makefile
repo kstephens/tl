@@ -58,7 +58,7 @@ clean :
 
 test : tl
 	set -xe; for f in t/*.scm; do \
-	  ./tl < $$f ;\
+	  ./tl < $$f || gdb --args ./tl "< $$f" || true ;\
 	done
 
 bdwgc/.git/config : # Makefile
