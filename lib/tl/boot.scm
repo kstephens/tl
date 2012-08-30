@@ -49,7 +49,7 @@
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
-(define <closure>      (tl_type <primitive>))
+(define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
 (define (procedure? x)
   (if (primitive? x) #t (if (closure? x) #t #f)))
