@@ -1,3 +1,4 @@
+(define *quasiquote-debug* #f)
 (define &quasiquote
   (let ((qq-list #f) (qq-element #f) (qq-object #f))
     (set! qq-list (lambda (l)
@@ -21,6 +22,12 @@
                         (qq-element object)
                         (list 'quote object))))
     (lambda (expr)
-      (qq-object expr))))
+      (if *quasiquote-debug*
+        (begin (display "qq-object ")(write expr)(newline)))
+      (let ((result (qq-object expr)))
+        (if *quasiquote-debug*
+          (begin (display "  => ")(write result)(newline)))
+        result))
+    )
 
 
