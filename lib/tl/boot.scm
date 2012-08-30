@@ -283,12 +283,18 @@
                 #f)))))
       #f)))
 
-
 (define %getenv getenv)
-(define (getenv s)
-  (if (symbol? s) (set! s (tl_car s)))
-  (let ((sp (%getenv (tl_S s))))
+(define (getenv v)
+  (if (symbol? v) (set! v (tl_car v)))
+  (let ((sp (%getenv (tl_S v))))
     (if (eq? sp %NULL) #f (tl_s sp))))
+(define %setenv setenv)
+(define (setenv v s)
+  (if (symbol? v) (set! v (tl_car v)))
+  (%void (%setenv (tl_S v) (tl_S s))))
+(define %system system)
+(define (system s)
+  (tl_i (%system (tl_S s))))
 
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
