@@ -578,6 +578,12 @@ tl tl_eval(tl exp, tl env)
     tl_write(tl_type(exp), stderr);
     fprintf(stderr, "\n");
   }
+#if 0
+  if ( getenv("TL_EVAL_TRACE") ) {
+    tl_write(exp, stderr);
+    fputs("\n", stderr);
+  }
+#endif
   if ( exp == tl_nil ) G(self);
   val = tl_type(exp);
   if ( val == tl_t_pair ) G(evexp);
