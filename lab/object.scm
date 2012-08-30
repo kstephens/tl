@@ -1,4 +1,4 @@
-(define (make-operation)
+(define (%make-operation)
   (let ((type-meth-map (make-map)))
     (define (&add type meth)
       (map-set type-meth-map type meth))
@@ -6,6 +6,7 @@
       (map-delete type-meth-map type))
     (define (&lookup type)
       (map-get type-meth-map type))
+    (list
     (lambda args
       (case (and (pair? args) (car args))
         ((&add)          (&add (cadr args) (caddr args)))
@@ -16,7 +17,11 @@
             (&lookup (if (null? args)
                        <object>
                        (tl_type (car args))))
-            args))))))
+            args))))
+      &add &remove
+      )))
+(define (make-operation . args) (car (apply %make-operation args)))
+
 (define (add-method op type meth)
   (op '&add type meth))
 
