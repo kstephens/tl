@@ -333,7 +333,7 @@
 (define-macro quasiquote &quasiquote)
 (load "lib/tl/r5rs-syntax.scm")
 (load "lib/tl/catch.scm")
-(load "lib/tl/r5rs-math.scm" 'verbose 5)
+(load "lib/tl/r5rs-math.scm")
 (load "lib/tl/parameter-safety.scm")
 
 (display "Ready!")(newline)
