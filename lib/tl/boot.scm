@@ -47,6 +47,13 @@
 
 (define (make-type n) (tl_m_type (->char* n)))
 
+(define <primitive>    (tl_type tl_car))
+(define (primitive? x) (eq? (tl_type x) <primitive>))
+(define <closure>      (tl_type <primitive>))
+(define (closure? x)   (eq? (tl_type x) <closure>))
+(define (procedure? x)
+  (if (primitive? x) #t (if (closure? x) #t #f)))
+
 (define (->char* s) (tl_ivar s 0))
 
 (define <port> (make-type "port"))
@@ -108,6 +115,9 @@
 (define real? integer?)
 (define complex? rational?)
 (define number? fixnum?)
+(define (positive? x) (> x 0))
+(define (negative? x) (< x 0))
+(define (zero? x) (= x 0))
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
 (define <symbol> (tl_type 'symbol))
@@ -116,6 +126,7 @@
   (let ((o (%allocate <symbol> (* 1 %word-size))))
     (tl_set_ivar o 0 s)
     o))
+(define (gensym . args) (make-symbol #f))
 (define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
@@ -164,6 +175,8 @@
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define (pair? x) (eq? (tl_type x) <pair>))
+(define (list? x) (or (null? x) (pair? x)))
+
 (define (%map-1 f l)
   (if (null? l) l
     (cons (f (car l)) (%map-1 f (cdr l)))))
@@ -200,6 +213,7 @@
 (define (list-length-2 l n)
   (if (null? l) n
     (list-length-2 (cdr l) (+ n 1))))
+(define length list-length)
 (define (reverse l) (%list-reverse-2 l '()))
 (define (%list-reverse-2 l e)
   (if (null? l) e
@@ -314,6 +328,7 @@
 (load "lib/tl/r5rs-syntax.scm")
 (load "lib/tl/catch.scm")
 (load "lib/tl/r5rs-math.scm" 'verbose 5)
+(load "lib/tl/parameter-safety.scm")
 
 (display "Ready!")(newline)
 
