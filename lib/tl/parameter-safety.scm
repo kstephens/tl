@@ -1,9 +1,9 @@
 ;; (set! *quasiquote-debug* #t)
 (define-macro (check-args f-constraints)
-  (display "  check-args ")(write f-constraints)(newline)
+  ;; (display "  check-args ")(write f-constraints)(newline)
   (let ((result 
           (%check-args (car f-constraints) (cdr f-constraints))))
-    (display "  => ")(write result)(newline)
+    ;; (display "  => ")(write result)(newline)
     result))
 
 (define (%check-args f constraints)
