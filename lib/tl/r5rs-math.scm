@@ -1,4 +1,5 @@
 ;; (write (tl_macro_expand '
+
 (let ((%+ +) (%* *) (%- -) (%/ /))
   (define (type-check-2 f fn)
     (lambda (x y)
