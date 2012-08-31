@@ -87,6 +87,9 @@ test : tl
 	  ./tl < $$f || gdb --args ./tl "< $$f" || true ;\
 	done
 
+code-stats :
+	tool/code-stats *.[hc] lib
+
 bdwgc/.git/config : # Makefile
 	git clone git://github.com/ivmai/bdwgc.git
 	cd bdwgc;         git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
