@@ -6,7 +6,7 @@
   (let ((c (tl_cons a b)))
     c))
 |#
-;; (tl_eval_trace_ 1)
+(tl_eval_trace_ 1)
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
@@ -327,6 +327,7 @@
           result)))))
 
 (load "lib/tl/map.scm")
+(tl_eval_trace_ 0)
 (load "lib/tl/macro-expander.scm")
 (define (tl_macro_expand exp env)
   (macro-environment-expand *top-level-macro-environment* exp))
