@@ -6,7 +6,7 @@
   (let ((c (tl_cons a b)))
     c))
 |#
-;; (tl_eval_trace_ 1)
+(tl_eval_trace_ 1)
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
@@ -323,7 +323,7 @@
           (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
           (close-port in) ;; FIXME: fclose() free() ERROR?
           result)))))
-(tl_eval_trace_ 1)
+;; (tl_eval_trace_ 1)
 ;;(list '*load-verbose* *load-verbose*)
 ;; (list '*load-debug* *load-debug*)
 
@@ -342,6 +342,8 @@
 (define (gensym . args) (make-symbol #f))
 (list 'gensym gemsym)
 (list '(gensym) (gensym))
+
+(tl_eval_trace_ 0)
 
 (load "lib/tl/macro-expander.scm")
 (define (tl_macro_expand exp env)
