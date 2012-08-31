@@ -9,7 +9,7 @@
     'OK!
     ))
 (newline)(display "In main thread.  ")(newline)(io-flush)
-(set! new-thread (tl_pthread_create thread_proc nil))
+(set! new-thread (tl_pthread_create thread_proc '()))
 ; (write "Waiting for other thread to finish")(newline)
 (define new-thread-result (tl_pthread_join new-thread))
 (display "Back in main thread.  ")(newline)(io-flush)
