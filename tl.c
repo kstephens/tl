@@ -522,6 +522,11 @@ tl tl_setE(tl var, tl val, tl env)
   return car(slot) = val;
 }
 int tl_eval_debug = 0;
+int tl_eval_trace = 0;
+tl tl_eval_trace_(tl x)
+{
+  tl_eval_trace = tl_I(x); return x;
+}
 tl tl_eval(tl exp, tl env)
 {
   tl rt = tl_rt;
@@ -578,14 +583,16 @@ tl tl_eval(tl exp, tl env)
     tl_write(tl_type(exp), stderr);
     fprintf(stderr, "\n");
   }
-#if 0
-  if ( getenv("TL_EVAL_TRACE") ) {
-    tl_write(exp, stderr);
-    fputs("\n", stderr);
-  }
-#endif
   if ( exp == tl_nil ) G(self);
   val = tl_type(exp);
+  if ( tl_eval_trace ) {
+    if ( val == tl_t_pair ) {
+      fputs("(", stderr);
+      tl_write(car(exp), stderr);
+      fputs(" ...)", stderr);
+    } else tl_write(exp, stderr);
+    fputs("\n", stderr);
+  }
   if ( val == tl_t_pair ) G(evexp);
   if ( val == tl_t_symbol ) {
     if ( exp == tl_s__env ) { val = env; G(rtn); }
@@ -1010,7 +1017,9 @@ tl tl_stdenv(tl env)
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error);
+  P(tl_string_TO_number); P(tl_fixnum_TO_string);
+  P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
+  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
