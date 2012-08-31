@@ -327,9 +327,11 @@ tl tl_string_TO_number(tl o, int radix)
   }
   return tl_f;
 }
-tl tl_string__intern(tl o)
+tl tl_fixnum_TO_string(tl o)
 {
-  return tl_m_symbol(tl_S(o));
+  char buf[64];
+  snprintf(buf, sizeof(buf), "%lld", (long long) tl_I(o));
+  return tl_m_string(GC_strdup(buf), strlen(buf));
 }
 tl tl_m_prim(void *f, const char *name)
 {
@@ -369,12 +371,6 @@ tl tl_fixnum_write(tl o, tl p)
 {
   fprintf(FP, "%lld", (long long) tl_I(o));
   return p;
-}
-tl tl_fixnum_TO_string(tl o)
-{
-  char buf[64];
-  sprintf(buf, "%lld", (long long) tl_I(o));
-  return tl_m_string(GC_strdup(buf), strlen(buf));
 }
 tl tl_symbol_write(tl *o, tl p)
 {
@@ -964,7 +960,7 @@ tl tl_pthread_join(tl t)
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
-#define STRING_2_SYMBOL(s) tl_string__intern(s)
+#define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
 #define ERROR(msg,args...) tl_error(msg, stream, #args)
 #define MALLOC(S) tl_malloc(S)
 #define REALLOC(P,S) tl_realloc(P,S)
