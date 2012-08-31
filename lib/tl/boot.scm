@@ -54,7 +54,8 @@
 (define (procedure? x)
   (if (primitive? x) #t (if (closure? x) #t #f)))
 
-(define (->char* s) (tl_ivar s 0))
+(define ->char* tl_car)
+(define tl_S tl_car)
 
 (define <port> (make-type "port"))
 (define (port? x) (eq? (tl_type x) <port>))
