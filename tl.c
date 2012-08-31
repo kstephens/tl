@@ -1037,8 +1037,7 @@ tl tl_stdenv(tl env)
   P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
-  P(strlen); P(strcpy);
-  P(memset); P(memcpy); P(memcmp);
+  P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
 #ifdef tl_PTHREAD
