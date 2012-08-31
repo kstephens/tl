@@ -957,31 +957,7 @@ tl tl_pthread_join(tl t)
   return tl_iv(t, 5);
 }
 #endif
-#define VALUE tl
-#define READ_DECL tl tl_read(tl stream)
-#define READ_CALL() tl_read(stream)
-#define FP(stream) ((FILE*)stream)
-#define GETC(stream) getc(FP(stream))
-#define UNGETC(stream,c) ungetc(c, FP(stream))
-#define EQ(X,Y) ((X) == (Y))
-#define NIL tl_nil
-#define EOS tl_eos
-#define CONS cons
-#define CAR car
-#define T tl_t
-#define F tl_f
-#define SET_CDR(C,R) cdr(C) = (R)
-#define MAKE_CHAR(I) tl_c(I)
-#define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
-#define STRING(S,L) tl_m_string((S), (L))
-#define SYMBOL_DOT tl_s_DOT
-#define SYMBOL(N) tl_s_##N
-#define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
-#define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
-#define ERROR(msg,args...) tl_error(msg, stream, #args)
-#define MALLOC(S) tl_malloc(S)
-#define REALLOC(P,S) tl_realloc(P,S)
-#include "lispread.c"
+tl tl_read(tl stream);
 tl tl_repl(tl env, tl in, tl out, tl prompt)
 {
   tl expr, result = tl_eos;
@@ -1092,3 +1068,28 @@ int main(int argc, char **argv)
   return 0;
 }
 
+#define VALUE tl
+#define READ_DECL tl tl_read(tl stream)
+#define READ_CALL() tl_read(stream)
+#define FP(stream) ((FILE*)stream)
+#define GETC(stream) getc(FP(stream))
+#define UNGETC(stream,c) ungetc(c, FP(stream))
+#define EQ(X,Y) ((X) == (Y))
+#define NIL tl_nil
+#define EOS tl_eos
+#define CONS cons
+#define CAR car
+#define T tl_t
+#define F tl_f
+#define SET_CDR(C,R) cdr(C) = (R)
+#define MAKE_CHAR(I) tl_c(I)
+#define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
+#define STRING(S,L) tl_m_string((S), (L))
+#define SYMBOL_DOT tl_s_DOT
+#define SYMBOL(N) tl_s_##N
+#define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
+#define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
+#define ERROR(msg,args...) tl_error(msg, stream, #args)
+#define MALLOC(S) tl_malloc(S)
+#define REALLOC(P,S) tl_realloc(P,S)
+#include "lispread.c"
