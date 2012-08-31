@@ -306,28 +306,27 @@ tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = 
 #define cons tl_cons
 tl tl_make_symbol(void *name)
 {
-  tl *o = tl_allocate(tl_t_symbol, sizeof(*o) * 4); // name interned? keyword? spare
+  tl *s = tl_allocate(tl_t_symbol, sizeof(tl) * 4); // name interned? keyword? spare
   name = name ?
     tl_m_string(GC_strdup(name), strlen(name)) : tl_f;
-  o[0] = name;
-#define tl_symbol_name(o) (*(tl*) o)
-  o[1] = tl_f;
-  o[2] = tl_f;
-  return o;
+  s[0] = name;
+  s[1] = tl_f;
+  s[2] = tl_f;
+  return s;
 }
 tl tl_m_symbol(void *x) // char*
 {
   tl l = car(tl_symtab); // not thread-safe
   while ( l != tl_nil ) {
-    tl s = car(l);
-    if ( strcmp(tl_S(tl_symbol_name(s)), x) == 0 )
+    tl *s = car(l);
+    if ( strcmp(tl_S(s[0]), x) == 0 )
       return s;
     l = cdr(l);
   }
-  tl *o = tl_make_symbol(x);
-  o[1] = tl_i(1); // interned
-  car(tl_symtab) = cons(o, car(tl_symtab));
-  return o;
+  tl *s = tl_make_symbol(x);
+  s[1] = tl_i(1); // interned
+  car(tl_symtab) = cons(s, car(tl_symtab));
+  return s;
 }
 #define tl__s(S) tl_m_symbol(S)
 #define _tl_s(N)tl_m_symbol(#N)
@@ -391,10 +390,10 @@ tl tl_fixnum_write(tl o, tl p)
 }
 tl tl_symbol_write(tl *o, tl p)
 {
-  if ( tl_symbol_name(o) == tl_f ) // unnamed?
+  if ( o[0] == tl_f ) // unnamed?
     return tl_object_write(o, p, 0);
   // if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
-  return tl_string_display(tl_symbol_name(o), p);
+  return tl_string_display(o[0], p);
 }
 tl tl_type_write(tl o, tl p)
 {
