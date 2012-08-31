@@ -495,7 +495,7 @@ tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
-  if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
+  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
   if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
   else
