@@ -78,10 +78,9 @@ static void tl_init()
 #define tl_t tl_s_t
 tl tl_allocate(tl type, size_t size)
 {
-  tl o = tl_malloc(size + sizeof(type));
-  o += sizeof(type);
+  tl *o = tl_malloc(sizeof(tl) + size);
+  *(o ++) = type;
 #define tl_t_(o) ((tl*)(o))[-1]
-  tl_t_(o) = type;
   memset(o, 0, size);
   return o;
 }
@@ -243,14 +242,13 @@ tl tl_type(tl o)
 //#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl x)
 {
-  tl o = tl_allocate(tl_t_type, sizeof(x) * 8);
-  *(void**) o = x;
+  tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
+  *o = x; // name
   return o;
 }
 tl tl_set_type(tl o, tl t)
 {
-  tl_t_(o) = t;
-  return o;
+  tl_t_(o) = t; return o;
 }
 tl tl_write(tl o, tl p);
 tl tl_error(tl msg, tl obj, ...)
