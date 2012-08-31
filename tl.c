@@ -473,6 +473,12 @@ tl tl_lookup(tl var, tl env)
     while ( vars ) {
       if ( vars == var )
         return cons(vals, tl_nil); // restarg hack.
+      // DEBUG HACK!!!
+      if ( vars != tl_nil && vars < (void*) 0x4072d0 ) {
+        fputc('?', stderr);
+        return tl_nil;
+      }
+      // DEBUG HACK!!! : END
       if ( car(vars) == var )
         return vals;
       vars = cdr(vars);
