@@ -36,7 +36,6 @@
 (define > tl_fixnum_GT)
 (define >= tl_fixnum_GE)
 (define <= tl_fixnum_LE)
-(define (not x) (if x #f #t))
 (define %NULL (tl_I 0))
 (define (%malloc size) (GC_malloc (tl_I size)))
 (define (%allocate type size)
@@ -51,6 +50,10 @@
   (tl_error (tl_S msg) args))
 
 (define (make-type n) (tl_m_type (->char* n)))
+
+(define <boolean> (tl_type #t))
+(define (boolean? x) (eq? (tl_type x) <boolean>))
+(define (not x) (if x #f #t))
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
@@ -186,7 +189,7 @@
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define (pair? x) (eq? (tl_type x) <pair>))
-(define (list? x) (or (null? x) (pair? x)))
+(define (list? x) (if (null? x) #t (if (pair? x) #t #f))
 
 (define (%map-1 f l)
   (if (null? l) l
@@ -293,6 +296,8 @@
                 (vector-equal? a b)
                 #f)))))
       #f)))
+
+;; ## ;; logical EOF
 
 (define %getenv getenv)
 (define (getenv v)
