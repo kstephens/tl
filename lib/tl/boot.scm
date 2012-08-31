@@ -1,8 +1,13 @@
-((lambda (a b) (tl_cons a b)) 1 2) ;; test
+#|
+;; Basic test.
+((lambda (a b) (tl_cons a b)) 1 2) 
 (let ((a 1) (b 2)) (tl_cons a b))  ;; test
 (let ((a 1) (b 2))
   (let ((c (tl_cons a b)))
     c))
+|#
+;; (tl_eval_trace_ 1)
+
 (define (%void . x) tl_v)
 (define %unspec tl_v)
 (define %env &env)
@@ -54,7 +59,8 @@
 (define (procedure? x)
   (if (primitive? x) #t (if (closure? x) #t #f)))
 
-(define (->char* s) (tl_ivar s 0))
+(define ->char* tl_car)
+(define tl_S tl_car)
 
 (define <port> (make-type "port"))
 (define (port? x) (eq? (tl_type x) <port>))
@@ -86,7 +92,7 @@
   ;; (display "close-port ")(write p)(newline)
   (if (not (eq? (->FILE* p) #f))
     (begin
-      (display "close-port: fclose ")(write p)(newline)
+      ;; (display "close-port: fclose ")(write p)(newline)
       (fclose (->FILE* p))))
   (set-car! p #f)
   p)
@@ -118,6 +124,9 @@
 (define (positive? x) (> x 0))
 (define (negative? x) (< x 0))
 (define (zero? x) (= x 0))
+(define number->string tl_fixnum_TO_string)
+(define (string->number s . radix)
+  (tl_string_TO_number s (tl_I (if (null? radix) 10 (car radix)))))
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
 (define <symbol> (tl_type 'symbol))
@@ -299,8 +308,11 @@
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
 (define (load name . opts)
+  ;; (&debug 1)
+  (display "load ")(write name)(display " opts:")(write opts)(newline)
   (let ((verbose (not (null? opts))))
     (if *load-debug* (set! verbose #t))
+    (if *load-verbose* (begin (display "load?: ")(display name)(newline)))
     (let ((in (open-file name "r"))
            (result #f))
       (if (not in) (error "cannot load" name)

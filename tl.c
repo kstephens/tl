@@ -370,10 +370,17 @@ tl tl_fixnum_write(tl o, tl p)
   fprintf(FP, "%lld", (long long) tl_I(o));
   return p;
 }
-tl tl_symbol_write(tl o, tl p)
+tl tl_fixnum_TO_string(tl o)
 {
-  if ( tl_symbol_name(o) == tl_f )
+  char buf[64];
+  sprintf(buf, "%lld", (long long) tl_I(o));
+  return tl_m_string(GC_strdup(buf), strlen(buf));
+}
+tl tl_symbol_write(tl *o, tl p)
+{
+  if ( tl_symbol_name(o) == tl_f ) // unnamed?
     return tl_object_write(o, p, 0);
+  // if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
   return tl_string_display(tl_symbol_name(o), p);
 }
 tl tl_type_write(tl o, tl p)
@@ -1017,7 +1024,7 @@ tl tl_stdenv(tl env)
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
-  P(tl_string_TO_number); // P(tl_fixnum_TO_string);
+  P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_symbol_write); // P(tl_make_symbol); 
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
