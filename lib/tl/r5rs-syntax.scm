@@ -4,7 +4,7 @@
     (if (null? (cdr body)) (car body)
       `(let () ,@body))))
 |#
-
+;; requires (gensym BASENAME)
 (define-macro (define n . b)
   (if (pair? n)
     `(define ,(car n) (lambda ,(cdr n) ,@b))
@@ -13,7 +13,7 @@
 (define-macro (or . cases)
   (if (null? cases) #f
     (if (null? (cdr cases)) (car cases)
-      (let ((tmp (make-symbol #f)))
+      (let ((tmp (gensym 'or)))
         `(let ((,tmp #f))
            (&or-tmp ,tmp ,@cases))))))
 (define-macro (&or-tmp tmp . cases)
@@ -25,7 +25,7 @@
 (define-macro (and . cases)
   (if (null? cases) #t
     (if (null? (cdr cases)) (car cases)
-      (let ((tmp (make-symbol #f)))
+      (let ((tmp (gensym 'and)))
         `(let ((,tmp ,(car cases)))
            (if (not ,tmp) ,tmp (and ,@(cdr cases))))))))
 #|
@@ -52,7 +52,7 @@
       `(let (,(car bindings)) (let* (,@(cdr bindings)) ,@body)))))
 
 (define-macro (macro-bind bindings . body)
-  (let ((anon-bindings (map (lambda (b) (cons (make-symbol '()) b)) bindings)))
+  (let ((anon-bindings (map (lambda (b) (cons (gensym 'macro-bind) b)) bindings)))
    `(let ,(map (lambda (b) `(,(cadr b) ,(car b))) anon-bindings)
      (let ,(map (lambda (b) `(,(car b) ,(caddr b))) anon-bindings)
        ,@body))))
@@ -80,7 +80,7 @@
       `(begin (let ,(reverse defines) ,@(reverse stmts))))))
 
 (define-macro (case val-expr . cases)
-  (letrec ((val (make-symbol #f))
+  (letrec ((val (gensym 'case))
 	   (%case 
 	     (lambda (cases)
 	       (if (null? cases) ''() ;; undefined
