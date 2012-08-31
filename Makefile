@@ -62,6 +62,9 @@ $(tl)-prof : tl.c Makefile
 tl.s : tl.c tool/asm-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | tool/asm-source > $@ 
 
+test-forever :
+	TL_BOOT_DEBUG=1 tool/test-forever './tl < t/file-test.scm'
+
 run : tl
 	rlwrap ./tl
 
