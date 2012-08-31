@@ -50,7 +50,7 @@ endif
 
 all : $(EARLY_TARGETS) $(tl)
 
-$(tl) : tl.c
+$(tl) : tl.c lib/tl/*.scm t/*.scm
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
 $(tl)-no-gc : tl.c Makefile
@@ -59,8 +59,8 @@ $(tl)-no-gc : tl.c Makefile
 $(tl)-prof : tl.c Makefile
 	$(MAKE) WITH_PROF=1
 
-tl.s : tl.c ./asm-source
-	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./asm-source > $@ 
+tl.s : tl.c tool/asm-source
+	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | tool/asm-source > $@ 
 
 run : tl
 	rlwrap ./tl
