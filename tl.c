@@ -304,18 +304,28 @@ tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
 #define cons tl_cons
-tl tl_m_symbol(void *x)
+tl tl_make_symbol(void *name)
 {
-  tl l = car(tl_symtab);
+  tl *o = tl_allocate(tl_t_symbol, sizeof(*o) * 4); // name interned? keyword? spare
+  name = name ?
+    tl_m_string(GC_strdup(name), strlen(name)) : tl_f;
+  o[0] = name;
+#define tl_symbol_name(o) (*(tl*) o)
+  o[1] = tl_f;
+  o[2] = tl_f;
+  return o;
+}
+tl tl_m_symbol(void *x) // char*
+{
+  tl l = car(tl_symtab); // not thread-safe
   while ( l != tl_nil ) {
     tl s = car(l);
-#define tl_symbol_name(o) (*(tl*) o)
     if ( strcmp(tl_S(tl_symbol_name(s)), x) == 0 )
       return s;
     l = cdr(l);
   }
-  tl o = tl_allocate(tl_t_symbol, sizeof(tl));  
-  tl_symbol_name(o) = tl_m_string(GC_strdup(x), strlen(x));
+  tl *o = tl_make_symbol(x);
+  o[1] = tl_i(1); // interned
   car(tl_symtab) = cons(o, car(tl_symtab));
   return o;
 }
@@ -1028,7 +1038,7 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
-  P(tl_m_symbol); P(tl_symbol_write); // P(tl_make_symbol); 
+  P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
