@@ -60,7 +60,7 @@
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
 (define (procedure? x)
-  (if (primitive? x) #t (if (closure? x) #t #f)))
+  (if (primitive? x) #t (closure? x)))
 
 (define ->char* tl_car)
 (define tl_S tl_car)
@@ -356,6 +356,12 @@
 (load "lib/tl/quasiquote.scm")
 (define-macro quasiquote &quasiquote)
 (load "lib/tl/r5rs-syntax.scm")
+
+(define (closure-parameters x)
+  (and (closure? x) (car (car x))))
+(define (closure-body x)
+  (and (closure? x) (cdr (car x))))
+
 (load "lib/tl/catch.scm")
 (load "lib/tl/r5rs-math.scm")
 (load "lib/tl/parameter-safety.scm")
