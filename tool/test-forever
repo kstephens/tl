@@ -17,6 +17,7 @@ show() {
   then
     banner "$state"
     cat "$log"
+    date
   fi
   last_state="$state"
 }
