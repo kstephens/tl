@@ -93,7 +93,7 @@ tl tl_allocate(tl type, size_t size)
 tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
 tl tl_runtime() { return tl_rt; }
 tl tl_m_type(tl name);
-tl tl_m_symbol(const char *x);
+tl tl_m_symbol(void *x);
 tl tl_cons(tl a, tl d);
 tl tl_m_runtime(tl parent)
 {
@@ -317,22 +317,30 @@ tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
 #define cons tl_cons
-tl tl_m_symbol(const char *x)
+tl tl_make_symbol(void *name)
 {
-  tl l = car(tl_symtab);
+  tl *s = tl_allocate(tl_t_symbol, sizeof(tl) * 4); // name interned? keyword? spare
+  name = name ?
+    tl_m_string(GC_strdup(name), strlen(name)) : tl_f;
+  s[0] = name;
+  s[1] = tl_f;
+  s[2] = tl_f;
+  return s;
+}
+tl tl_m_symbol(void *x)
+{
+  tl l = car(tl_symtab); // not thread-safe
   while ( l != tl_nil ) {
-    tl s = car(l);
-#define tl_symbol_name(o) (*(tl*) o)
-    if ( strcmp(tl_S(tl_symbol_name(s)), x) == 0 )
+    tl *s = car(l);
+    if ( strcmp(tl_S(s[0]), x) == 0 )
       return s;
     l = cdr(l);
   }
-  tl *o = tl_allocate(tl_t_symbol, sizeof(tl) * 4);
-  o[0] = tl_m_string(GC_strdup(x), strlen(x));
-  o[1] = tl_t; // interned
-  o[2] = tl_b(x[0] == ':'); // keyword?
-  car(tl_symtab) = cons(o, car(tl_symtab));
-  return o;
+  tl *s = tl_make_symbol(x);
+  s[1] = tl_i(1); // interned
+  s[2] = tl_b(*(char*)x == ':'); // keyword?
+  car(tl_symtab) = cons(s, car(tl_symtab));
+  return s;
 }
 #define tl__s(S) tl_m_symbol(S)
 #define _tl_s(N)tl_m_symbol(#N)
@@ -398,7 +406,7 @@ tl tl_symbol_write(tl *o, tl p)
 {
   if ( o[0] == tl_f ) // unnamed?
     return tl_object_write(o, p, 0);
-  // if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
+  if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
   return tl_string_display(o[0], p);
 }
 tl tl_type_write(tl o, tl p)
@@ -1019,7 +1027,7 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
-  P(tl_m_symbol); P(tl_symbol_write); // P(tl_make_symbol); 
+  P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);

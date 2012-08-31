@@ -5,8 +5,8 @@
 (let ((a 1) (b 2))
   (let ((c (tl_cons a b)))
     c))
-|#
 (tl_eval_trace_ 0)
+|#
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
@@ -49,6 +49,8 @@
 (define (error msg . args)
   (tl_error (tl_S msg) args))
 
+(define <type> (tl_type (tl_type '())))
+(define (type? x) (eq? (tl_type x) <type>))
 (define (make-type n) (tl_m_type (->char* n)))
 
 (define <boolean> (tl_type #t))
@@ -79,7 +81,7 @@
           (old-f o p op))))))
 (%object-writer <port>
   (lambda (o p op)
-    (fprintf p (tl_S "#<port @%p ") o)
+    (fprintf p (tl_S "#<port @%p :FILE* @%p") o (tl_car o))
     (tl_write_2 (port-info o) p op)
     (fputs (tl_S ">") p)
     p))
@@ -130,20 +132,29 @@
 (define number->string tl_fixnum_TO_string)
 (define (string->number s . radix)
   (tl_string_TO_number s (tl_I (if (null? radix) 10 (car radix)))))
+
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
+
 (define <symbol> (tl_type 'symbol))
 (define (symbol? x) (eq? (tl_type x) <symbol>))
-(define (make-symbol s) 
-  (let ((o (%allocate <symbol> (* 4 %word-size))))
-    (tl_set_ivar o 0 s)  ;; name
-    (tl_set_ivar o 1 #f) ;; interned?
-    (tl_set_ivar o 2 #f) ;; keyword?
-    o))
 (define (keyword? o) (if (symbol? o) (tl_ivar o 2) #f))
+(define (make-symbol name) ;; not interned.
+  (tl_make_symbol (if name (tl_S name) %NULL)))
 (define (gensym . args) (make-symbol #f))
+(define *gensym-counter* 0)
+(define gensym
+  (let ((counter 0))
+    (lambda args
+      (let ((name (if (null? args) #f (car args))))
+        (if (not name) (set! name "g"))
+        (if (symbol? name) (set! name (symbol->string name)))
+        (set! counter (+ counter 1))
+        (set! name (string-append name (number->string counter)))
+        (make-symbol name)))))
 (define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
 (define (symbol->string s) (tl_car s))
+
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
 (define (%string-ptr s) (tl_tlw_get s))
@@ -193,7 +204,6 @@
 (define <pair> (tl_type '(a b)))
 (define (pair? x) (eq? (tl_type x) <pair>))
 (define (list? x) (if (null? x) #t (pair? x)))
-
 (define (%map-1 f l)
   (if (null? l) l
     (cons (f (car l)) (%map-1 f (cdr l)))))
@@ -235,8 +245,7 @@
 (define (%list-reverse-2 l e)
   (if (null? l) e
     (%list-reverse-2 (cdr l) (cons (car l) e))))
-(define <type> (tl_type (tl_type '())))
-(define (type? x) (eq? (tl_type x) <type>))
+
 (define <environment> (tl_type %env))
 (define <vector> (make-type "vector"))
 (define (vector? x) (eq? (tl_type x) <vector>))
@@ -323,8 +332,6 @@
 (list '*load-debug*= *load-debug*)
 (list 'display= display)
 (define (load name . opts)
-  ;; (&debug 1)
-  (display "load ")(write name)(display " opts:")(write opts)(newline)
   (let ((verbose (not (null? opts))))
     (if *load-debug* (set! verbose #t))
     (if *load-verbose* (begin (display "load?: ")(display name)(newline)))
@@ -338,8 +345,9 @@
               (if verbose (->FILE* tl_stdout) %NULL)
               (if verbose (->FILE* tl_stdout) %NULL)))
           (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
-          ;; (close-port in) ;; FIXME: fclose() free() ERROR?
+          (close-port in)
           result)))))
+;; (tl_eval_trace_ 1)
 
 (load "lib/tl/map.scm")
 (load "lib/tl/macro-expander.scm")
