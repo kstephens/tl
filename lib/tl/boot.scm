@@ -6,7 +6,7 @@
   (let ((c (tl_cons a b)))
     c))
 |#
-;; (tl_eval_trace_ 1)
+(tl_eval_trace_ 0)
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
@@ -305,8 +305,13 @@
 (define (system s)
   (tl_i (%system (tl_S s))))
 
+(list 'display= display)
+
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
+(list '*load-verbose*= *load-verbose*)
+(list '*load-debug*= *load-debug*)
+(list 'display= display)
 (define (load name . opts)
   ;; (&debug 1)
   (display "load ")(write name)(display " opts:")(write opts)(newline)
