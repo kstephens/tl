@@ -476,10 +476,10 @@ tl tl_let(tl var, tl val, tl env)
 }
 tl tl_lookup(tl var, tl env)
 {
-  while ( env ) {
+  while ( env != tl_nil ) {
     tl vv = car(env);
     tl vars = car(vv), vals = cdr(vv);
-    while ( vars ) {
+    while ( vars != tl_nil ) {
       if ( vars == var )
         return cons(vals, tl_nil); // restarg hack.
       if ( car(vars) == var )
@@ -504,7 +504,7 @@ tl tl_define_here(tl var, tl val, tl env)
 }
 tl tl_define(tl var, tl val, tl env)
 {
-  while ( env && cdr(env) )
+  while ( env != tl_nil && cdr(env) != tl_nil )
     env = cdr(env);
   return tl_define_here(var, val, env);
 }
@@ -608,6 +608,10 @@ tl tl_eval(tl exp, tl env)
     if ( val == tl_t_pair ) {
       fputs("(", stderr);
       tl_write(car(exp), stderr);
+      if ( car(exp) == tl_s_define ) {
+        fputs(" ", stderr);
+        tl_write(cadr(exp), stderr);
+      }
       fputs(" ...)", stderr);
     } else tl_write(exp, stderr);
     fputs("\n", stderr);
