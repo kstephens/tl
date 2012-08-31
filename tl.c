@@ -1017,8 +1017,8 @@ tl tl_stdenv(tl env)
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
-  P(tl_string_TO_number); P(tl_fixnum_TO_string);
-  P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
+  P(tl_string_TO_number); // P(tl_fixnum_TO_string);
+  P(tl_m_symbol); P(tl_symbol_write); // P(tl_make_symbol); 
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
