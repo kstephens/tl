@@ -77,6 +77,7 @@ profile : tl-prof
 
 clean :
 	rm -f tl tl-pt tl-prof tl-no-gc
+	rm -rf *.dSYM/
 
 test : tl
 	set -xe; for f in t/*.scm; do \
