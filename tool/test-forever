@@ -13,7 +13,7 @@ pass() {
   state="$t"
 }
 show() {
-  if [ "$state" != "$last_state" -o "$stat" = "$f" ]
+  if [ "$state" != "$last_state" -o "$state" = "$f" ]
   then
     banner "$state"
     cat "$log"
