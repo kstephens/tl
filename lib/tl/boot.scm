@@ -136,6 +136,7 @@
     (tl_set_ivar o 0 s)
     o))
 (define (gensym . args) (make-symbol #f))
+(define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
 (define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
