@@ -363,7 +363,7 @@
 (define-constant %NULL %NULL)
 (define-constant %word-size %word-size)
 
-(load "lib/tl/caxr.scm")
+(load "lib/tl/cxr.scm")
 (load "lib/tl/quasiquote.scm")
 (define-macro quasiquote &quasiquote)
 (load "lib/tl/r5rs-syntax.scm")
