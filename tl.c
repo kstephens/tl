@@ -93,7 +93,7 @@ tl tl_allocate(tl type, size_t size)
 tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
 tl tl_runtime() { return tl_rt; }
 tl tl_m_type(tl name);
-tl tl_m_symbol(void *x);
+tl tl_m_symbol(const char *x);
 tl tl_cons(tl a, tl d);
 tl tl_m_runtime(tl parent)
 {
@@ -317,7 +317,7 @@ tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 tl tl_car(tl o) { return car(o); } tl tl_set_carE(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); } tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
 #define cons tl_cons
-tl tl_m_symbol(void *x)
+tl tl_m_symbol(const char *x)
 {
   tl l = car(tl_symtab);
   while ( l != tl_nil ) {
@@ -327,8 +327,10 @@ tl tl_m_symbol(void *x)
       return s;
     l = cdr(l);
   }
-  tl o = tl_allocate(tl_t_symbol, sizeof(tl));  
-  tl_symbol_name(o) = tl_m_string(GC_strdup(x), strlen(x));
+  tl *o = tl_allocate(tl_t_symbol, sizeof(tl) * 4);
+  o[0] = tl_m_string(GC_strdup(x), strlen(x));
+  o[1] = tl_t; // interned
+  o[2] = tl_b(x[0] == ':'); // keyword?
   car(tl_symtab) = cons(o, car(tl_symtab));
   return o;
 }
@@ -624,6 +626,7 @@ tl tl_eval(tl exp, tl env)
   }
   if ( val == tl_t_pair ) G(evexp);
   if ( val == tl_t_symbol ) {
+    if ( tl_iv(exp, 2) != tl_f ) G(self); // keyword
     if ( exp == tl_s__env ) { val = env; G(rtn); }
     if ( exp == tl_s__args ) { val = args; G(rtn); }
     val = tl_value(exp, env); 
