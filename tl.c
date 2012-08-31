@@ -74,8 +74,8 @@ static void tl_init()
 }
 #define tl_rt tl_rt_
 #define tl_nil ((tl) 0)
-#define tl_f tl_nil
-#define tl_t tl_s_t
+#define tl_f ((tl) (tlw) 2)
+#define tl_t ((tl) (tlw) 4)
 tl tl_allocate(tl type, size_t size)
 {
   tl *o = tl_malloc(sizeof(tl) + size);
@@ -100,6 +100,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_type tl_(0)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
+#define tl_t_boolean tl_(21) // FIXME
 #define tl_t_fixnum tl_(3)
 #define tl_t_character tl_(4)
 #define tl_t_string tl_(5)
@@ -165,6 +166,7 @@ tl tl_m_runtime(tl parent)
   tl_t_runtime = tl_m_type("runtime");
   tl_t_(tl_rt) = tl_t_runtime;
   tl_t_void = tl_m_type("void");
+  tl_t_boolean = tl_m_type("boolean");
   tl_t_fixnum = tl_m_type("fixnum");
   tl_t_character = tl_m_type("character");
   tl_t_string = tl_m_type("string");
@@ -236,7 +238,12 @@ int tl_C(tl o) { return _tl_C(o); }
 tl tl_get_env() { return tl_env; }
 tl tl_type(tl o)
 {
-#define _tl_type(o) ((o) == 0 ? tl_t_null : (((tlw) (o)) & 1 ? tl_t_fixnum : tl_t_(o)))
+#define _tl_type(o)                                                     \
+  (                                                                     \
+   (o) == 0         ? tl_t_null :                                       \
+   ((tlw) (o)) & 1  ? tl_t_fixnum :                                     \
+   (o) <= tl_t      ? tl_t_boolean : tl_t_(o)                           \
+                                                                        )
   return _tl_type(o);
 }
 //#define tl_type(o)_tl_type(o)
@@ -428,6 +435,8 @@ tl tl_write_2(tl o, tl p, tl op)
   tl t;
   if ( o == tl_nil )
     return tl_pair_write(o, p, op);
+  if ( o == tl_f ) { fputs("#f", p); return p; }
+  if ( o == tl_t ) { fputs("#t", p); return p; }
   t = tl_type(o);
   if ( t == tl_t_fixnum )
     return tl_fixnum_write(o, p);
@@ -996,8 +1005,6 @@ tl tl_stdenv(tl env)
   tl_env = env = tl_let(tl__s("tl_rt"), tl_rt, env);
 #define Ds(N,V) tl_define_here(tl__s(N), _v = (V), env)
 #define D(N,V) tl_define_here(tl_s(N), _v = (V), env)
-  D(t, tl_s(t));
-  D(nil, tl_nil);
   Ds("tl_v", tl_v);
 #define V(N) D(N,tl_##N)
   V(eos);
