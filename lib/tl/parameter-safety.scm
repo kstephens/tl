@@ -62,15 +62,16 @@
 (check-args (string-ref string? non-negative-fixnum?))
 (check-args (string-set! string? non-negative-fixnum?))
 (check-args (string-equal? string? string?))
-(check-args (make-string fixnum?))
+(check-args (make-string non-negative-fixnum?))
 (check-args (string-copy string?))
 (check-args (substring string? non-negative-fixnum? non-negative-fixnum))
 
 (check-args (list-length list?))
+(set! length list-length)
 (check-args (reverse list?))
 (check-args (append list?))
 
-(check-args (make-vector fixnum?))
+(check-args (make-vector non-negative-fixnum?))
 (check-args (vector-ref vector? non-negative-fixnum?))
 (check-args (vector-set! vector? non-negative-fixnum?))
 (check-args (vector-equal? vector? vector?))
