@@ -6,7 +6,7 @@
   (let ((c (tl_cons a b)))
     c))
 |#
-;; (tl_eval_trace_ 1)
+(tl_eval_trace_ 0)
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
@@ -136,6 +136,7 @@
     (tl_set_ivar o 0 s)
     o))
 (define (gensym . args) (make-symbol #f))
+(define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
 (define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
@@ -147,6 +148,7 @@
     o))
 (define tl_S %string-ptr)
 (define (tl_s ptr) (%make-string ptr (strlen ptr)))
+(define (tl_s+ ptr) (%make-string (GC_strdup ptr) (strlen ptr)))
 (define (%string-len s) (tl_ivar s 1))
 (define (%string-ref s i) (%+ (%string-ptr s) (tl_I i)))
 (define (%string-set ptr strs)
@@ -296,7 +298,7 @@
 (define (getenv v)
   (if (symbol? v) (set! v (tl_car v)))
   (let ((sp (%getenv (tl_S v))))
-    (if (eq? sp %NULL) #f (tl_s sp))))
+    (if (eq? sp %NULL) #f (tl_s+ sp))))
 (define %setenv setenv)
 (define (setenv v s)
   (if (symbol? v) (set! v (tl_car v)))
@@ -305,8 +307,13 @@
 (define (system s)
   (tl_i (%system (tl_S s))))
 
+(list 'display= display)
+
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
+(list '*load-verbose*= *load-verbose*)
+(list '*load-debug*= *load-debug*)
+(list 'display= display)
 (define (load name . opts)
   ;; (&debug 1)
   (display "load ")(write name)(display " opts:")(write opts)(newline)

@@ -467,12 +467,18 @@ tl tl_let(tl var, tl val, tl env)
 }
 tl tl_lookup(tl var, tl env)
 {
-  while ( env ) {
+  while ( env != tl_nil ) {
     tl vv = car(env);
     tl vars = car(vv), vals = cdr(vv);
-    while ( vars ) {
+    while ( vars != tl_nil ) {
       if ( vars == var )
         return cons(vals, tl_nil); // restarg hack.
+      // DEBUG HACK!!!
+      if ( vars != tl_nil && vars < (void*) 0x4072d0 ) {
+        fputc('?', stderr);
+        return tl_nil;
+      }
+      // DEBUG HACK!!! : END
       if ( car(vars) == var )
         return vals;
       vars = cdr(vars);
@@ -486,7 +492,7 @@ tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
-  if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
+  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
   if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
   else
@@ -495,7 +501,7 @@ tl tl_define_here(tl var, tl val, tl env)
 }
 tl tl_define(tl var, tl val, tl env)
 {
-  while ( env && cdr(env) )
+  while ( env != tl_nil && cdr(env) != tl_nil )
     env = cdr(env);
   return tl_define_here(var, val, env);
 }
@@ -599,6 +605,10 @@ tl tl_eval(tl exp, tl env)
     if ( val == tl_t_pair ) {
       fputs("(", stderr);
       tl_write(car(exp), stderr);
+      if ( car(exp) == tl_s_define ) {
+        fputs(" ", stderr);
+        tl_write(cadr(exp), stderr);
+      }
       fputs(" ...)", stderr);
     } else tl_write(exp, stderr);
     fputs("\n", stderr);
