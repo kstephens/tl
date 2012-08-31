@@ -76,6 +76,12 @@ static void tl_init()
 #define tl_nil ((tl) 0)
 #define tl_f ((tl) (tlw) 2)
 #define tl_t ((tl) (tlw) 4)
+#define _tl_b(x) ((x) ? tl_t : tl_f)
+#define _tl_B(x) ((x) != tl_f)
+tl tl_b(tlw i) { return _tl_b(i); }
+#define tl_b(x)_tl_b(x)
+tlw tl_B(tl i) { return _tl_B(i); }
+#define tl_B(x)_tl_B(x)
 tl tl_allocate(tl type, size_t size)
 {
   tl *o = tl_malloc(sizeof(tl) + size);
@@ -491,12 +497,7 @@ tl tl_lookup(tl var, tl env)
     while ( vars != tl_nil ) {
       if ( vars == var )
         return cons(vals, tl_nil); // restarg hack.
-      // DEBUG HACK!!!
-      if ( vars != tl_nil && vars < (void*) 0x4072d0 ) {
-        fputc('?', stderr);
-        return tl_nil;
-      }
-      // DEBUG HACK!!! : END
+      if ( tl_type(vars) != tl_t_pair ) break;
       if ( car(vars) == var )
         return vals;
       vars = cdr(vars);
@@ -523,12 +524,6 @@ tl tl_define(tl var, tl val, tl env)
     env = cdr(env);
   return tl_define_here(var, val, env);
 }
-#define _tl_b(x) ((x) ? tl_t : tl_f)
-#define _tl_B(x) ((x) != tl_f)
-tl tl_b(tlw i) { return _tl_b(i); }
-#define tl_b(x)_tl_b(x)
-tlw tl_B(tl i) { return _tl_B(i); }
-#define tl_B(x)_tl_B(x)
 tl tl_eqQ(tl x, tl y)
 {
   return tl_b(x == y);

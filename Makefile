@@ -3,12 +3,13 @@ UNAME_S:=$(shell uname -s 2>/dev/null)#
 CC=clang
 #CC=gcc
 CC_OPTIMIZE=-O3 #
+BUILD_GC=1
 tl=tl
 
 ifeq "$(UNAME_S)" "Linux"
 CC=gcc
 #NO_OPTIMIZE=1
-NO_GC=1
+BUILD_GC=0
 #NO_PTHREADS=1
 endif
 
@@ -37,9 +38,11 @@ tl=tl-no-gc#
 NO_PTHREADS=1
 CFLAGS += -Dtl_NO_GC=1
 else
+ifneq "$(BUILD_GC)" "0"
 EARLY_TARGETS += gc/lib/libgc.a
 CFLAGS += -Igc/include
 LDFLAGS += -Lgc/lib 
+endif
 LDFLAGS += -lgc #
 endif
 
@@ -62,6 +65,9 @@ $(tl)-prof : tl.c Makefile
 tl.s : tl.c tool/asm-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | tool/asm-source > $@ 
 
+test-forever :
+	TL_BOOT_DEBUG=1 tool/test-forever './tl < t/file-test.scm'
+
 run : tl
 	rlwrap ./tl
 
@@ -74,6 +80,7 @@ profile : tl-prof
 
 clean :
 	rm -f tl tl-pt tl-prof tl-no-gc
+	rm -rf *.dSYM/
 
 test : tl
 	set -xe; for f in t/*.scm; do \
