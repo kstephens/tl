@@ -122,11 +122,9 @@
 (define (character? x) (eq? (tl_type x) <character>))
 (define <symbol> (tl_type 'symbol))
 (define (symbol? x) (eq? (tl_type x) <symbol>))
-(define (make-symbol s) 
-  (let ((o (%allocate <symbol> (* 1 %word-size))))
-    (tl_set_ivar o 0 s)
-    o))
-(define (gensym . args) (make-symbol #f))
+(define (make-symbol name) ;; not interned.
+  (tl_make_symbol (if name (tl_S name) %NULL)))
+(define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
 (define (symbol->string s) (tl_car s))
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
@@ -311,10 +309,28 @@
               (if verbose (->FILE* tl_stdout) %NULL)
               (if verbose (->FILE* tl_stdout) %NULL)))
           (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
-          ;; (close-port in) ;; FIXME: fclose() free() ERROR?
+          (close-port in) ;; FIXME: fclose() free() ERROR?
           result)))))
+(tl_eval_trace_ 1)
+;;(list '*load-verbose* *load-verbose*)
+;; (list '*load-debug* *load-debug*)
 
 (load "lib/tl/map.scm")
+#|
+(define *gensym-counter* 0)
+(define (gensym . args)
+  (let ((name (if (null? args) #f (car args))))
+    (if (not name) (set! name "g"))
+    (if (symbol? name) (set! name (symbol->string name)))
+    (display "  gensym => ")(write name)(newline)
+    (set! *gensym-counter* (+ *gensym-counter* 1))
+    (set! name (string-append name (number->string *gensym-counter*)))
+    (make-symbol name)))
+|#
+(define (gensym . args) (make-symbol #f))
+(list 'gensym gemsym)
+(list '(gensym) (gensym))
+
 (load "lib/tl/macro-expander.scm")
 (define (tl_macro_expand exp env)
   (macro-environment-expand *top-level-macro-environment* exp))
