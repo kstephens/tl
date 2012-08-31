@@ -189,7 +189,7 @@
 (define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define (pair? x) (eq? (tl_type x) <pair>))
-(define (list? x) (if (null? x) #t (if (pair? x) #t #f))
+(define (list? x) (if (null? x) #t (pair? x)))
 
 (define (%map-1 f l)
   (if (null? l) l
