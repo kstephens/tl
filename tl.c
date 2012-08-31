@@ -388,10 +388,10 @@ tl tl_fixnum_write(tl o, tl p)
 }
 tl tl_symbol_write(tl *o, tl p)
 {
-  if ( tl_symbol_name(o) == tl_f ) // unnamed?
+  if ( o[0] == tl_f ) // unnamed?
     return tl_object_write(o, p, 0);
-  // if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
-  return tl_string_display(tl_symbol_name(o), p);
+  if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
+  return tl_string_display(o[0], p);
 }
 tl tl_type_write(tl o, tl p)
 {
