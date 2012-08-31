@@ -136,9 +136,9 @@
 (define (symbol? x) (eq? (tl_type x) <symbol>))
 (define (make-symbol s) 
   (let ((o (%allocate <symbol> (* 4 %word-size))))
-    (tl_set_ivar o 0 s)  // name
-    (tl_set_ivar o 1 #f) // interned?
-    (tl_set_ivar o 2 #f) // keyword?
+    (tl_set_ivar o 0 s)  ;; name
+    (tl_set_ivar o 1 #f) ;; interned?
+    (tl_set_ivar o 2 #f) ;; keyword?
     o))
 (define (keyword? o) (if (symbol? o) (tl_ivar o 2) #f))
 (define (gensym . args) (make-symbol #f))
