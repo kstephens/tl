@@ -10,10 +10,19 @@
 #define GC_THREADS
 // #define GC_PTHREADS
 #endif
-#include "gc/gc.h"
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
+#ifndef tl_NO_GC
+#include "gc/gc.h"
+#else
+void *GC_malloc(size_t s) { return malloc(s); }
+void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
+void GC_gcollect() { }
+void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
+void GC_invoke_finalizers() { }
+#define GC_INIT() (void) 0
+#endif
 #define tl_malloc(S) GC_malloc(S)
 #define tl_realloc(P,S) GC_realloc(P,S)
 char *GC_strdup(const char *x)

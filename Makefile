@@ -1,7 +1,9 @@
 UNAME_S:=$(shell uname -s 2>/dev/null)#
 
 CC=clang
+#CC=gcc
 CC_OPTIMIZE=-O3 #
+tl=tl
 
 ifeq "$(UNAME_S)" "Linux"
 CC=gcc
@@ -21,24 +23,41 @@ endif
 
 CFLAGS += -g #
 
-ifndef NO_GC
+ifdef WITH_PROF
+tl=tl-prof#
+NO_PTHEADS=1
+NO_DEBUG=1
+CFLAGS += -pg -Dtl_NO_DEBUG=1 #
+LDFLAGS += -pg
+endif
+
+ifdef NO_GC
+tl=tl-no-gc#
+#CC=gcc
+NO_PTHREADS=1
+CFLAGS += -Dtl_NO_GC=1
+else
 EARLY_TARGETS += gc/lib/libgc.a
 CFLAGS += -Igc/include
 LDFLAGS += -Lgc/lib 
-endif
 LDFLAGS += -lgc #
+endif
 
 ifndef NO_PTHREADS
 CFLAGS += -pthread -Dtl_PTHREAD=1
 LDFLAGS += -lpthread
 endif
 
-all : $(EARLY_TARGETS) tl
+all : $(EARLY_TARGETS) $(tl)
 
-tl : tl.c
+$(tl) : tl.c
+	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
-tl-prof : tl.c Makefile
-	$(CC) --verbose $(CFLAGS) -Dtl_NO_DEBUG=1 -o $@ tl.c $(LDFLAGS) -pg
+$(tl)-no-gc : tl.c Makefile
+	$(MAKE) NO_GC=1
+
+$(tl)-prof : tl.c Makefile
+	$(MAKE) WITH_PROF=1
 
 tl.s : tl.c ./asm-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | ./asm-source > $@ 
@@ -54,7 +73,7 @@ profile : tl-prof
 	gprof -l ./tl-prof | less
 
 clean :
-	rm -f tl tl-pt tl-prof
+	rm -f tl tl-pt tl-prof tl-no-gc
 
 test : tl
 	set -xe; for f in t/*.scm; do \
