@@ -51,7 +51,14 @@ CFLAGS += -pthread -Dtl_PTHREAD=1
 LDFLAGS += -lpthread
 endif
 
+ifdef v
+all : v
+endif
+
 all : $(EARLY_TARGETS) $(tl)
+
+v :
+	echo "$(v)=$($v)"
 
 $(tl) : tl.c lib/tl/*.scm t/*.scm
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
