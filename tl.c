@@ -1033,7 +1033,7 @@ tl tl_stdenv(tl env)
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
-  P(fdopen); P(fileno); P(isatty), P(ttyname); P(ttyslot);
+  P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);

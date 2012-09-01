@@ -1,4 +1,5 @@
 UNAME_S:=$(shell uname -s 2>/dev/null)#
+UNAME_O:=$(shell uname -o 2>/dev/null)#
 
 CC=clang
 #CC=gcc
@@ -11,6 +12,12 @@ CC=gcc
 #NO_OPTIMIZE=1
 BUILD_GC=0
 #NO_PTHREADS=1
+endif
+
+ifeq "$(UNAME_O)" "Cygwin"
+CC=gcc
+BUILD_GC=0
+NO_PTHREADS=1
 endif
 
 ifndef NO_OPTIMIZE
