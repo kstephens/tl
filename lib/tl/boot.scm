@@ -11,7 +11,7 @@
 (define (%void . x) tl_v)
 (define %unspec tl_v)
 (define %env &env)
-(define %word-size (tl_tlw_sizeof))
+(define %word-size tl_tlw_sizeof)
 (define (environment-vars x) (car (car x)))
 (define %eos eos)
 (define (eos? x) (eq? x %eos))
