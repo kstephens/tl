@@ -6,13 +6,15 @@
 #include <stdarg.h>
 #include <setjmp.h>
 #include <assert.h>
+
 #ifdef tl_PTHREAD
 #define GC_THREADS
-// #define GC_PTHREADS
 #endif
+
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;
+
 #ifndef tl_NO_GC
 #include "gc/gc.h"
 #else
@@ -23,6 +25,7 @@ void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
 #define GC_INIT() (void) 0
 #endif
+
 #define tl_malloc(S) GC_malloc(S)
 #define tl_realloc(P,S) GC_realloc(P,S)
 char *GC_strdup(const char *x)
@@ -31,6 +34,7 @@ char *GC_strdup(const char *x)
 }
 
 #define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
+
 #ifdef tl_PTHREAD
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
@@ -70,7 +74,9 @@ static void tl_init_th()
 tl tl_rt_; // runtime.
 tl tl_env; // environment.
 #endif
+
 FILE *tl_stdin, *tl_stdout, *tl_stderr;
+
 static void tl_init()
 {
   tl_stdin = stdin; tl_stdout = stdout; tl_stderr = stderr;
@@ -570,6 +576,7 @@ tl tl_define_here(tl var, tl val, tl env)
     tl_let(var, val, env);
   return var;
 }
+
 tl tl_define(tl var, tl val, tl env)
 {
   while ( env != tl_nil && cdr(env) != tl_nil )
