@@ -313,15 +313,8 @@ tlsw tl_I(tl o) { return _tl_I(o); }
 #define tl_i(x)_tl_i(x)
 #define tl_I(o)_tl_I(o)
 
-tl tl_ivar(tl o, tl i)
-{
-  return ((tl*) o)[tl_I(i)];
-}
-
-tl tl_set_ivar(tl o, tl i, tl v)
-{
-  return ((tl*) o)[tl_I(i)] = v;
-}
+tl tl_get(tl o, tl i)       { return ((tl*) o)[tl_I(i)]; }
+tl tl_set(tl o, tl i, tl v) { return ((tl*) o)[tl_I(i)] = v; }
 
 tl tl_m_string(void *x, size_t l)
 {
@@ -569,7 +562,7 @@ tl tl_define_here(tl var, tl val, tl env)
 {
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
-  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_ivar(var, 0)), val); }
+  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_get(var, 0)), val); }
   if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
   else
@@ -1104,7 +1097,7 @@ tl tl_stdenv(tl env)
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
-  P(tl_ivar); P(tl_set_ivar);
+  P(tl_get); P(tl_set);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
