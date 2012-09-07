@@ -1060,15 +1060,13 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
   return result;
 }
 
+#define TYPE(T,N)
 #define ITYPE(T,N)                                                      \
+  TYPE(T,N)                                                             \
   tl tl_##N##_get(tl ptr) { return (tl) (tlw) *(T*)ptr; }      \
-  tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (T)(tlw)word); } \
-  tl tl_##N##_sizeof(TLP0) { return tl_i((tlw) sizeof(T)); }
+  tl tl_##N##_set(tl ptr, tl word) { return (tl) (tlw) (*((T*)ptr) = (T)(tlw)word); }
 #define FTYPE(T,N)
-// ITYPE(tl,tl)
-ITYPE(tlw,tlw)
-ITYPE(tlsw,tlsw)
-#include "ctypes.h"
+#include "tltypes.h"
 #define BOP(O,N) \
   tl tl_fixnum_##N(tl x, tl y) { return tl_i(tl_I(x) O tl_I(y)); }  \
   tl tl_word_##N(tl x, tl y) { return (tl) (((tlw) x) O ((tlw) y)); }
@@ -1115,15 +1113,26 @@ tl tl_stdenv(tl env)
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
 #ifdef tl_PTHREAD
-  P(pthread_self); P(pthread_detach); P(pthread_equal); P(pthread_exit);
-  P(pthread_join); P(pthread_cancel);
   P(tl_pthread_create); P(tl_pthread_self); P(tl_pthread_join);
+  P(pthread_create); P(pthread_exit);
+  P(pthread_getspecific); P(pthread_setspecific); P(pthread_key_create); P(pthread_key_delete);
+  // P(pthread_cleanup_pop); P(pthread_cleanup_push);
+  P(pthread_self); P(pthread_detach); P(pthread_equal);
+  P(pthread_join); P(pthread_cancel);
+  P(pthread_mutex_init); P(pthread_mutex_destroy); P(pthread_mutex_lock); P(pthread_mutex_unlock); P(pthread_mutex_trylock);
+  P(pthread_mutexattr_init); P(pthread_mutexattr_destroy);
+  P(pthread_mutexattr_getprotocol); P(pthread_mutexattr_setprotocol);
+  P(pthread_mutexattr_gettype); P(pthread_mutexattr_settype);
+  P(pthread_mutexattr_getprioceiling); P(pthread_mutexattr_setprioceiling);
+  P(pthread_condattr_init); P(pthread_condattr_destroy);
+  P(pthread_cond_init); P(pthread_cond_destroy);
+  P(pthread_cond_signal); P(pthread_cond_broadcast);
+  P(pthread_cond_wait);P(pthread_cond_timedwait);
 #endif
-#define ITYPE(T,N) P(tl_##N##_get); P(tl_##N##_set); P(tl_##N##_sizeof);
+#define TYPE(T,N) D(tl_##N##_sizeof,tl_i(sizeof(T)));
+#define ITYPE(T,N) TYPE(T,N); P(tl_##N##_get); P(tl_##N##_set);
 #define FTYPE(T,N)
-ITYPE(tlw,tlw)
-ITYPE(tlsw,tlsw)
-#include "ctypes.h"
+#include "tltypes.h"
 #define BOP(O,N) P(tl_fixnum_##N); P(tl_word_##N);
 #define UOP(O,N) BOP(O,N)
 #define ROP(O,N) BOP(O,N)
