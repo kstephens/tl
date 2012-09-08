@@ -343,9 +343,9 @@ tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
 #define cadr(o) car(cdr(o))
 #define cddr(o) cdr(cdr(o))
 tl tl_car(tl o) { return car(o); }
-tl tl_set_carE(tl o, tl v) { return car(o) = v; }
+tl tl_set_car(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); }
-tl tl_set_cdrE(tl o, tl v) { return cdr(o) = v; }
+tl tl_set_cdr(tl o, tl v) { return cdr(o) = v; }
 
 tl tl_make_symbol(void *name)
 {
@@ -1098,7 +1098,7 @@ tl tl_stdenv(tl env)
   P(tl_get); P(tl_set);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
-  P(tl_car); P(tl_cdr); P(tl_set_carE); P(tl_set_cdrE);
+  P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
   P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
