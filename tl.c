@@ -1159,6 +1159,7 @@ int main(int argc, char **argv)
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   if ( ! isatty(0) && ! getenv("TL_PROMPT") ) out = 0;
+  if ( getenv("TL_DEBUG") ) out = stderr;
   tl_repl(tl_env, stdin, out, out);
   tl_env = tl_nil;
   GC_gcollect();
