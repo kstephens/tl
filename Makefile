@@ -17,7 +17,7 @@ endif
 ifeq "$(UNAME_O)" "Cygwin"
 CC=gcc
 BUILD_GC=0
-NO_PTHREADS=1
+# NO_PTHREADS=1
 endif
 
 ifndef NO_OPTIMIZE
@@ -54,7 +54,10 @@ LDFLAGS += -lgc #
 endif
 
 ifndef NO_PTHREADS
-CFLAGS += -pthread -Dtl_PTHREAD=1
+ifneq "$(UNAME_O)" "Cygwin"
+CFLAGS += -pthread
+endif
+CFLAGS += -Dtl_PTHREAD=1
 LDFLAGS += -lpthread
 endif
 
