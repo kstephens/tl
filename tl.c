@@ -146,7 +146,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_form tl_(20)
 
 #define tl_v tl_(30)
-#define tl_symtab tl_(31)
+#define tl_symbol_list tl_(31)
 #define tl_in_error tl_(32)
 #define tl_eos tl_(33)
 #define tl_result tl_(34)
@@ -211,7 +211,7 @@ tl tl_m_runtime(tl parent)
   tl_t_setE = tl_m_type("set!");
   tl_t_evlist = tl_m_type("evlist");
 
-  tl_symtab = tl_cons(tl_nil, tl_nil);
+  tl_symbol_list = tl_cons(tl_nil, tl_nil);
   tl_s_quote = tl_m_symbol("quote");
   tl_s_quasiquote = tl_m_symbol("quasiquote");
   tl_s_unquote_splicing = tl_m_symbol("unquote-splicing");
@@ -360,7 +360,7 @@ tl tl_make_symbol(void *name)
 
 tl tl_m_symbol(void *x)
 {
-  tl l = car(tl_symtab); // not thread-safe
+  tl l = car(tl_symbol_list);
   while ( l != tl_nil ) {
     tl *s = car(l);
     if ( strcmp(tl_S(s[0]), x) == 0 )
@@ -370,9 +370,12 @@ tl tl_m_symbol(void *x)
   tl *s = tl_make_symbol(x);
   s[1] = tl_i(1); // interned
   s[2] = tl_b(*(char*)x == ':'); // keyword?
-  car(tl_symtab) = cons(s, car(tl_symtab));
+  car(tl_symbol_list) = cons(s, car(tl_symbol_list));
   return s;
 }
+
+tl tl_symbols() { return car(tl_symbol_list); }
+
 #define tl__s(S) tl_m_symbol(S)
 #define _tl_s(N)tl_m_symbol(#N)
 #define tl_s(N)_tl_s(N)
@@ -1105,6 +1108,7 @@ tl tl_stdenv(tl env)
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
+  P(tl_symbols);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
