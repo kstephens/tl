@@ -27,5 +27,6 @@
 (define new-thread-result (thread-join new-thread))
 (display "Back in main thread.  ")(newline)(io-flush)
 (display "new-thread-result = ")(write new-thread-result)(newline)
+(mutex-destroy m)(set! m #f)
 
 'ok
