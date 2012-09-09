@@ -24,7 +24,7 @@
 (define cons tl_cons)
 (define (list . l) l)
 (define apply tl_apply)
-(define eval tl_eval)
+(define (eval expr . env) (tl_eval_top_level expr (if (null? env) %env (car env))))
 (define + tl_fixnum_ADD)
 (define %+ tl_word_ADD)
 (define - tl_fixnum_SUB)
@@ -324,13 +324,12 @@
 (define (system s)
   (tl_i (%system (tl_S s))))
 
-(list 'display= display)
-
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
-(list '*load-verbose*= *load-verbose*)
-(list '*load-debug*= *load-debug*)
-(list 'display= display)
+(define (load-repl env in out prompt)
+  (tl_repl env (->FILE* in)
+    (if out (->FILE* out) %NULL)
+    (if prompt (->FILE* prompt) %NULL)))
 (define (load name . opts)
   (let ((verbose (not (null? opts))))
     (if *load-debug* (set! verbose #t))
@@ -341,9 +340,9 @@
         (begin
           (if *load-verbose* (begin (display "load: ")(display name)(newline)))
           (set! result
-            (tl_repl %env (->FILE* in) 
-              (if verbose (->FILE* tl_stdout) %NULL)
-              (if verbose (->FILE* tl_stdout) %NULL)))
+            (load-repl %env in
+              (if verbose tl_stdout #f)
+              (if verbose tl_stdout #f)))
           (if *load-verbose* (begin (display "load: ")(display name)(display " : DONE.")(newline)))
           (close-port in)
           result)))))
@@ -374,9 +373,32 @@
   (and (closure? x) (cdr (car x))))
 
 (load "lib/tl/catch.scm")
+(load "lib/tl/error.scm")
 (load "lib/tl/r5rs-math.scm")
 (load "lib/tl/parameter-safety.scm")
+(load "lib/tl/repl.scm")
 
-(display "Ready!")(newline)
+(define *argc* #f)
+(define *arg0* #f)
+(define *args* #())
+(define (tl_main argc argv)
+  (set! argc (tl_i argc))
+  (set! *argc* argc)
+  (set! *arg0* (tl_s+ (tl_get argv 0)))
+  (set! argc (- argc 1))
+  (set! *args* (make-vector argc))
+  (define (fill-args i)
+    (if (< i argc)
+      (begin
+        (vector-set! *args* i (tl_s+ (tl_get argv (+ i 1))))
+        (fill-args (+ i 1)))))
+  (fill-args 0)
+  (display "Ready!")(newline)
+  (let ((output #f) (prompt #f))
+    (if (tl_b (isatty (tl_I 1)))
+      (begin
+        (set! prompt tl_stdout)
+        (set! output tl_stdout)))
+    (repl %env tl_stdin output prompt)))
 
 'ok
