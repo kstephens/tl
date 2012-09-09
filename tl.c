@@ -175,6 +175,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s__args tl_(60)
 #define tl_s__debug tl_(61)
 #define tl_s_list_TO_vector tl_(62)
+#define tl_s_tl__error tl_(63)
 
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
@@ -237,6 +238,7 @@ tl tl_m_runtime(tl parent)
   tl_s__args = tl_m_symbol("&args");
   tl_s__debug = tl_m_symbol("&debug");
   tl_s_list_TO_vector = tl_m_symbol("list->vector");
+  tl_s_tl__error = tl_m_symbol("tl__error");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -290,20 +292,29 @@ tl tl_set_type(tl o, tl t)
 }
 
 tl tl_write(tl o, tl p);
+tl tl_m_string(void *x, size_t l);
+tl tl_call(tl s, int n, ...);
 
-tl tl_error(tl msg, tl obj, ...)
+tl tl__error_abort(tl msg, tl obj)
 {
-  va_list vap;
-  if ( tl_in_error != tl_nil ) abort();
-  tl_in_error = tl_t;
-  fprintf(stderr, "\nERROR: ");
-  va_start(vap, obj);
-  vfprintf(stderr, msg, vap);
-  va_end(vap);
+  abort(); return 0;
+}
+tl tl__error(tl msg, tl obj)
+{
+  fprintf(stderr, "\nERROR: %s", tl_iv(msg, 0));
   fprintf(stderr, " : type:%s object-word:@%p object:", (char*) tl_iv(tl_type(obj), 0), obj);
   tl_write(obj, stderr);
   fprintf(stderr, "\n");
-  abort(); return 0;
+  return tl__error_abort(msg, obj);
+}
+tl tl_error(tl msg, tl obj, ...)
+{
+  char buf[1024];
+  va_list vap;
+  va_start(vap, obj);
+  vsnprintf(buf, sizeof(buf), msg, vap);
+  va_end(vap);
+  return tl_call(tl_s_tl__error, 2, tl_m_string(GC_strdup(buf), strlen(buf)), obj);
 }
 
 #define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) | 1))
@@ -492,8 +503,6 @@ tl tl_pair_write(tl o, tl p, tl op)
   fwrite(")", 1, 1, FP);
   return p;
 }
-
-tl tl_call(tl s, int n, ...);
 
 tl tl_write_2(tl o, tl p, tl op)
 {
@@ -1104,13 +1113,14 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_error); P(tl_eval_trace_);
+  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_eval_trace_);
+  P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
   P(tl_symbols);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
-  P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
+  P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
@@ -1163,9 +1173,7 @@ int main(int argc, char **argv)
   tl_init();
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
-  if ( ! isatty(0) && ! getenv("TL_PROMPT") ) out = 0;
-  if ( getenv("TL_DEBUG") ) out = stderr;
-  tl_repl(tl_env, stdin, out, out);
+  tl_call(tl_s(tl_main), 2, argc, argv);
   tl_env = tl_nil;
   GC_gcollect();
   GC_invoke_finalizers();

@@ -8,10 +8,11 @@
   (newline))
 
 (define %error-catch #f)
-
+(define *last-error* #f)
 (set! tl__error 
   (lambda (msg obj)
     (set! obj (cons msg obj))
+    (set! *last-error* obj)
     (if %error-catch
       (throw %error-catch obj)
       (%error-display obj))
@@ -21,12 +22,12 @@
   (let ((prev-error-catch %error-catch)
          (result #f))
     (catch 
-      (lambda (c) ;; catch body
+      (lambda (c) ;; try body
         (set! %error-catch c)
         (set! result (proc))
         (set! %error-catch prev-error-catch)
         result)
-      (lambda (c v) ;; throw body
+      (lambda (c v) ;; catch body
         (set! %error-catch prev-error-catch)
         (%error-display v)
         result
