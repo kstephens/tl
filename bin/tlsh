@@ -1,0 +1,2 @@
+#!/bin/sh
+exec rlwrap -pyellow "$(dirname "$0")/../tl" "$@"
