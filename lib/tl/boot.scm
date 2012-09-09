@@ -282,6 +282,11 @@
     (begin
       (vector-set! v i (car l))
       (list->vector-2 (cdr l) v (+ i 1)))))
+(define (vector->list v)
+  (vector->list-2 v 0))
+(define (vector->list-2 v i)
+  (if (>= i (vector-length v)) '()
+    (cons (vector-ref v i) (vector->list-2 v (+ i 1)))))
 (define (tl_vector_write o p op)
   (fputs (tl_S "#(") p)
   (tl_vector_write-2 o p op 0)
