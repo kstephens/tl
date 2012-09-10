@@ -398,12 +398,6 @@
 (load "tl/quasiquote")
 (define-macro quasiquote &quasiquote)
 (load "tl/r5rs-syntax")
-
-(define (closure-parameters x)
-  (and (closure? x) (car (car x))))
-(define (closure-body x)
-  (and (closure? x) (cdr (car x))))
-
 (load "tl/catch")
 (load "tl/error")
 (load "tl/r5rs-math")
