@@ -1136,9 +1136,11 @@ tl tl_stdenv(tl env)
   P(pthread_join); P(pthread_cancel);
   P(pthread_mutex_init); P(pthread_mutex_destroy); P(pthread_mutex_lock); P(pthread_mutex_unlock); P(pthread_mutex_trylock);
   P(pthread_mutexattr_init); P(pthread_mutexattr_destroy);
+#ifndef __linux__
   P(pthread_mutexattr_getprotocol); P(pthread_mutexattr_setprotocol);
   P(pthread_mutexattr_gettype); P(pthread_mutexattr_settype);
   P(pthread_mutexattr_getprioceiling); P(pthread_mutexattr_setprioceiling);
+#endif
   P(pthread_condattr_init); P(pthread_condattr_destroy);
   P(pthread_cond_init); P(pthread_cond_destroy);
   P(pthread_cond_signal); P(pthread_cond_broadcast);
