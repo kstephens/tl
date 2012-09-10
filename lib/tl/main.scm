@@ -13,6 +13,6 @@
         (vector-set! *args* i (tl_s+ (tl_get argv (+ i 1))))
         (fill-args (+ i 1)))))
   (fill-args 0)
-  (display "Ready!")(newline)
+  (display "TL: Ready!")(newline)
   (let ((in tl_stdin) (output tl_stdout) (prompt '()))
     (repl %env in output prompt)))

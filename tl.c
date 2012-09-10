@@ -1090,6 +1090,17 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
   tl tl_word_##N(tl x) { return (tl) (tlw) (O ((tlw) x)); }
 #include "cops.h"
 
+tl tl_load(tl env, const char *name)
+{
+  FILE *fp;
+  if ( (fp = fopen(name, "r")) ) {
+    tl result = tl_repl(env, fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0); 
+    fclose(fp);
+    return result;
+  } else
+    return tl_error("Cannot load %s", tl_rt, name);
+}
+
 tl tl_stdenv(tl env)
 {
   tl _v;
@@ -1113,7 +1124,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_eval_trace_);
+  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load); P(tl_eval_trace_);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
@@ -1156,15 +1167,9 @@ tl tl_stdenv(tl env)
 #define ROP(O,N) BOP(O,N)
 #include "cops.h"
   {
-    FILE *fp;
     const char *boot_scm = getenv("TL_BOOT_SCM");
     boot_scm = boot_scm && *boot_scm ? boot_scm : "lib/tl/boot.scm";
-    if ( (fp = fopen(boot_scm, "r")) ) {
-      tl_repl(env, fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0); 
-      fclose(fp);
-    } else {
-      tl_error("FATAL: Cannot open boot.scm: %s", tl_rt, boot_scm);
-    }
+    tl_load(env, boot_scm);
   }
   return env;
 }
