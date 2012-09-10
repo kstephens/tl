@@ -426,11 +426,7 @@
         (fill-args (+ i 1)))))
   (fill-args 0)
   (display "Ready!")(newline)
-  (let ((output #f) (prompt #f))
-    (if (tl_b (isatty (tl_I 1)))
-      (begin
-        (set! prompt tl_stdout)
-        (set! output tl_stdout)))
-    (repl %env tl_stdin output prompt)))
+  (let ((in tl_stdin) (output tl_stdout) (prompt '()))
+    (repl %env in output prompt)))
 
 'ok

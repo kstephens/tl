@@ -10,7 +10,7 @@
             (cons #f result)
             (begin
               (set! result (eval expr env))
-              (if out
+              (if (and out (not (eq? %unspec result)))
                 (begin (write result out)(newline out)))
               (cons #t result)))))))
   (define (read-eval-print-loop last-result)
@@ -20,7 +20,9 @@
         last-result)))
   (if (null? in)        (set! in tl_stdin))
   (if (null? out)       (set! out tl_stdout))
-  (if (null? prompt)    (set! prompt tl_stdout))
-  (if (tl_b (isatty 0)) (set! prompt tl_stdout))
+  (if (and (null? prompt)
+	   (tl_b (isatty (fileno (->FILE* in)))))
+    (set! prompt out))
+  (if (null? prompt) (set! prompt #f))
   (read-eval-print-loop #f))
 
