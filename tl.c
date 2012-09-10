@@ -784,7 +784,6 @@ tl tl_eval(tl exp, tl env)
   val = car(args); // = ((formals . body) . env) or #<prim>
   args = cdr(args);
   L(apply);
-  if ( val == tl_nil ) return tl_error("Cannot apply nil", val);
   if ( tl_type(val) == tl_t_prim ) G(callprim);
   // tl_eval_debug = 1;
 
