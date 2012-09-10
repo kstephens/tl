@@ -6,7 +6,7 @@
         (let ((expr #f) (result #f))
           (if prompt (display "> " prompt))
           (set! expr (read in))
-          (if (eq? expr %eos)
+          (if (eof-object? expr)
             (cons #f result)
             (begin
               (set! result (eval expr env))
