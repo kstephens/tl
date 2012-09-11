@@ -1,3 +1,5 @@
+(define genusym gensym)
+
 (define (T-k expr k)
   (cond
     ((and (pair? expr) (eq? 'lambda (car expr)))
@@ -10,7 +12,7 @@
         (T-k f (lambda ($f)
                  (T-K e (lambda ($e)
                           `(,$f ,$e ,cont))))))))
-    ))
+    )
        
 (define (T-c expr c)
   (cond
