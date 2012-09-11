@@ -9,7 +9,7 @@
 
 (define %error-catch #f)
 (define *last-error* #f)
-(set! tl__error 
+(set! tl__error
   (lambda (msg obj)
     (set! obj (cons msg obj))
     (set! *last-error* obj)
