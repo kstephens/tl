@@ -14,8 +14,6 @@
 (define %word-size tl_tlw_sizeof)
 (define (environment-vars x) (car (car x)))
 (define %eos eos)
-(define (eof-object) %eos)
-(define (eof-object? x) (eq? x %eos))
 (define eq? tl_eqQ)
 (define eqv? tl_eqvQ)
 (define car tl_car)
@@ -106,6 +104,7 @@
 (set! tl_stdout (%make-port tl_stdout 'tl_stdout))
 (set! tl_stderr (%make-port tl_stderr 'tl_stderr))
 
+(define <null> (tl_type '()))
 (define (null? x) (eq? x '()))
 
 (define (display obj . port)
@@ -205,7 +204,6 @@
     (string-equal? (substring a (- (string-length a) (string-length b)) (string-length b)) b)
     #f))
 
-(define <null> (tl_type '()))
 (define <pair> (tl_type '(a b)))
 (define (pair? x) (eq? (tl_type x) <pair>))
 (define (list? x) (if (null? x) #t (pair? x)))
@@ -391,10 +389,9 @@
       (tl_define name value %env)
       (f name value))))
 
-(define-constant %unspec %unspec)
-(define-constant %NULL %NULL)
-(define-constant %word-size %word-size)
-
+(load "tl/constants")
+(define (eof-object) %eos)
+(define (eof-object? x) (eq? x %eos))
 (load "tl/cxr")
 (load "tl/quasiquote")
 (define-macro quasiquote &quasiquote)
