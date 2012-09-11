@@ -1201,6 +1201,7 @@ int main(int argc, char **argv)
 #define T tl_t
 #define F tl_f
 #define E tl_eos
+#define BRACKET_LISTS 1
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_c(I)
 #define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
@@ -1209,7 +1210,7 @@ int main(int argc, char **argv)
 #define SYMBOL(N) tl_s_##N
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
-#define ERROR(msg,args...) tl_error(msg, tl_f, #args)
+#define ERROR(msg,args...) tl_error(msg, tl_s(read), #args)
 #define MALLOC(S) tl_malloc(S)
 #define REALLOC(P,S) tl_realloc(P,S)
 #include "lispread.c"
