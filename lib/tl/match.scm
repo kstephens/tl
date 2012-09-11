@@ -9,7 +9,7 @@
         (match-cases-list val (cdr cases) f))))
   (define (match-case val case f)
     (if (not (pair? case)) (error "case not a pair." case))
-    (match-datum (car case) val `(begin ,@(cdr case)) f))
+    (match-datum (car case) val (list 'begin (cdr case)) f))
   (define (match-datum pat val t f)
     (if (quasiquote? pat)
       (match-sequence (cadr pat) val t f)
@@ -57,11 +57,11 @@
       (eq? '? (car pat))
       (pair? (cdr pat))))
   (define (unquote-splicing? pat)
-      (and 
-        (pair? pat)
-        (eq? 'unquote-splicing (car pat))
-        (pair? (cdr pat))
-        (symbol? (cadr pat))))
+    (and
+      (pair? pat)
+      (eq? 'unquote-splicing (car pat))
+      (pair? (cdr pat))
+      (symbol? (cadr pat))))
   (define (quasiquote? pat)
     (and 
       (pair? pat)
