@@ -372,6 +372,7 @@ tl tl_make_symbol(void *name)
 tl tl_m_symbol(void *x)
 {
   tl l = car(tl_symbol_list);
+  if ( ! strcmp(x, "\xCE\xBB") ) x = "lambda"; // UTF8 Lower-Case Lambda: λ
   while ( l != tl_nil ) {
     tl *s = car(l);
     if ( strcmp(tl_S(s[0]), x) == 0 )
