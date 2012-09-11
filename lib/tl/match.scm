@@ -31,16 +31,18 @@
   (define (match-item pat val t f)
     (cond
       ((unquote? pat) (match-var      (cadr pat)   val t f))
+      ((predicate? pat) (match-if (list (cadr pat) val) t f))
       ((pair? pat)    (match-sequence pat          val t f))
       (else           (match-atom     (quote! pat) val t f))))
   (define (match-var var val t f)
     `(let ((,var ,val))
        ,t))
   (define (match-atom pat val t f)
+    (match-if (list 'equal? pat val) t f))
+  (define (match-if test t f)
     (if (and (eq? t #t) (eq? f #f))
-      `(equal? ,pat ,val)
-      `(if (equal? ,pat ,val)
-         ,t ,f)))
+      test
+      (list 'if test t f)))
   (define (quote! x)
     (list 'quote x))
   (define (unquote? pat)
@@ -49,6 +51,11 @@
       (eq? 'unquote (car pat))
       (pair? (cdr pat))
       (symbol? (cadr pat))))
+  (define (predicate? pat)
+    (and
+      (pair? pat)
+      (eq? '? (car pat))
+      (pair? (cdr pat))))
   (define (unquote-splicing? pat)
       (and 
         (pair? pat)
@@ -59,7 +66,7 @@
     (and 
       (pair? pat)
       (eq? 'quasiquote (car pat))))
-  (match-cases val cases #t)
+  (match-cases val cases #f)
 )
 (define-macro (match val . cases)
   (match-expr val cases))

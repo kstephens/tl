@@ -1,5 +1,7 @@
 (load "tl/match")
 (let ()
+  (write (match-expr 'x '( ((? symbol?) (write :is-a-symbol!)))))(display)
+
   (define (t1 d)
     (write (list 't1 d))(display " => ")
     (match d
@@ -23,6 +25,8 @@
       (`(1 (2 3) ,c)    (write (list :matched! :c c)))
       (`(1 ,b ,c)       (write (list :matched! :b b :c c)))
       (`(2 ,@r)         (write (list :matched! :r r)))
+      ((? string?)      (write (list :string?)))
+      ((? symbol?)      (write (list :symbol?)))
       )
     (newline)
     )
@@ -35,5 +39,7 @@
   (t2 '(1 (2 3) "foo"))
   (t2 '(1 (4 3) 4))
   (t2 '(2 3 4 5))
+  (t2 "foo")
+  (t2 'a-symbol)
 )
 'ok
