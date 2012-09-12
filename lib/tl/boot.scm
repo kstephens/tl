@@ -394,7 +394,7 @@
 (define (eof-object? x) (eq? x %eos))
 (load "tl/cxr")
 (load "tl/quasiquote")
-(define-macro quasiquote &quasiquote)
+(define-macro quasiquote %quasiquote)
 (load "tl/r5rs-syntax")
 (load "tl/catch")
 (load "tl/error")
