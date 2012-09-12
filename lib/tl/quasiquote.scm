@@ -1,5 +1,5 @@
 (define *quasiquote-debug* #f)
-(define &quasiquote
+(define %quasiquote
   (let ((qq-list #f) (qq-element #f) (qq-object #f))
     (set! qq-list (lambda (l)
                     (if (pair? l)
