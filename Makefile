@@ -70,7 +70,7 @@ all : $(EARLY_TARGETS) $(tl)
 v :
 	echo "$(v)=$($v)"
 
-$(tl) : tl.c lib/tl/*.scm t/*.scm
+$(tl) : tl.c lispread.c lib/tl/*.scm t/*.scm
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
 $(tl)-no-gc : tl.c Makefile
