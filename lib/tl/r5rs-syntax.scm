@@ -4,70 +4,86 @@
     (if (null? (cdr body)) (car body)
       `(let () ,@body))))
 |#
-;; requires (gensym BASENAME)
+
+;; requires (gensym BASENAME), %unspec
 (define-macro (define n . b)
   (if (pair? n)
     `(define ,(car n) (lambda ,(cdr n) ,@b))
     `(define ,n ,@b)))
 
-(define-macro (or . cases)
-  (if (null? cases) #f
-    (if (null? (cdr cases)) (car cases)
-      (let ((tmp (gensym 'or)))
-        `(let ((,tmp #f))
-           (&or-tmp ,tmp ,@cases))))))
-(define-macro (&or-tmp tmp . cases)
-  (if (null? cases) #f
-    `(begin
-       (set! ,tmp ,(car cases))
-       (if ,tmp ,tmp (&or-tmp ,tmp ,@(cdr cases))))))
-
-(define-macro (and . cases)
-  (if (null? cases) #t
-    (if (null? (cdr cases)) (car cases)
-      (let ((tmp (gensym 'and)))
-        `(let ((,tmp ,(car cases)))
-           (if (not ,tmp) ,tmp (and ,@(cdr cases))))))))
-#|
-        `(let ((,tmp #f))
-           (&and-tmp ,tmp ,@cases))))))
-|#
-(define-macro (&and-tmp tmp . cases)
-  (if (null? cases) #f
-    `(begin
-       (set! ,tmp ,(car cases))
-       (if (not ,tmp) ,tmp (&and-tmp ,tmp ,@(cdr cases))))))
-
-(define-macro (cond case . cases)
-  (if (null? cases)
-    `(begin ,@(cdr case))
-    `(if ,(car case) 
-       (begin ,@(cdr case))
-       (cond ,@cases))))
-
-(define-macro (let* bindings . body)
-  (cond
-    ((null? bindings) `(begin ,@body))
-    ((pair? bindings)
-      `(let (,(car bindings)) (let* (,@(cdr bindings)) ,@body)))))
-
-(define-macro (macro-bind bindings . body)
-  (let ((anon-bindings (map (lambda (b) (cons (gensym 'macro-bind) b)) bindings)))
-   `(let ,(map (lambda (b) `(,(cadr b) ,(car b))) anon-bindings)
-     (let ,(map (lambda (b) `(,(car b) ,(caddr b))) anon-bindings)
-       ,@body))))
-
 (define-macro (letrec bindings . body)
-  `(let ,(map (lambda (b) `(,(car b) %unspec)) bindings)
+  `(let ,(map (lambda (b) `(,(car b) ',%unspec)) bindings)
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
      ,@body))
+
+(define-macro (cond . cases)
+  (letrec ((%cond 
+             (lambda (cases)
+               (if (null? cases) ',%unspec
+                 (let ((case (car cases)))
+                   (if (eq? 'else (car case))
+                     `(begin ,@(cdr case))
+                     `(if ,(car case)
+                        (begin ,@(cdr case))
+                        ,(%cond (cdr cases)))))))))
+    (%cond cases)))
+
+(define-macro (let* bindings . body)
+  (letrec ((%let* 
+             (lambda (bindings body)
+               (cond
+                 ((null? bindings) `(begin ,@body))
+                 ((pair? bindings)
+                   `(let (,(car bindings)) ,(%let* (cdr bindings) body)))
+                 (else (error "let*: invalid bindings" bindings))))))
+    (%let* bindings body)))
+
+(define-macro (or . cases)
+  (letrec ((%or
+             (lambda (tmp cases))
+             (if (null? cases) #f
+               `(begin
+                  (set! ,tmp ,(car cases))
+                  (if ,tmp ,tmp ,(%or tmp (cdr cases)))))))
+    (cond
+      ((null? cases)       #f)
+      ((null? (cdr cases)) (car cases))
+      (else 
+        (let ((tmp (gensym 'or-)))
+          `(let ((,tmp #f))
+             ,(%or tmp cases)))))))
+
+(define-macro (and . cases)
+  (let ((%and #f))
+    (set! %and
+      (lambda (cases)
+        (cond
+          ((null? cases)       #t)
+          ((null? (cdr cases)) (car cases))
+          (else
+            `(if ,(car cases) ,(%and (cdr cases)) #f)))))
+    (%and cases)))
+
+(define-macro (case val-expr . cases)
+  (letrec ((val (gensym 'case))
+	   (%case 
+	     (lambda (cases)
+	       (if (null? cases) `',%unspec
+		 (let ((c (car cases)))
+		   (if (eq? (car c) 'else)
+		     `(begin ,@(cdr c))
+		     `(if (or ,@(map (lambda (e) `(eqv? ',e ,val)) (car c)))
+			(begin ,@(cdr c))
+			,(%case (cdr cases)))))))))
+    `(let ((,val ,val-expr))
+       ,(%case cases))))
 
 (define (%body-defines b c)
   (if (null? b) c
     (let ((stmt (car b)))
       (if (and (pair? stmt) (eq? 'define (car stmt)))
         (let ((var (cadr stmt)) (val (caddr stmt)))
-          (set-car! c (cons `(,var %unspec) (car c)))
+          (set-car! c (cons `(,var ',%unspec) (car c)))
           (set! stmt `(set! ,var ,val))))
       (set-cdr! c (cons stmt (cdr c)))
       (%body-defines (cdr b) c))))
@@ -79,17 +95,10 @@
       (cons 'begin b)
       `(begin (let ,(reverse defines) ,@(reverse stmts))))))
 
-(define-macro (case val-expr . cases)
-  (letrec ((val (gensym 'case))
-	   (%case 
-	     (lambda (cases)
-	       (if (null? cases) ''() ;; undefined
-		 (let ((c (car cases)))
-		   (if (eq? (car c) 'else)
-		     `(begin ,@(cdr c))
-		     `(if (or ,@(map (lambda (e) `(eqv? ',e ,val)) (car c)))
-			(begin ,@(cdr c))
-			,(%case (cdr cases)))))))))
-    `(let ((,val ,val-expr))
-       ,(%case cases))))
+;; MISC.
+(define-macro (macro-bind bindings . body)
+  (let ((anon-bindings (map (lambda (b) (cons (gensym 'macro-bind) b)) bindings)))
+   `(let ,(map (lambda (b) `(,(cadr b) ,(car b))) anon-bindings)
+     (let ,(map (lambda (b) `(,(car b) ,(caddr b))) anon-bindings)
+       ,@body))))
 
