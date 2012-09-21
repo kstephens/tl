@@ -26,9 +26,9 @@
     (let ((constraint (car constraints)))
       `(begin 
          (set! ,arg (car ,args))
-         (if (not ,(%check-arg-expr constraint arg))
-           (error "argument error: " '(:in ,f :parameter ,param :constraint ,constraint))
-           ,(%check-args-list-1 f (cdr constraints) (list 'cdr args) arg (+ param 1)))))))
+         (if ,(%check-arg-expr constraint arg)
+           ,(%check-args-list-1 f (cdr constraints) (list 'cdr args) arg (+ param 1))
+           (error "argument error: " '(:in ,f :parameter ,param :constraint ,constraint)))))))
 (define (%check-arg-expr constraint arg)
   (cond
     ((null? constraint)        #t)
