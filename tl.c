@@ -114,6 +114,7 @@ tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
 tl tl_cons(tl a, tl d);
 
+char *tl_progpath, *tl_progname, *tl_progdir;
 tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
@@ -1094,6 +1095,11 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 tl tl_load(tl env, const char *name)
 {
   FILE *fp;
+  char buf[1024];
+  if ( ! strchr(name, '/') ) {
+    snprintf(buf, sizeof(buf), "%s/../bin/lib/%s", tl_progdir, name);
+    name = buf;
+  }
   if ( (fp = fopen(name, "r")) ) {
     tl result = tl_repl(env, fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0); 
     fclose(fp);
@@ -1106,13 +1112,15 @@ tl tl_stdenv(tl env)
 {
   tl _v;
   tl_env = env = tl_let(tl__s("tl_rt"), tl_rt, env);
-#define Ds(N,V) tl_define_here(tl__s(N), _v = (V), env)
-#define D(N,V) tl_define_here(tl_s(N), _v = (V), env)
+#define Ds(N,V) tl_define_here(tl__s(N), _v = (tl) (V), env)
+#define D(N,V) tl_define_here(tl_s(N), _v = (tl) (V), env)
+#define DD(N) D(N,N)
   Ds("tl_v", tl_v);
 #define V(N) D(N,tl_##N)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
-  D(tl_stdin,tl_stdin); D(tl_stdout,tl_stdout); D(tl_stderr,tl_stderr);
+  DD(tl_stdin); DD(tl_stdout); DD(tl_stderr);
+  DD(tl_progpath); DD(tl_progname); DD(tl_progdir);
 #define Pf(N, F) D(N, tl_m_prim((F), #N))
 #define P(N) Pf(N, N)
   P(tl_allocate);
@@ -1169,7 +1177,6 @@ tl tl_stdenv(tl env)
 #include "cops.h"
   {
     const char *boot_scm = getenv("TL_BOOT_SCM");
-    boot_scm = boot_scm && *boot_scm ? boot_scm : "lib/tl/boot.scm";
     tl_load(env, boot_scm);
   }
   return env;
@@ -1178,6 +1185,17 @@ tl tl_stdenv(tl env)
 int main(int argc, char **argv)
 {
   FILE *out = stdout;
+  {
+    char *r;
+    tl_progpath = tl_progname = argv[0];
+    if ( (r = strrchr(tl_progname, '/')) ) {
+      tl_progdir = malloc(r - tl_progname + 1);
+      strncpy(tl_progdir, tl_progname, r - tl_progname);
+      tl_progname = r + 1;
+    } else {
+      tl_progdir = ".";
+    }
+  }
   tl_init();
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
