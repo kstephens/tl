@@ -348,9 +348,36 @@
         path-name
         (locate-file-in-path name (cdr path-list))))))
 
+(define (string-index-right str c . start)
+  (define (string-scan-right i)
+    (if (< i 0) #f
+      (if (eqv? (string-ref str i) c) i
+        (string-scan-right (- i 1)))))
+  (string-scan-right (if (pair? start) (car start) (- (string-length str) 1))))
+
+(define (string-index-left str c . start)
+  (define (string-scan-left i)
+    (if (>= i (string-length str)) #f
+      (if (eqv? (string-ref str i) c) i
+        (string-scan-left (+ i 1)))))
+  (string-scan-left (if (pair> start) (car start) 0)))
+
+(define (path-directory path)
+  (let ((last-slash (string-index-right path #\/)))
+    (if last-slash
+      (substring path 0 last-slash)
+      ".")))
+(define (path-name path)
+  (let ((last-slash (string-index-right path #\/)))
+    (if last-slash
+      (begin
+        (set! last-slash (+ last-slash 1))
+        (substring path last-slash (- (string-length path) 1)))
+      path)))
+
 (define *load-verbose* (getenv "TL_LOAD_VERBOSE"))
 (define *load-debug* (getenv "TL_LOAD_DEBUG"))
-(define *load-path* (list "." "lib"))
+(define *load-path* (list "." (string-append tl_progdir "/../lib")))
 (define *load-loaded* '())
 (define (load-repl env in out prompt)
   (tl_repl env (->FILE* in)
@@ -368,7 +395,7 @@
            (result #f))
       (if (not in) (error "cannot open" pathname)
         (begin
-          (if *load-verbose* (begin 
+          (if *load-verbose* (begin
                                (display "load: ")(display name)
                                (display " => ")(display pathname)(newline)))
           (set! result
