@@ -318,7 +318,9 @@
       #f)))
 
 ;; ## ;; logical EOF
-
+(set! tl_progpath (tl_s+ tl_progpath))
+(set! tl_progdir (tl_s+ tl_progdir))
+(set! tl_progname (tl_s+ tl_progname))
 (define %getenv getenv)
 (define (getenv v)
   (if (symbol? v) (set! v (tl_car v)))
