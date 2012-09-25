@@ -1177,6 +1177,7 @@ tl tl_stdenv(tl env)
 #include "cops.h"
   {
     const char *boot_scm = getenv("TL_BOOT_SCM");
+    if ( ! (boot_scm && *boot_scm ) ) boot_scm = "tl/boot.scm";
     tl_load(env, boot_scm);
   }
   return env;
