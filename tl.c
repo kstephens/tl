@@ -280,10 +280,14 @@ tl tl_type(tl o)
 }
 
 //#define tl_type(o)_tl_type(o)
-tl tl_m_type(tl x)
+tl tl_m_type(tl name)
 {
   tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
-  *o = x; // name
+  // Note: this layout is the same as an environment.
+  o[0] = tl_nil; // car: (names . values )
+  o[1] = tl_nil; // cdr: parent
+  o[4] = name;
+#define tl_type_name(x) ((char*) tl_iv(x, 4))
   return o;
 }
 
@@ -303,7 +307,7 @@ tl tl__error_abort(tl msg, tl obj)
 tl tl__error(tl msg, tl obj)
 {
   fprintf(stderr, "\nERROR: %s", tl_iv(msg, 0));
-  fprintf(stderr, " : type:%s object-word:@%p object:", (char*) tl_iv(tl_type(obj), 0), obj);
+  fprintf(stderr, " : type:%s object-word:@%p object:", tl_type_name(tl_type(obj)), obj);
   tl_write(obj, stderr);
   fprintf(stderr, "\n");
   return tl__error_abort(msg, obj);
@@ -436,7 +440,7 @@ tl tl_port__read(tl p, tl s, tl l)
 
 tl tl_object_write(tl o, tl p, tl op)
 {
-  fprintf(FP, "#<%s @%p>", (char*) tl_iv(tl_type(o), 0), o);
+  fprintf(FP, "#<%s @%p>", tl_type_name(tl_type(o)), o);
   return p;
 }
 
@@ -469,19 +473,19 @@ tl tl_symbol_write(tl *o, tl p)
 
 tl tl_type_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s @%p %s>", (char*) tl_iv(tl_type(o), 0), o, (char*) tl_iv(o, 0));
+  fprintf(FP, "#<%s @%p %s>", tl_type_name(tl_type(o)), o, tl_type_name(o));
   return p;
 }
 
 tl tl_prim_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s @%p %s @%p>", (char*) tl_iv(tl_type(o), 0), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
+  fprintf(FP, "#<%s @%p %s @%p>", tl_type_name(o), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
   return p;
 }
 
 tl tl_closure_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s @%p ", (char*) tl_iv(tl_type(o), 0), o);
+  fprintf(FP, "#<%s @%p ", tl_type_name(o), o);
   tl_write(car(car(o)), p);
   fprintf(FP, " >");
   return p;
