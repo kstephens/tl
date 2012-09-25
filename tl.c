@@ -176,7 +176,8 @@ tl tl_m_runtime(tl parent)
 #define tl_s__args tl_(60)
 #define tl_s__debug tl_(61)
 #define tl_s_list_TO_vector tl_(62)
-#define tl_s_tl__error tl_(63)
+#define tl_s_tl_string_TO_number tl_(63)
+#define tl_s_tl__error tl_(64)
 
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
@@ -239,6 +240,7 @@ tl tl_m_runtime(tl parent)
   tl_s__args = tl_m_symbol("&args");
   tl_s__debug = tl_m_symbol("&debug");
   tl_s_list_TO_vector = tl_m_symbol("list->vector");
+  tl_s_tl_string_TO_number = tl_m_symbol("tl_string_TO_number");
   tl_s_tl__error = tl_m_symbol("tl__error");
 
   tl_v = tl_allocate(tl_t_void, 0);
@@ -393,11 +395,11 @@ tl tl_symbols() { return car(tl_symbol_list); }
 #define _tl_s(N)tl_m_symbol(#N)
 #define tl_s(N)_tl_s(N)
 
-tl tl_string_TO_number(tl o, int radix)
+tl tl_string_TO_number(tl o, tl radix_)
 {
-  long long i = 0; char *endptr = 0;
+  long long i = 0; char *endptr = 0; int radix = tl_I(radix_);
   const char *str = tl_S(o), *strend = strchr(str, '\0');
-  if ( radix < 1 ) radix = 10;
+  if ( radix < 2 ) radix = 10;
   i = strtoll(str, &endptr, radix);
   if ( endptr == strend ) {
     tl o = tl_i(i);
@@ -1227,7 +1229,7 @@ int main(int argc, char **argv)
 #define STRING(S,L) tl_m_string((S), (L))
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
-#define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
+#define STRING_2_NUMBER(s, radix) tl_call(tl_s_tl_string_TO_number, 2, s, tl_i(radix))
 #define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
 #define ERROR(msg,args...) tl_error(msg, tl_s(read), #args)
 #define MALLOC(S) tl_malloc(S)
