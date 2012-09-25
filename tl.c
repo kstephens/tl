@@ -1096,8 +1096,8 @@ tl tl_load(tl env, const char *name)
 {
   FILE *fp;
   char buf[1024];
-  if ( ! strchr(name, '/') ) {
-    snprintf(buf, sizeof(buf), "%s/../bin/lib/%s", tl_progdir, name);
+  if ( name[0] != '/' ) {
+    snprintf(buf, sizeof(buf), "%s/../lib/%s", tl_progdir, name);
     name = buf;
   }
   if ( (fp = fopen(name, "r")) ) {
