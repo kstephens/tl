@@ -164,8 +164,8 @@
     (tl_set o 1 (tl_I size))
     o))
 (define tl_S %string-ptr)
-(define (tl_s ptr) (%make-string ptr (strlen ptr)))
-(define (tl_s+ ptr) (%make-string (GC_strdup ptr) (strlen ptr)))
+(define (tl_s ptr) (%make-string ptr (tl_i (strlen ptr))))
+(define (tl_s+ ptr) (%make-string (GC_strdup ptr) (tl_i (strlen ptr))))
 (define (%string-len s) (tl_get s 1))
 (define (%string-ref s i) (%+ (%string-ptr s) (tl_I i)))
 (define (%string-set ptr strs)
@@ -348,19 +348,19 @@
         path-name
         (locate-file-in-path name (cdr path-list))))))
 
+(define (string-scan-right str c i)
+  (if (< i 0) #f
+    (if (eqv? (string-ref str i) c) i
+      (string-scan-right str c (- i 1)))))
 (define (string-index-right str c . start)
-  (define (string-scan-right i)
-    (if (< i 0) #f
-      (if (eqv? (string-ref str i) c) i
-        (string-scan-right (- i 1)))))
-  (string-scan-right (if (pair? start) (car start) (- (string-length str) 1))))
+  (string-scan-right str c (if (pair? start) (car start) (- (string-length str) 1))))
 
+(define (string-scan-left str c i)
+  (if (>= i (string-length str)) #f
+    (if (eqv? (string-ref str i) c) i
+      (string-scan-left str c (+ i 1)))))
 (define (string-index-left str c . start)
-  (define (string-scan-left i)
-    (if (>= i (string-length str)) #f
-      (if (eqv? (string-ref str i) c) i
-        (string-scan-left (+ i 1)))))
-  (string-scan-left (if (pair> start) (car start) 0)))
+  (string-scan-left str c (if (pair> start) (car start) 0)))
 
 (define (path-directory path)
   (let ((last-slash (string-index-right path #\/)))
