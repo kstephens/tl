@@ -72,6 +72,7 @@ v :
 
 $(tl) : tl.c lispread.c lib/tl/*.scm t/*.scm
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
+	cp -p $@ bin/$@
 
 $(tl)-no-gc : tl.c Makefile
 	$(MAKE) NO_GC=1
