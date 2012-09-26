@@ -2,6 +2,9 @@ bdwgc
 gc
 libatomic_ops
 ./tl
+./tl-*
+bin/tl
+bin/tl-*
 *.dSYM
 *.o
 *.a
