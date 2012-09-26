@@ -1,0 +1,43 @@
+
+(define (%type-make name . supertype)
+  (let ((t (make-type name)))
+    (tl_set_car t (cons '() '()))
+    (tl_set_cdr t (if (null? supertype) <object> (car supertype)))
+    t))
+(define (type-selectors-methods t)   (tl_car t))
+(define (type-supertype t)      (tl_cdr t))
+(define (type-supertypes t)
+  (if (null? t) t
+    (cons t (type-supertypes (type-supertype t)))))
+(define (type-is-a? t st)
+  (cond
+    ((null? t)   #f)
+    ((eq? t st)  #t)
+    (else        (type-is-a? (type-supertype t) st))))
+(define (type-set-supertype! t st)
+  (if (null? (tl_car t))
+    (tl_set_car t (cons '() '())))
+  (tl_set_cdr t st)
+  t)
+(define (type-add-method! t selector method)
+  (let ((x (type-selectors-methods t)))
+    (set-car! x (cons selector (car x)))
+    (set-cdr! x (cons method (cdr x)))
+    selector))
+(define-macro (define-type name . args)
+  (let ((t (gensym)))
+    `(define ,name
+       (let ((,t (%type-make ,(symbol->string name) ,@args)))
+         ,t
+         )
+       )))
+(define-type <object> '())
+(type-set-supertype! <type> <object>) ;; primitive
+(define-type <number>)
+(define-type <complex> <number>)
+(define-type <float> <complex>)
+(define-type <flonum> <float>)
+(define-type <rational> <complex>)
+(define-type <integer> <rational>)
+(type-set-supertype! <fixnum> <integer>) ;; primitve
+(define-type <bignum> <integer>)
