@@ -411,7 +411,7 @@
 (load "tl/map")
 (load "tl/macro-expander")
 (define (tl_macro_expand exp env)
-  (macro-environment-expand *top-level-macro-environment* exp))
+  (macro-environment-expand-top-level *top-level-macro-environment* exp))
 (let ((f %define-constant))
   (set! %define-constant
     (lambda (name value)

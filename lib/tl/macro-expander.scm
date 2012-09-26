@@ -133,7 +133,14 @@
             ))
         (macro-environment-expand self e-next))
       )))
-
+(define *macro-expand-verbose* #f)
+(define (macro-environment-expand-top-level self e)
+  (let ((e-prime (macro-environment-expand self e)))
+    (if *macro-expand-verbose*
+      (begin
+        (display " expr   = ")(write e)(newline)
+        (display " result = ")(write e-prime)(newline)))
+    e-prime))
 (define *top-level-macro-environment* (macro-environment-new))
 (define (&macro-environment) *top-level-macro-environment*)
 (define (%define-macro name transformer)
