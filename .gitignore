@@ -1,12 +1,12 @@
+*~
 bdwgc
 gc
 libatomic_ops
-./tl
-./tl-*
+tl
+tl-*
 bin/tl
 bin/tl-*
 *.dSYM
 *.o
 *.a
 tl.s
-
