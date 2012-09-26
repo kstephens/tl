@@ -283,9 +283,8 @@ tl tl_type(tl o)
 tl tl_m_type(tl name)
 {
   tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
-  // Note: this layout is the same as an environment.
-  o[0] = tl_nil; // car: (names . values )
-  o[1] = tl_nil; // cdr: parent
+  // Note: this layout is the same as an environment cons.
+  o[0] = o[1] = tl_nil; // ((names . values ) . parent)
   o[4] = name;
 #define tl_type_name(x) ((char*) tl_iv(x, 4))
   return o;

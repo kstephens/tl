@@ -72,7 +72,6 @@ v :
 
 $(tl) : tl.c lispread.c lib/tl/*.scm t/*.scm
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
-	cp -p $@ bin/$@
 
 $(tl)-no-gc : tl.c Makefile
 	$(MAKE) NO_GC=1
@@ -80,17 +79,20 @@ $(tl)-no-gc : tl.c Makefile
 $(tl)-prof : tl.c Makefile
 	$(MAKE) WITH_PROF=1
 
+bin/$(tl) : $(tl)
+	cp -p $@ $<
+
 tl.s : tl.c tool/asm-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | tool/asm-source > $@ 
 
 test-forever :
 	TL_BOOT_DEBUG=1 tool/test-forever './tl < t/file-test.scm'
 
-run : tl
-	rlwrap ./tl
+run : bin/$(tl)
+	bin/tlsh
 
-debug : tl
-	gdb --args tl
+debug : bin/$(tl)
+	gdb --args bin/$(tl)
 
 profile : tl-prof
 	./tl-prof < t/test.scm
