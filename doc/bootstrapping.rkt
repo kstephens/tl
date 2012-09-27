@@ -41,7 +41,11 @@
   (let* ((left "Label:")
          (elems
           `( 
-              ,@(map (lambda (r) `(,(t left) ,@(map (lambda (x) (inset (tt x) 0)) r))) labels)
+              ,@(map (lambda (r)
+                       (let ((h left))
+                         (set! left "")
+                         `(,(t left) ,@(map (lambda (x) (inset (tt x) 0)) r)))
+                       ) labels)
               (,(t "Offset:")
                 ,@(let ((i -2))
                   (map (lambda (x) (set! i (+ i 1)) (inset (tt (number->string i)) 0)) (car labels)))
@@ -60,14 +64,11 @@
 
 ;;;;;
 
-;;;;
-
 (slide
  #:title "Bootstrapping A Programming Language"
   (blank 50)
  (vc-append 0
             (t "Kurt Stephens")
-            (colorize (bt "Enova Finanical") "red")
             (colorize (t "kurtstephens.com") "blue")))
 
 (slide
@@ -165,7 +166,7 @@
  'next
  (item "Is available as:")
  'next
- (lisp-code "(tl_car v)")
+ (lisp-code "(tl_car pair)")
  'next
  (item "And temporarily reused as:")
  (lisp-code "(define car tl_car)")
@@ -366,16 +367,16 @@ tl tl_cons(tl car, tl_cdr) {
 
 (slide
  #:title "Layer Four: Define Additional Data Types."
- (lisp-code "(define <vector> (make-type <object>))")
+ (item "Vectors:")
  (lisp-code "
+(define <vector> (make-type <object>))
 (define (make-vector size)
   (let ((vector (tl_allocate <vector>
                              (tl_I (* %word-size (+ size 1))))))
     (tl_set vector 0 size)
     vector
-    ))")
- (lisp-code "(define (vector-ref v i) (tl_get v (+ i 1)))")
- (lisp-code "
+    ))
+(define (vector-ref v i) (tl_get v (+ i 1)))
 (add-type-checking (make-vector non-negative-fixnum?))
 (add-type-checking (vector-ref vector? non-negative-fixnum?))
 ")
