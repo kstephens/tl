@@ -624,13 +624,6 @@ tl tl_setE(tl var, tl val, tl env)
   return car(slot) = val;
 }
 
-int tl_eval_debug = 0;
-int tl_eval_trace = 0;
-tl tl_eval_trace_(tl x)
-{
-  tl_eval_trace = tl_I(x); return x;
-}
-
 tl tl_eval(tl exp, tl env)
 {
   tl rt = tl_rt;
@@ -641,66 +634,16 @@ tl tl_eval(tl exp, tl env)
 #define car(o)((o) == tl_nil ? tl_nil : car_(o))
 #define cdr(o)((o) == tl_nil ? tl_nil : cdr_(o))
 #define nil tl_nil
-#ifdef tl_NO_DEBUG
-#define tl_eval_debug 0
-#endif
   tl val = tl_nil, args = tl_nil, clink = tl_nil, argp = tl_nil;
-  if ( tl_eval_debug ) {
-    fprintf(stderr, "\n  tl_eval:");
-    fprintf(stderr, "\n    env => ");
-    tl_write(env, stderr);
-    fprintf(stderr, "\n    exp => ");
-    tl_write(exp, stderr);
-    fprintf(stderr, " type=");
-    tl_write(tl_type(exp), stderr);
-    fprintf(stderr, "\n");
-  }
-#define pop(x)  x = car(clink); clink = cdr(clink)
+#define pop(x)     x = car(clink); clink = cdr(clink)
 #define tpush(t,x) clink = tl_type_cons(t, x, clink)
-#define push(x) clink = cons(x, clink)
-#define L(N) N:                           \
-  if ( tl_eval_debug ) {                  \
-  fprintf(stderr, "    %s:", #N);         \
-  fprintf(stderr, "\n      exp   => ");   \
-  tl_write(exp, stderr);                        \
-  if ( tl_eval_debug > 1 ) {                    \
-    fprintf(stderr, "\n      val   => ");       \
-    tl_write(val, stderr);                      \
-    fprintf(stderr, "\n      args  => ");       \
-    tl_write(args, stderr);                     \
-  }                                             \
-  fprintf(stderr, "\n      clink => ");         \
-  tl_write(clink, stderr);          \
-  fprintf(stderr, "\n      env   => ");   \
-  tl_write(env, stderr);            \
-  fprintf(stderr, "\n");                  \
-  }
-#define G(N) do {                             \
-    if ( tl_eval_debug )                      \
-      fprintf(stderr, "      goto %s\n", #N); \
-      goto N;                                 \
-    } while(0)
+#define push(x)    clink = cons(x, clink)
+#define L(N) N:
+#define G(N) goto N;
 
   L(eval);
-  if ( tl_eval_debug ) {
-    fprintf(stderr, "  eval: %p type=", exp);
-    tl_write(tl_type(exp), stderr);
-    fprintf(stderr, "\n");
-  }
   if ( exp == tl_nil ) G(self);
   val = tl_type(exp);
-  if ( tl_eval_trace ) {
-    if ( val == tl_t_pair ) {
-      fputs("(", stderr);
-      tl_write(car(exp), stderr);
-      if ( car(exp) == tl_s_define ) {
-        fputs(" ", stderr);
-        tl_write(cadr(exp), stderr);
-      }
-      fputs(" ...)", stderr);
-    } else tl_write(exp, stderr);
-    fputs("\n", stderr);
-  }
   if ( val == tl_t_pair ) G(evexp);
   if ( val == tl_t_symbol ) {
     if ( tl_iv(exp, 2) != tl_f ) G(self); // keyword
@@ -743,10 +686,6 @@ tl tl_eval(tl exp, tl env)
   if ( car(exp) == tl_s_setE ) G(setE);
   if ( car(exp) == tl_s_begin ) 
     { exp = cdr(exp); G(evlist); }
-#ifndef tl_NO_DEBUG
-  if ( car(exp) == tl_s__debug )
-    { tl_eval_debug = tl_I(val = cadr(exp)); G(rtn); }
-#endif
 
   L(evcomb);
   args = argp = tl_nil;
@@ -785,12 +724,11 @@ tl tl_eval(tl exp, tl env)
   exp = cons(cons(tl_s_lambda, cons(argp, cdr(exp))), args);
   G(eval);
 
-  L(call); // tl_eval_debug = 1;
+  L(call);
   val = car(args); // = ((formals . body) . env) or #<prim>
   args = cdr(args);
   L(apply);
   if ( tl_type(val) == tl_t_prim ) G(callprim);
-  // tl_eval_debug = 1;
 
   L(callclosure);
   if ( tl_type(val) != tl_t_closure ) tl_error("Cannot apply", val);
@@ -812,11 +750,8 @@ tl tl_eval(tl exp, tl env)
   pop(env);
   G(evlist);
 
-  // L(callprim); tl_eval_debug = 1;
   L(callprim);
   if ( val == tl_p_apply ) {
-    // tl_eval_debug = 1;
-    // pop(val); // args.
     val = car(args);
     args = cadr(args);
     G(apply);
@@ -894,9 +829,7 @@ tl tl_eval(tl exp, tl env)
 
   L(setE_);
   pop(exp); pop(env);
-  // fprintf(stderr, "set! "); tl_write(exp, stderr); fprintf(stderr, " = ");tl_write(val, stderr); fprintf(stderr, "\n");
   tl_setE(exp, val, env);
-  // fprintf(stderr, " result = "); tl_write(tl_value(exp, env), stderr); fprintf(stderr, "\n");
   G(rtn);
 
   L(rtn);
@@ -1136,7 +1069,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load); P(tl_eval_trace_);
+  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
