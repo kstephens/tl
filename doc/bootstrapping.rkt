@@ -302,7 +302,8 @@ tl tl_cons(tl car, tl_cdr) {
  (item "ADT Constructor:")
  (lisp-code "
 (define (cons car cdr)
-  (let ((pair (tl_allocate <pair> (tl_I (* 2 %word-size)))))
+  (let ((pair (tl_allocate <pair>
+                (tl_I (* 2 %word-size)))))
    (tl_set pair 0 car)
    (tl_set pair 1 cdr)
    pair))
@@ -392,8 +393,12 @@ tl tl_cons(tl car, tl_cdr) {
 (slide
  #:title "Layer Z: Compilation."
  (item "Implement compiler for Level One language in Level Z-1 language.")
+ 'next
+ (item "Compiler recognizes Level One primitives.")
+ 'next
  (item "Use compiler to compile itself.")
- (item "Discard Level Zero interpreter.")
+ 'next
+ (item "Discard Level Zero.")
  )
 
 (slide
