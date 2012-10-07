@@ -66,7 +66,7 @@ ifdef v
 all : v
 endif
 
-all : $(EARLY_TARGETS) $(tl)
+all : $(EARLY_TARGETS) bin/$(tl)
 
 v :
 	echo "$(v)=$($v)"
@@ -81,7 +81,7 @@ $(tl)-prof : tl.c Makefile
 	$(MAKE) WITH_PROF=1
 
 bin/$(tl) : $(tl)
-	cp -p $@ $<
+	cp -p $< $@
 
 tl.s : tl.c tool/asm-source
 	$(CC) $(CFLAGS) -Dtl_NO_DEBUG=1 -S -o - tl.c | tool/asm-source > $@ 
