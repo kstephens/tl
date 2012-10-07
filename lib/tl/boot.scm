@@ -42,7 +42,7 @@
   (tl_allocate type (tl_I size)))
 (define (%register-finalizer obj func)
   ;; (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
-  ;; (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
+  (GC_register_finalizer obj (tl_car tl_apply_2) func %NULL %NULL)
   obj)
 (define (tl_gc) (%void (GC_gcollect)))
 

@@ -888,7 +888,7 @@ tl tl_apply(tl f, tl args)
 
 tl tl_apply_2(tl obj, tl closure)
 {
-  fprintf(stderr, "\n  tl_apply_2(%p, %p)\n", obj, closure);
+  // fprintf(stderr, "\n  tl_apply_2(%p, %p)\n", obj, closure);
   tl_apply(closure, cons(obj, tl_nil));
   return tl_v;
 }
