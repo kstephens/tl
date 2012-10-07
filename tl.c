@@ -617,7 +617,7 @@ tl tl_value(tl var, tl env)
 tl tl_setE(tl var, tl val, tl env)
 {
   tl slot;
-  if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
+  if ( tl_type(var) != tl_t_symbol ) return tl_error("set!: not a symbol", var);
   slot = tl_lookup(var, env);
   if ( slot == tl_nil )
     return tl_error("unbound", var);
