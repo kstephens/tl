@@ -23,6 +23,7 @@ void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
 void GC_gcollect() { }
 void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
+int  GC_register_disappearing_link(void **link) { return 0; }
 #define GC_INIT() (void) 0
 #endif
 
@@ -1088,6 +1089,7 @@ tl tl_stdenv(tl env)
   P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
+  P(GC_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(sleep); P(usleep);
