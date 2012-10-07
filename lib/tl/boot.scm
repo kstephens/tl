@@ -44,6 +44,7 @@
   ;; (display "%register-finalizer ")(write obj)(display " ")(write func)(newline)
   ;; (GC_register_finalizer obj tl_apply_2 func %NULL %NULL)
   obj)
+(define (tl_gc) (%void (GC_gcollect)))
 
 (define (error msg . args)
   (tl_error (tl_S msg) args))
