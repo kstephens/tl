@@ -454,7 +454,7 @@ tl tl_object_write(tl o, tl p, tl op)
 
 tl tl_string_display(tl o, tl p)
 {
-  return tl_port__write(p, o, tl_i(strlen(tl_S(o))));
+  return tl_port__write(p, o, tl_i(((tlw*) o)[1]));
 }
 
 tl tl_string_write(tl o, tl p)
