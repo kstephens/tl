@@ -284,8 +284,7 @@ tl tl_type(tl o)
   (                                                                     \
    (o) == 0         ? tl_t_null :                                       \
    ((tlw) (o)) & 1  ? tl_t_fixnum :                                     \
-   (o) <= tl_t      ? tl_t_boolean : tl_t_(o)                           \
-                                                                        )
+   (o) <= tl_t      ? tl_t_boolean : tl_t_(o)                           )
   return _tl_type(o);
 }
 
