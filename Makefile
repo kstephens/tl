@@ -21,7 +21,7 @@ BUILD_GC=0
 endif
 
 ifndef NO_OPTIMIZE
-CFLAGS += $(CC_OPTIMIZE)#
+CFLAGS += $(CC_OPTIMIZE) #
 endif
 
 ifeq "$(UNAME_S)" "Darwin"
@@ -47,9 +47,9 @@ NO_PTHREADS=1
 CFLAGS += -Dtl_NO_GC=1
 else
 ifneq "$(BUILD_GC)" "0"
-EARLY_TARGETS += gc/lib/libgc.a
-CFLAGS += -Igc/include
-LDFLAGS += -Lgc/lib 
+EARLY_TARGETS += local/gc/lib/libgc.a #
+CFLAGS += -Ilocal/gc/include #
+LDFLAGS += -Llocal/gc/lib #
 endif
 LDFLAGS += -lgc #
 endif
@@ -58,8 +58,8 @@ ifndef NO_PTHREADS
 ifneq "$(UNAME_O)" "Cygwin"
 CFLAGS += -pthread
 endif
-CFLAGS += -Dtl_PTHREAD=1
-LDFLAGS += -lpthread
+CFLAGS += -Dtl_PTHREAD=1 #
+LDFLAGS += -lpthread #
 endif
 
 ifdef v
@@ -111,26 +111,27 @@ test : tl
 code-stats :
 	tool/code-stats *.[hc] lib
 
-bdwgc/.git/config : # Makefile
-	git clone git://github.com/ivmai/bdwgc.git
-	cd bdwgc;         git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
-	git clone git://github.com/ivmai/libatomic_ops.git
-	cd libatomic_ops; git checkout 7b6b6925359baac3c3535dae37996b10ec18d260
+local/bdwgc/.git/config : # Makefile
+	mkdir -p local
+	cd local;         git clone git://github.com/ivmai/bdwgc.git
+	cd local/bdwgc;   git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
+	cd local;                git clone git://github.com/ivmai/libatomic_ops.git
+	cd local/libatomic_ops;  git checkout 7b6b6925359baac3c3535dae37996b10ec18d260
 	ln -s ../libatomic_ops bdwgc/libatomic_ops
 	set -ex ;\
-	cd bdwgc ;\
+	cd local/bdwgc ;\
 	autoreconf -vif ;\
 	automake --add-missing
 
-bdwgc/Makefile : bdwgc/.git/config bdwgc/configure # Makefile
+local/bdwgc/Makefile : local/bdwgc/.git/config local/bdwgc/configure # Makefile
 	set -ex ;\
-	cd bdwgc ;\
+	cd local/bdwgc ;\
 	./configure --enable-gc-assertions --enable-gc-debug --enable-handle-fork --enable-large-config --enable-parallel-mark --enable-thread=pthreads --enable-static --prefix=$$(cd .. && /bin/pwd)/gc
 
-gc/lib/libgc.a : bdwgc/Makefile
-	mkdir -p gc
+local/gc/lib/libgc.a : local/bdwgc/Makefile
+	mkdir -p local/gc
 	set -ex ;\
-	cd bdwgc ;\
+	cd local/bdwgc ;\
 	make clean ;\
 	make ;\
 	make install

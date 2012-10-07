@@ -1,7 +1,5 @@
 *~
-bdwgc
-gc
-libatomic_ops
+local
 tl
 tl-*
 bin/tl
