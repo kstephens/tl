@@ -487,13 +487,13 @@ tl tl_type_write(tl o, tl p)
 
 tl tl_prim_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s @%p %s @%p>", tl_type_name(o), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
+  fprintf(FP, "#<%s @%p %s @%p>", tl_type_name(tl_type(o)), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
   return p;
 }
 
 tl tl_closure_write(tl o, tl p)
 {
-  fprintf(FP, "#<%s @%p ", tl_type_name(o), o);
+  fprintf(FP, "#<%s @%p ", tl_type_name(tl_type(o)), o);
   tl_write(car(car(o)), p);
   fprintf(FP, " >");
   return p;
