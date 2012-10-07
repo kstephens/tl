@@ -81,7 +81,7 @@
           (old-f o p op))))))
 (%object-writer <port>
   (lambda (o p op)
-    (fprintf p (tl_S "#<port @%p :FILE* @%p") o (tl_car o))
+    (fprintf p (tl_S "#<port @%p :FILE* @%p ") o (tl_car o))
     (tl_write_2 (port-info o) p op)
     (fputs (tl_S ">") p)
     p))
