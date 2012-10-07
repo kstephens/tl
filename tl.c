@@ -31,7 +31,7 @@ int  GC_register_disappearing_link(void **link) { return 0; }
 #define tl_realloc(P,S) GC_realloc(P,S)
 char *GC_strdup(const char *x)
 {
-  return strcpy(GC_malloc(strlen(x) + 1), x);
+  return strcpy(GC_malloc_atomic(strlen(x) + 1), x);
 }
 
 #define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
@@ -888,7 +888,6 @@ tl tl_apply(tl f, tl args)
 
 tl tl_apply_2(tl obj, tl closure)
 {
-  // fprintf(stderr, "\n  tl_apply_2(%p, %p)\n", obj, closure);
   tl_apply(closure, cons(obj, tl_nil));
   return tl_v;
 }
@@ -1088,7 +1087,7 @@ tl tl_stdenv(tl env)
   P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
-  P(GC_register_disappearing_link);
+  P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(sleep); P(usleep);
