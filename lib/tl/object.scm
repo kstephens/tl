@@ -84,8 +84,4 @@
   (t -null? '(a b))
   )
 
-
-(define -object? (make-type-test-operation <object>))
-(define -list? (make-type-test-operation <list>))
-(define -pair? (make-type-test-operation <pair>))
-(define -null? (make-type-test-operation <null>))
+'ok
