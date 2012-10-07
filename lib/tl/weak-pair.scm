@@ -1,12 +1,12 @@
-(define (%weaken-ptr ptr)
-  (tl_i (GC_register_disappearing_link ptr)))
-(define (pair-weaken-car! p)
-  (%weaken-ptr p))
-(define (pair-weaken-cdr! p)
-  (%weaken-ptr (%+ p %word-size)))
+(define (weaken-car! p)
+  (set-car! p (make-weak (car p)))
+  p)
+(define (weaken-cdr! p)
+  (set-cdr! p (make-weak (cdr p)))
+  p)
 
-(define s "string")
-(define p (cons s 1))
-(pair-weaken-car! p)
+(define p
+  (let ((s "string"))
+    (weaken-car! (cons s 1))))
 
 'ok

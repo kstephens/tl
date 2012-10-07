@@ -1,9 +1,7 @@
 *~
 local
 tl
-tl-*
 bin/tl
-bin/tl-*
 *.dSYM
 *.o
 *.a
