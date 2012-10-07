@@ -76,10 +76,20 @@ tl tl_env; // environment.
 #endif
 
 FILE *tl_stdin, *tl_stdout, *tl_stderr;
+char *tl_progpath, *tl_progname, *tl_progdir;
 
-static void tl_init()
+static void tl_init(int argc, char **argv)
 {
+  char *r;
   tl_stdin = stdin; tl_stdout = stdout; tl_stderr = stderr;
+  tl_progpath = tl_progname = argv[0];
+  if ( (r = strrchr(tl_progname, '/')) ) {
+    tl_progdir = malloc(r - tl_progname + 1);
+    strncpy(tl_progdir, tl_progname, r - tl_progname);
+    tl_progname = r + 1;
+  } else {
+    tl_progdir = ".";
+  }
   GC_INIT();
   tl_init_th();
 }
@@ -114,7 +124,6 @@ tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
 tl tl_cons(tl a, tl d);
 
-char *tl_progpath, *tl_progname, *tl_progdir;
 tl tl_m_runtime(tl parent)
 {
   tl tl_rt_save = tl_rt;
@@ -1121,19 +1130,7 @@ tl tl_stdenv(tl env)
 
 int main(int argc, char **argv)
 {
-  FILE *out = stdout;
-  {
-    char *r;
-    tl_progpath = tl_progname = argv[0];
-    if ( (r = strrchr(tl_progname, '/')) ) {
-      tl_progdir = malloc(r - tl_progname + 1);
-      strncpy(tl_progdir, tl_progname, r - tl_progname);
-      tl_progname = r + 1;
-    } else {
-      tl_progdir = ".";
-    }
-  }
-  tl_init();
+  tl_init(argc, argv);
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   tl_call(tl_s(tl_main), 2, argc, argv);
