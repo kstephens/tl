@@ -30,6 +30,7 @@ LDFLAGS += -L/opt/local/lib #
 endif
 
 CFLAGS += -g #
+CFLAGS += -Wall #
 
 ifdef WITH_PROF
 tl=tl-prof#

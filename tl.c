@@ -696,13 +696,13 @@ tl tl_eval(tl exp, tl env)
   if ( car(exp) == tl_s_begin ) 
     { exp = cdr(exp); G(evlist); }
 
-  L(evcomb);
+  // L(evcomb);
   args = argp = tl_nil;
 
   L(evcom1);
   if ( exp == tl_nil ) G(call);
 
-  L(evcom2);
+  // L(evcom2);
   push(env);
   push(args);
   push(argp);
@@ -739,7 +739,7 @@ tl tl_eval(tl exp, tl env)
   L(apply);
   if ( tl_type(val) == tl_t_prim ) G(callprim);
 
-  L(callclosure);
+  // L(callclosure);
   if ( tl_type(val) != tl_t_closure ) tl_error("Cannot apply", val);
   exp = car(val); // = (formals . body)
   env = tl_bind(car(exp), args, cdr(val));
