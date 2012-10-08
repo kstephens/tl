@@ -280,11 +280,11 @@ tl tl_get_env() { return tl_env; }
 
 tl tl_type(tl o)
 {
-#define _tl_type(o)                                                     \
-  (                                                                     \
-   (o) == 0         ? tl_t_null :                                       \
-   ((tlw) (o)) & 1  ? tl_t_fixnum :                                     \
-   (o) <= tl_t      ? tl_t_boolean : tl_t_(o)                           )
+#define _tl_type(o)                           \
+  (                                           \
+   (o) == 0         ? tl_t_null :             \
+   ((tlw) (o)) & 1  ? tl_t_fixnum :           \
+   (o) <= tl_t      ? tl_t_boolean : tl_t_(o) )
   return _tl_type(o);
 }
 
@@ -1109,7 +1109,7 @@ tl tl_stdenv(tl env)
   P(pthread_condattr_init); P(pthread_condattr_destroy);
   P(pthread_cond_init); P(pthread_cond_destroy);
   P(pthread_cond_signal); P(pthread_cond_broadcast);
-  P(pthread_cond_wait);P(pthread_cond_timedwait);
+  P(pthread_cond_wait); P(pthread_cond_timedwait);
   P(nanosleep);
 #endif
 #define TYPE(T,N) D(tl_##N##_sizeof,tl_i(sizeof(T)));
