@@ -15,7 +15,7 @@ count_lines() {
     *)
       cat "$f"
     ;;
-  esac | remove-blank-lines | wc -l | tr -d ' '
+  esac | "$dir/remove-blank-lines" | wc -l | tr -d ' '
 }
 
 (
