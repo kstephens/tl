@@ -18,6 +18,7 @@
   (lambda ()
     (display "thread_proc thread ")(write (current-thread))(newline)
     (count-down 1000)
+    (display "thread_proc thread DONE: ")(write (current-thread))(newline)
     'OK!
     ))
 (newline)(display "In main thread.  ")(newline)(io-flush)
