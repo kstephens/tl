@@ -111,30 +111,7 @@ test : tl
 code-stats :
 	tool/code-stats *.[hc] lib
 
-local/src/bdwgc/.git/config : # Makefile
-	mkdir -p local/src
-	cd local/src;         git clone git://github.com/ivmai/bdwgc.git
-	cd local/src/bdwgc;   git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
-	cd local/src;                git clone git://github.com/ivmai/libatomic_ops.git
-	cd local/src/libatomic_ops;  git checkout 7b6b6925359baac3c3535dae37996b10ec18d260
-
-local/src/bdwgc/configure : local/src/bdwgc/.git/config
-	cd local/src; ln -s ../libatomic_ops bdwgc/libatomic_ops
-	set -ex ;\
-	cd local/src/bdwgc ;\
-	autoreconf -vif ;\
-	automake --add-missing
-
-local/src/bdwgc/Makefile : local/src/bdwgc/configure # Makefile
-	set -ex ;\
-	cd local/src/bdwgc ;\
-	./configure --enable-gc-assertions --enable-gc-debug --enable-handle-fork --enable-large-config --enable-parallel-mark --enable-thread=pthreads --enable-static --prefix=$(shell cd local && /bin/pwd)
-
-local/lib/libgc.a : local/src/bdwgc/Makefile
-	mkdir -p local/lib
-	set -ex ;\
-	cd local/src/bdwgc ;\
-	make clean ;\
-	make ;\
-	make install
+ifneq "$(BUILD_GC)" "0"
+include Makefile.gc
+endif
 
