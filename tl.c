@@ -183,7 +183,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_define tl_(57)
 #define tl_s_setE tl_(58)
 #define tl_s__env tl_(59)
-#define tl_s__args tl_(60)
+#define tl_s__depth tl_(60)
 #define tl_s__debug tl_(61)
 #define tl_s_list_TO_vector tl_(62)
 #define tl_s_tl__error tl_(63)
@@ -246,7 +246,7 @@ tl tl_m_runtime(tl parent)
   // tl_s__callrtn = tl_m_symbol("&callrtn");
   // tl_s__stmt = tl_m_symbol("&stmt");
   tl_s__env = tl_m_symbol("&env");
-  tl_s__args = tl_m_symbol("&args");
+  tl_s__depth = tl_m_symbol("&depth");
   tl_s__debug = tl_m_symbol("&debug");
   tl_s_list_TO_vector = tl_m_symbol("list->vector");
   tl_s_tl__error = tl_m_symbol("tl__error");
@@ -657,7 +657,13 @@ tl tl_eval(tl exp, tl env)
   if ( val == tl_t_symbol ) {
     if ( tl_iv(exp, 2) != tl_f ) G(self); // keyword
     if ( exp == tl_s__env ) { val = env; G(rtn); }
-    if ( exp == tl_s__args ) { val = args; G(rtn); }
+    if ( exp == tl_s__depth ) { 
+      int clink_depth = 0; tl v = clink;
+      while ( v != tl_nil ) {
+        ++ clink_depth; v = cdr(v);
+      }
+      val = tl_i(clink_depth); G(rtn);
+    }
     val = tl_value(exp, env); 
     G(rtn);
   }
