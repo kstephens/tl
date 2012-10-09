@@ -9,7 +9,7 @@ count_lines() {
     *.[hc])
       "$dir/remove-c-comments" "$f"
     ;;
-    *.scm)
+    *.scm|*.l)
       "$dir/remove-lisp-comments" "$f"
     ;;
     *)
