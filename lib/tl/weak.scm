@@ -10,9 +10,11 @@
 
 (define s #f)
 (define w
-  (let ((ss "string"))
-    (set! s ss)
-    (make-weak ss)))
+  (let ((ss "string") (w #f))
+    ;; (set! s ss)
+    (set! w (make-weak ss))
+    (display (weak-value w))(newline)
+    w))
 
 'ok
 
