@@ -87,6 +87,7 @@ static void tl_init(int argc, char **argv)
   if ( (r = strrchr(tl_progname, '/')) ) {
     tl_progdir = malloc(r - tl_progname + 1);
     strncpy(tl_progdir, tl_progname, r - tl_progname);
+    tl_progdir[r - tl_progname] = 0;
     tl_progname = r + 1;
   } else {
     tl_progdir = ".";
