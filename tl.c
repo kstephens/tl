@@ -316,7 +316,7 @@ tl tl__error_abort(tl msg, tl obj)
 }
 tl tl__error(tl msg, tl obj)
 {
-  fprintf(stderr, "\nERROR: %s", tl_iv(msg, 0));
+  fprintf(stderr, "\nERROR: %s", (char*) tl_iv(msg, 0));
   fprintf(stderr, " : type:%s object-word:@%p object:", tl_type_name(tl_type(obj)), obj);
   tl_write(obj, stderr);
   fprintf(stderr, "\n");
