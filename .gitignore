@@ -6,3 +6,4 @@ bin/tl
 *.o
 *.a
 tl.s
+/lab/*.t
