@@ -17,6 +17,7 @@ all : $(T_T)
 llvm.t : llvm.t.cc
 
 llvm_w.o: llvm_w.cc
+llvm_w_t.o: llvm_w_t.c
 
-llvm_w.t: llvm_w.t.c llvm_w.o
+llvm_w.t: llvm_w.t.cc llvm_w_t.o llvm_w.o
 

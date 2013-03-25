@@ -20,6 +20,7 @@ typedef LLVMContext *LLVMContextR;
 typedef IntegerType *IntegerTypeP;
 typedef Module *ModuleP;
 typedef Module *ModuleR;
+typedef PassManager *PassManagerP;
 
 extern "C" {
 #include "llvm_w.h"
