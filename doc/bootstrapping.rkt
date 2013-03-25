@@ -122,10 +122,15 @@
 
 (slide
  #:title "Nails through the Onion"
+ 'next
  (item "Layer Zero is a subset of Layer One implemented in a lower-level language.")
+ 'next
  (item "Each layer bootstraps the next.")
+ 'next
  (item "One layer's safe abstraction is another layer's unsafe primitive.")
+ 'next
  (item "Reuse, Cut the Snake: Pierce abstraction layers with structural or functional isomorphisms.")
+ 'next
  (item "Lift and Reconnect the Snake: meta-circular redefinitions.")
  )
 
@@ -241,6 +246,22 @@
  )
 
 (slide
+ #:title "Primitive Procedures"
+ (item "Unsafe primitives in a lower level are accessible in higher levels.")
+ 'next
+ (item "Primitives are temporary implementations in higher levels until safe re-implementations are complete.")
+ 'next
+ (c-code "tl tl_car(tl pair);")
+ 'next
+ (item "Is available as:")
+ 'next
+ (lisp-code "(tl_car pair)")
+ 'next
+ (item "And temporarily reused as:")
+ (lisp-code "(define car tl_car)")
+ )
+
+(slide
  #:title "Layer Zero Typing"
 (item "Distingushes an ADT's dynamic structure.")
 (item "Anchors a CDS with a well-known structure.")
@@ -281,7 +302,6 @@
  'next
  (lisp-code "(tl_type v)")
  )
-
 
 (slide
  #:title "Layer Zero CDS"
@@ -373,7 +393,7 @@ tl tl_cons(tl car, tl_cdr) {
 (define <vector> (make-type <object>))
 (define (make-vector size)
   (let ((vector (tl_allocate <vector>
-                             (tl_I (* %word-size (+ size 1))))))
+                  (tl_I (* %word-size (+ size 1))))))
     (tl_set vector 0 size)
     vector
     ))
@@ -392,13 +412,13 @@ tl tl_cons(tl car, tl_cdr) {
 
 (slide
  #:title "Layer Z: Compilation."
- (item "Implement compiler for Level One language in Level Z-1 language.")
+ (item "Implement compiler for Layer One language in Layer Z-1 language.")
  'next
- (item "Compiler recognizes Level One primitives.")
+ (item "Compiler recognizes Layer One primitives.")
  'next
  (item "Use compiler to compile itself.")
  'next
- (item "Discard Level Zero.")
+ (item "Discard Layer Zero.")
  )
 
 (slide

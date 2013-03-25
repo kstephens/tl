@@ -19,11 +19,12 @@ typedef ssize_t tlsw;
 #include "gc/gc.h"
 #else
 void *GC_malloc(size_t s) { return malloc(s); }
+void *GC_malloc_atomic(size_t s) { return malloc(s); }
 void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
 void GC_gcollect() { }
 void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
-int  GC_register_disappearing_link(void **link) { return 0; }
+int  GC_general_register_disappearing_link(void **link) { return 0; }
 #define GC_INIT() (void) 0
 #endif
 
@@ -315,7 +316,7 @@ tl tl__error_abort(tl msg, tl obj)
 }
 tl tl__error(tl msg, tl obj)
 {
-  fprintf(stderr, "\nERROR: %s", tl_iv(msg, 0));
+  fprintf(stderr, "\nERROR: %s", (char*) tl_iv(msg, 0));
   fprintf(stderr, " : type:%s object-word:@%p object:", tl_type_name(tl_type(obj)), obj);
   tl_write(obj, stderr);
   fprintf(stderr, "\n");

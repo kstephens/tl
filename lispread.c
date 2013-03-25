@@ -171,9 +171,10 @@ int eat_whitespace_peekchar(VALUE stream)
 READ_DECL
 {
   int c;
-  int radix = 10, skip_radix_char = 0;
+  int radix, skip_radix_char;
 
  try_again:
+  radix = 10; skip_radix_char = 0;
 #ifdef READ_PROLOGUE
   READ_PROLOGUE;
 #endif
@@ -200,7 +201,11 @@ READ_DECL
 #ifdef BRACKET_LISTS
     case '[': c = ']'; goto list;
 #endif
-    case '(': c = ')';      list: {
+    case '(': c = ')';
+#ifdef BRACKET_LISTS
+                            list:
+#endif
+      {
       int terminator = c;
       VALUE l = NIL, lc = NIL;
       while ( 1 ) {

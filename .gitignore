@@ -1,9 +1,10 @@
 *~
-local
-tl
-bin/tl
+/local
+/tl
+/bin/tl
 *.dSYM
 *.o
 *.a
-tl.s
+*.s
 /lab/*.t
+/lib/tl/symbols.txt
