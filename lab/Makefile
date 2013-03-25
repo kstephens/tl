@@ -7,11 +7,16 @@ LDFLAGS:=$(LDFLAGS) $(shell $(LLVM_CONFIG) --ldflags --libs engine bitreader sca
 CPPFLAGS += -I/opt/local/include
 LDFLAGS += -L/opt/local/lib
 
+T_T_C := $(shell ls *.t.c)
+T_T += $(T_T_C:%.t.c=%.t)
 T_T_CC := $(shell ls *.t.cc)
-T_T = $(T_T_CC:%.t.cc=%.t)
+T_T += $(T_T_CC:%.t.cc=%.t)
 
 all : $(T_T)
 
 llvm.t : llvm.t.cc
 
-llvm_wrapper.t: llvm_wrapper.t.cc
+llvm_w.o: llvm_w.cc
+
+llvm_w.t: llvm_w.t.c llvm_w.o
+
