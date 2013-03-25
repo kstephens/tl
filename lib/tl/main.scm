@@ -32,7 +32,7 @@
   (if (null? *command-line-prog-files*) (set! *command-line-prog-files* '("-p")))
 
   (map (lambda (file)
-              (display "TL: loading ")(display file)(newline)
+              ;; (display "TL: loading ")(display file)(newline)
               (load file)) *command-line-load-files*)
   (map
     (lambda (file)
@@ -42,7 +42,7 @@
           (let ((in tl_stdin) (output tl_stdout) (prompt '()))
             (repl %env in output prompt)))
         (begin
-          (display "TL: running")(display file)(newline)
+          ;; (display "TL: running ")(display file)(newline)
           (load file))))
     *command-line-prog-files*)
 )

@@ -105,7 +105,7 @@ clean :
 
 test : bin/$(tl)
 	set -xe; for f in t/*.scm; do \
-	  ./bin/tl < $$f || gdb --args ./tl "< $$f" || true ;\
+	  ./bin/tl $$f || gdb --args ./tl "< $$f" || true ;\
 	done
 
 code-stats :

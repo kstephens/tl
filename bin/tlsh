@@ -6,5 +6,5 @@ if [ -f "$symbols_txt" ]
 then
   args="$args -f $symbols_txt"
 fi
-set -x
+# set -x
 exec rlwrap $args "$dir/tl" "$@"
