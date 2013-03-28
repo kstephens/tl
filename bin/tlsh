@@ -7,4 +7,5 @@ then
   args="$args -f $symbols_txt"
 fi
 # set -x
+export LD_LIBRARY_PATH="$dir0/../local/lib:$LD_LIBRARY_PATH"
 exec rlwrap $args "$dir/tl" "$@"
