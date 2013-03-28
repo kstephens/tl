@@ -16,6 +16,18 @@
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
      ,@body))
 
+#|
+(define-macro (let bindings-or-loop-name . body)
+  (if (symbol? bindings-or-loop-name)
+    (let ((loop-name bindings-or-loop-name)
+           (bindings (car body)))
+      (set! body (cdr body))
+    `(letrec ((,loop-name (lambda ,(map car bindings) @,body)))
+       (,loop-name ,(map cadr bindings))))
+    `(let ,binidngs-or-loop-name @,body)
+    ))
+|#
+
 (define-macro (cond . cases)
   (letrec ((%cond 
              (lambda (cases)
