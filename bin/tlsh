@@ -1,2 +1,10 @@
 #!/bin/sh
-exec rlwrap -pyellow "$(dirname "$0")/tl" "$@"
+dir="$(dirname "$0")"
+args='-pyellow -b \(\)\{\}\[\]\#\`\,\@'
+symbols_txt="$dir/../lib/tl/symbols.txt"
+if [ -f "$symbols_txt" ]
+then
+  args="$args -f $symbols_txt"
+fi
+# set -x
+exec rlwrap $args "$dir/tl" "$@"

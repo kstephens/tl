@@ -103,9 +103,9 @@ clean :
 	rm -f tl tl-pt tl-prof tl-no-gc
 	rm -rf *.dSYM/ *.exe
 
-test : tl
+test : bin/$(tl)
 	set -xe; for f in t/*.scm; do \
-	  ./tl < $$f || gdb --args ./tl "< $$f" || true ;\
+	  ./bin/tl $$f || gdb --args ./tl "< $$f" || true ;\
 	done
 
 code-stats :

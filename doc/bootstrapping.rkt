@@ -163,6 +163,21 @@
  )
 
 (slide
+ #:title "Primitive Procedures"
+ (item "Unsafe primitives in a lower level are accessible in higher levels.")
+ (item "Primitives are temporary implementations in higher levels until safe re-implementations are complete.")
+ 'next
+ (c-code "tl tl_car(tl pair);")
+ 'next
+ (item "Is available as:")
+ 'next
+ (lisp-code "(tl_car pair)")
+ 'next
+ (item "And temporarily reused as:")
+ (lisp-code "(define car tl_car)")
+ )
+
+(slide
  #:title "Layer Zero Data"
  (item "Layer Zero")
  (p "    Concrete Data Structures")
@@ -383,10 +398,8 @@ tl tl_cons(tl car, tl_cdr) {
     vector
     ))
 (define (vector-ref v i) (tl_get v (+ i 1)))
-(add-type-checking
-  (make-vector non-negative-fixnum?))
-(add-type-checking
-  (vector-ref vector? non-negative-fixnum?))
+(add-type-checking (make-vector non-negative-fixnum?))
+(add-type-checking (vector-ref vector? non-negative-fixnum?))
 ")
  )
 
