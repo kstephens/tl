@@ -1,6 +1,6 @@
 
-#define UNBOX(T,V) UNBOX_##T(T,V)
-#define BOX(D,T,V) BOX_##T(D,T,V)
+#define UNBOX(T,V) tl_##T##_(V)
+#define BOX(D,T,V) D = tl_##T(V)
 
 #define PARAMS_TL(PARAMS) PARAMS_TL_##PARAMS
 #define PARAMS_TL_PARAMS0() 
@@ -31,8 +31,11 @@
     return __return;                                    \
   }
 
-#define UNBOX_void(T,V)
-#define BOX_void(D,T,V) V
+#define tl_void_(V) (void) (V)
+#define tl_void(V) ((V), (tl) 0)
+
+#define tl_int_(V) tl_I(V)
+#define tl_int(V)  tl_i(V)
 
 #include "jit.h"
 
@@ -65,7 +68,9 @@
 tl tl_jit_env(tl env)
 {
   tl _v;
-#define CT(TYPE,NAME) D(TYPE, tl_t_##NAME = tl_m_type(#TYPE));
+#define CT(TYPE,NAME) \
+  D(TYPE, tl_t_##NAME = tl_m_type(#TYPE)); \
+  P(tl_##NAME); P(tl_##NAME##_);
 #include "jit_types.h"
 #undef CT
 
