@@ -1008,6 +1008,8 @@ static tl tl_memcmp(tl a, tl b, tl as, tl bs)
   return tl_i(cmp ? (cmp < 0 ? -1 : 1) : (tl_I(as) == tl_I(bs) ? 0 : (tl_I(as) < tl_I(bs) ? -1 : 1)));
 }
 
+#include "jit.h"
+
 tl tl_stdenv(tl env)
 { TL_RT
   tl _v;
@@ -1088,8 +1090,11 @@ tl tl_stdenv(tl env)
     if ( ! (boot_scm && *boot_scm ) ) boot_scm = "tl/boot.scm";
     tl_load(env, boot_scm);
   }
+  tl_jit_env(env);
   return env;
 }
+
+#include "jit.c"
 
 #ifdef _tl_main
 int _tl_main (int, char **);
