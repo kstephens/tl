@@ -46,7 +46,7 @@
     (macro-environment-define-transformer (macro-environment-parent self) symbol transformer)
     (macro-environment-set-transformer self symbol transformer)))
 (define (macro-environment-apply-transformer self transformer e)
-  ;; (display "  apply-macro ")(write transformer)(display " to ")(write e)(newline)
+  (if *macro-expand-trace* (begin (display "  apply-macro ")(write transformer)(display " to ")(write e)(newline)))
   (apply transformer (cdr e)))
 (define (macro-environment-skip-first-arg? self e)
   (let ((head (car e)))

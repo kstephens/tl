@@ -24,21 +24,8 @@ ifndef NO_OPTIMIZE
 CFLAGS += $(CC_OPTIMIZE) #
 endif
 
-ifeq "$(UNAME_S)" "Darwin"
-CFLAGS += -I/opt/local/include #
-LDFLAGS += -L/opt/local/lib #
-endif
-
 CFLAGS += -g #
 CFLAGS += -Wall #
-
-ifdef WITH_PROF
-tl=tl-prof#
-NO_PTHEADS=1
-NO_DEBUG=1
-CFLAGS += -pg -Dtl_NO_DEBUG=1 #
-LDFLAGS += -pg
-endif
 
 ifdef NO_GC
 tl=tl-no-gc#
@@ -52,6 +39,19 @@ CFLAGS += -Ilocal/include #
 LDFLAGS += -Llocal/lib #
 endif
 LDFLAGS += -lgc #
+endif
+
+ifdef WITH_PROF
+tl=tl-prof#
+NO_PTHEADS=1
+NO_DEBUG=1
+CFLAGS += -pg -Dtl_NO_DEBUG=1 #
+LDFLAGS += -pg
+endif
+
+ifeq "$(UNAME_S)" "Darwin"
+CFLAGS += -I/opt/local/include #
+LDFLAGS += -L/opt/local/lib #
 endif
 
 ifndef NO_PTHREADS
