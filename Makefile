@@ -49,9 +49,12 @@ CFLAGS += -pg -Dtl_NO_DEBUG=1 #
 LDFLAGS += -pg
 endif
 
+LDFLAGS += -ljit
+
 ifeq "$(UNAME_S)" "Darwin"
 CFLAGS += -I/opt/local/include #
 LDFLAGS += -L/opt/local/lib #
+LDFLAGS += -L/opt/local/lib/X86_64 #
 endif
 
 ifndef NO_PTHREADS

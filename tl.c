@@ -1060,6 +1060,8 @@ tl tl_load(tl env, const char *name)
     return tl_error("Cannot load %s", tl_rt, name);
 }
 
+#include "jit.h"
+
 tl tl_stdenv(tl env)
 {
   tl _v;
@@ -1133,8 +1135,11 @@ tl tl_stdenv(tl env)
     if ( ! (boot_scm && *boot_scm ) ) boot_scm = "tl/boot.scm";
     tl_load(env, boot_scm);
   }
+  tl_jit_env(env);
   return env;
 }
+
+#include "jit.c"
 
 int main(int argc, char **argv)
 {
