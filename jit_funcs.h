@@ -56,3 +56,58 @@ CF(int jit_constant_convert
 	(jit_constant_t,*result, const jit_constant_t,*value,
 	 jit_type_t,type, int overflow_check))
 #endif
+
+CF(jit_type_t, jit_type_copy, PARAMS1(jit_type_t,type))
+CF(void, jit_type_free, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_create_struct
+   ,PARAMS3(jit_type_tP,fields, unsigned_int,num_fields, int,incref))
+CF(jit_type_t, jit_type_create_union
+   ,PARAMS3(jit_type_tP,fields, unsigned_int,num_fields, int,incref))
+CF(jit_type_t, jit_type_create_signature
+   , PARAMS5(jit_abi_t,abi, jit_type_t,return_type, jit_type_tP,params,
+             unsigned_int,num_params, int,incref))
+CF(jit_type_t, jit_type_create_pointer, PARAMS2(jit_type_t,type, int,incref))
+CF(jit_type_t, jit_type_create_tagged
+   , PARAMS5(jit_type_t,type, int,kind, voidP,data,
+                  jit_meta_free_func,free_func, int,incref))
+CF(int, jit_type_set_names
+   , PARAMS3(jit_type_t,type, charPP,names, unsigned_int,num_names))
+CF(void, jit_type_set_size_and_alignment
+   , PARAMS3(jit_type_t,type, jit_nint,size, jit_nint,alignment))
+CF(void, jit_type_set_offset
+   , PARAMS3(jit_type_t,type, unsigned_int,field_index, jit_nuint,offset))
+CF(int, jit_type_get_kind, PARAMS1(jit_type_t,type))
+CF(jit_nuint, jit_type_get_size, PARAMS1(jit_type_t,type))
+CF(jit_nuint, jit_type_get_alignment, PARAMS1(jit_type_t,type))
+CF(unsigned_int, jit_type_num_fields, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_get_field
+   , PARAMS2(jit_type_t,type, unsigned_int,field_index))
+CF(jit_nuint, jit_type_get_offset
+   , PARAMS2(jit_type_t,type, unsigned_int,field_index))
+CF(const_charP, jit_type_get_name, PARAMS2(jit_type_t,type, unsigned_int,index))
+// #define	JIT_INVALID_NAME	(~((unsigned int)0))
+CF(unsigned_int, jit_type_find_name, PARAMS2(jit_type_t,type, charP,name))
+CF(unsigned_int, jit_type_num_params, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_get_return, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_get_param, PARAMS2(jit_type_t,type, unsigned_int,param_index))
+CF(jit_abi_t, jit_type_get_abi, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_get_ref, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_get_tagged_type, PARAMS1(jit_type_t,type))
+CF(void, jit_type_set_tagged_type
+   ,PARAMS3(jit_type_t,type, jit_type_t,underlying, int,incref))
+CF(int, jit_type_get_tagged_kind, PARAMS1(jit_type_t,type))
+CF(voidP, jit_type_get_tagged_data, PARAMS1(jit_type_t,type))
+CF(void, jit_type_set_tagged_data
+   ,PARAMS3(jit_type_t,type, voidP,data, jit_meta_free_func,free_func))
+CF(int, jit_type_is_primitive, PARAMS1(jit_type_t,type))
+CF(int, jit_type_is_struct, PARAMS1(jit_type_t,type))
+CF(int, jit_type_is_union, PARAMS1(jit_type_t,type))
+CF(int, jit_type_is_signature, PARAMS1(jit_type_t,type))
+CF(int, jit_type_is_pointer, PARAMS1(jit_type_t,type))
+CF(int, jit_type_is_tagged, PARAMS1(jit_type_t,type))
+CF(jit_nuint, jit_type_best_alignment, PARAMS0())
+CF(jit_type_t, jit_type_normalize, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_remove_tags, PARAMS1(jit_type_t,type))
+CF(jit_type_t, jit_type_promote_int, PARAMS1(jit_type_t,type))
+CF(int, jit_type_return_via_pointer, PARAMS1(jit_type_t,type))
+CF(int, jit_type_has_tag, PARAMS2(jit_type_t,type, int,kind))
