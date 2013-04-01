@@ -3,6 +3,8 @@
 
 #include "jit/jit.h"
 
+typedef unsigned int unsigned_int;
+
 tl tl_jit_env(tl env);
 
 #endif
