@@ -28,6 +28,11 @@ tl tl_jit_env(tl env)
 #define CF(RTYPE,NAME,PARAMS) P(tl_##NAME);
 #include "jit_funcs.h"
 #undef CF
+
+#define CG(TYPE,NAME) D(tl_##NAME, tl_##TYPE(NAME));
+#include "jit_globals.h"
+#undef CG
+
   return env;
 }
 
