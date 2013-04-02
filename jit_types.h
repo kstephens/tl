@@ -16,4 +16,7 @@ CT(jit_float64,jit_float64)
 CT(jit_nfloat,jit_nfloat)
 CT(jit_abi_t,jit_abi_t)
 CT(jit_meta_free_func,jit_meta_free_func)
+CT(jit_intrinsic_descr_t,jit_intrinsic_descr_t)
+CT(jit_insn_t,jit_insn_t)
+CT(jit_insn_iter_t,jit_insn_iter_t)
 

@@ -3,7 +3,10 @@ CF(void,jit_context_destroy,PARAMS1(jit_context_t,context))
 CF(void,jit_context_build_start,PARAMS1(jit_context_t,context))
 CF(void,jit_context_build_end,PARAMS1(jit_context_t,context))
 
+/* jit-function.h */
 CF(jit_function_t,jit_function_create,PARAMS2(jit_context_t,context,jit_type_t,signature))
+CF(int, jit_function_compile, PARAMS1(jit_function_t,func))
+CF(voidP, jit_function_to_closure, PARAMS1(jit_function_t,func))
 
 CF(jit_function_t,jit_block_get_function,PARAMS1(jit_block_t,block))
 CF(jit_context_t,jit_block_get_context,PARAMS1(jit_block_t,block))
@@ -111,3 +114,279 @@ CF(jit_type_t, jit_type_remove_tags, PARAMS1(jit_type_t,type))
 CF(jit_type_t, jit_type_promote_int, PARAMS1(jit_type_t,type))
 CF(int, jit_type_return_via_pointer, PARAMS1(jit_type_t,type))
 CF(int, jit_type_has_tag, PARAMS2(jit_type_t,type, int,kind))
+
+/* jit-function.h */
+
+/* isns.h */
+CF(int, jit_insn_get_opcode, PARAMS1(jit_insn_t,insn))
+CF(jit_value_t, jit_insn_get_dest, PARAMS1(jit_insn_t,insn))
+CF(jit_value_t, jit_insn_get_value1, PARAMS1(jit_insn_t,insn))
+CF(jit_value_t, jit_insn_get_value2, PARAMS1(jit_insn_t,insn))
+CF(jit_label_t, jit_insn_get_label, PARAMS1(jit_insn_t,insn))
+CF(jit_function_t, jit_insn_get_function, PARAMS1(jit_insn_t,insn))
+CF(voidP, jit_insn_get_native, PARAMS1(jit_insn_t,insn))
+CF(const_charP, jit_insn_get_name, PARAMS1(jit_insn_t,insn))
+CF(jit_type_t, jit_insn_get_signature, PARAMS1(jit_insn_t,insn))
+CF(int, jit_insn_dest_is_value, PARAMS1(jit_insn_t,insn))
+
+CF(int, jit_insn_label, PARAMS2(jit_function_t,func, jit_label_tP,label))
+CF(int, jit_insn_new_block, PARAMS1(jit_function_t,func))
+CF(jit_value_t, jit_insn_load, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(jit_value_t, jit_insn_dup, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(jit_value_t, jit_insn_load_small
+	, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(int, jit_insn_store
+   , PARAMS3(jit_function_t,func, jit_value_t,dest, jit_value_t,value))
+CF(jit_value_t, jit_insn_load_relative
+   , PARAMS4(jit_function_t,func, jit_value_t,value,
+             jit_nint,offset, jit_type_t,type))
+CF(int, jit_insn_store_relative
+   , PARAMS4(jit_function_t,func, jit_value_t,dest,
+             jit_nint,offset, jit_value_t,value))
+CF(jit_value_t, jit_insn_add_relative
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_nint,offset))
+CF(jit_value_t, jit_insn_load_elem
+   , PARAMS4(jit_function_t,func, jit_value_t,base_addr,
+             jit_value_t,index, jit_type_t,elem_type))
+CF(jit_value_t, jit_insn_load_elem_address
+   , PARAMS4(jit_function_t,func, jit_value_t,base_addr,
+             jit_value_t,index, jit_type_t,elem_type))
+CF(int, jit_insn_store_elem
+   , PARAMS4(jit_function_t,func, jit_value_t,base_addr,
+             jit_value_t,index, jit_value_t,value))
+CF(int, jit_insn_check_null, PARAMS2(jit_function_t,func, jit_value_t,value))
+
+CF(jit_value_t, jit_insn_add
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_add_ovf
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_sub
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_sub_ovf
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_mul
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_mul_ovf
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_div
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_rem
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_rem_ieee
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_neg
+   , PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_and
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_or
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_xor
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_not
+   , PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_shl
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_shr
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_ushr
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_sshr
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_eq
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_ne
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_lt
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_le
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_gt
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_ge
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_cmpl
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_cmpg
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_to_bool
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_to_not_bool
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_acos
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_asin
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_atan
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_atan2
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_ceil
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_cos
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_cosh
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_exp
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_floor
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_log
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_log10
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_pow
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_rint
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_round
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_sin
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_sinh
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_sqrt
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_tan
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_tanh
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_is_nan
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_is_finite
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_is_inf
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_abs
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_min
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_max
+	, PARAMS3(jit_function_t,func, jit_value_t,value1, jit_value_t,value2))
+CF(jit_value_t, jit_insn_sign
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(int, jit_insn_branch
+   , PARAMS2(jit_function_t,func, jit_label_tP,label))
+CF(int, jit_insn_branch_if
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_label_tP,label))
+CF(int, jit_insn_branch_if_not
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_label_tP,label))
+CF(int, jit_insn_jump_table
+	, PARAMS4(jit_function_t,func, jit_value_t,value,
+                  jit_label_tP,labels, unsigned_int,num_labels))
+CF(jit_value_t, jit_insn_address_of
+	, PARAMS2(jit_function_t,func, jit_value_t,value1))
+CF(jit_value_t, jit_insn_address_of_label
+   , PARAMS2(jit_function_t,func, jit_label_tP,label))
+CF(jit_value_t, jit_insn_convert
+	, PARAMS4(jit_function_t,func, jit_value_t,value,
+                  jit_type_t,type, int,overflow_check))
+
+#if 0
+CF(jit_value_t, jit_insn_call
+	(jit_function_t,func, const_charP name,
+	 jit_function_t, jit_func, jit_type_t,signature,
+	 jit_value_tP args, unsigned int num_args, int flags))
+CF(jit_value_t, jit_insn_call_indirect
+	(jit_function_t,func, jit_value_t,value, jit_type_t,signature,
+	 jit_value_tP args, unsigned int num_args, int flags))
+CF(jit_value_t, jit_insn_call_indirect_vtable
+	(jit_function_t,func, jit_value_t,value, jit_type_t,signature,
+	 jit_value_tP args, unsigned int num_args, int flags))
+CF(jit_value_t, jit_insn_call_native
+	(jit_function_t,func, const_charP name,
+	 voidP native_func, jit_type_t,signature,
+	 jit_value_tP args, unsigned int num_args, int flags))
+CF(jit_value_t, jit_insn_call_intrinsic
+	(jit_function_t,func, const_charP name, voidP intrinsic_func,
+	 jit_intrinsic_descr_tP descriptor,
+	 jit_value_t,arg1, jit_value_t,arg2))
+#endif
+CF(int, jit_insn_incoming_reg
+   , PARAMS3(jit_function_t,func, jit_value_t,value, int,reg))
+CF(int, jit_insn_incoming_frame_posn
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_nint,frame_offset))
+CF(int, jit_insn_outgoing_reg
+   , PARAMS3(jit_function_t,func, jit_value_t,value, int,reg))
+CF(int, jit_insn_outgoing_frame_posn
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_nint,frame_offset))
+CF(int, jit_insn_return_reg
+   , PARAMS3(jit_function_t,func, jit_value_t,value, int,reg))
+CF(int, jit_insn_setup_for_nested
+   , PARAMS3(jit_function_t,func, int,nested_level, int,reg))
+CF(int, jit_insn_flush_struct, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(jit_value_t, jit_insn_import
+	, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(int, jit_insn_push, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(int, jit_insn_push_ptr
+	, PARAMS3(jit_function_t,func, jit_value_t,value, jit_type_t,type))
+CF(int, jit_insn_set_param
+   , PARAMS3(jit_function_t,func, jit_value_t,value, jit_nint,offset))
+CF(int, jit_insn_set_param_ptr
+	, PARAMS4(jit_function_t,func, jit_value_t,value, jit_type_t,type,
+                  jit_nint,offset))
+CF(int, jit_insn_push_return_area_ptr, PARAMS1(jit_function_t,func))
+CF(int, jit_insn_pop_stack, PARAMS2(jit_function_t,func, jit_nint,num_items))
+CF(int, jit_insn_defer_pop_stack
+   , PARAMS2(jit_function_t,func, jit_nint,num_items))
+CF(int, jit_insn_flush_defer_pop
+   , PARAMS2(jit_function_t,func, jit_nint,num_items))
+CF(int, jit_insn_return, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(int, jit_insn_return_ptr
+	, PARAMS3(jit_function_t,func, jit_value_t,value, jit_type_t,type))
+CF(int, jit_insn_default_return, PARAMS1(jit_function_t,func))
+CF(int, jit_insn_throw, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(jit_value_t, jit_insn_get_call_stack, PARAMS1(jit_function_t,func))
+
+#if 0
+CF(jit_value_t, jit_insn_thrown_exception(jit_function_t,func))
+CF(int, jit_insn_uses_catcher(jit_function_t,func))
+CF(jit_value_t, jit_insn_start_catcher(jit_function_t,func))
+CF(int, jit_insn_branch_if_pc_not_in_range
+	(jit_function_t,func, jit_label_t,start_label,
+	 jit_label_t,end_label, jit_label_tP label))
+CF(int, jit_insn_rethrow_unhandled(jit_function_t,func))
+CF(int, jit_insn_start_finally
+	(jit_function_t,func, jit_label_tP finally_label))
+CF(int, jit_insn_return_from_finally(jit_function_t,func))
+CF(int, jit_insn_call_finally
+	(jit_function_t,func, jit_label_tP finally_label))
+CF(jit_value_t, jit_insn_start_filter
+	(jit_function_t,func, jit_label_tP label, jit_type_t,type))
+CF(int, jit_insn_return_from_filter
+	, PARAMS2(jit_function_t,func, jit_value_t,value))
+CF(jit_value_t, jit_insn_call_filter
+	(jit_function_t,func, jit_label_t,*label,
+	 jit_value_t,value, jit_type_t,type))
+
+CF(int, jit_insn_memcpy
+	(jit_function_t,func, jit_value_t,dest,
+	 jit_value_t,src, jit_value_t,size))
+CF(int, jit_insn_memmove
+	(jit_function_t,func, jit_value_t,dest,
+	 jit_value_t,src, jit_value_t,size))
+CF(int, jit_insn_memset
+	(jit_function_t,func, jit_value_t,dest,
+	 jit_value_t,value, jit_value_t,size))
+CF(jit_value_t, jit_insn_alloca
+	(jit_function_t,func, jit_value_t,size))
+
+CF(int, jit_insn_move_blocks_to_end
+   (jit_function_t,func, jit_label_t,from_label, jit_label_t,to_label))
+CF(int, jit_insn_move_blocks_to_start
+   (jit_function_t,func, jit_label_t,from_label, jit_label_t,to_label))
+
+
+CF(int, jit_insn_mark_offset
+   (jit_function_t,func, jit_int,offset))
+CF(int, jit_insn_mark_breakpoint
+   (jit_function_t,func, jit_nint,data1, jit_nint,data2))
+CF(int, jit_insn_mark_breakpoint_variable
+	(jit_function_t,func, jit_value_t,data1, jit_value_t,data2))
+
+CF(void, jit_insn_iter_init(jit_insn_iter_tP,iter, jit_block_t,block))
+   CF(void, jit_insn_iter_init_last
+      (jit_insn_iter_tP,iter, jit_block_t,block))
+CF(jit_insn_t, jit_insn_iter_next(jit_insn_iter_tP,iter))
+CF(jit_insn_t, jit_insn_iter_previous(jit_insn_iter_tP,iter))
+
+#endif
