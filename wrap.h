@@ -54,32 +54,40 @@
 #define WRAP_CT1(TYPE,NAME)                                             \
   static tl tl_t_##NAME;                                                \
   struct tl_ts_##NAME {                                                 \
-    tl slots[1];                                                        \
+    tl size;                                                            \
     TYPE value;                                                         \
   };                                                                    \
   static tl tl_##NAME(TYPE value) {                                     \
-    struct tl_ts_##NAME *result = tl_allocate(tl_t_##NAME, sizeof(*result)); \
-    result->value = value;                                              \
-    return (tl) result;                                                 \
+    struct tl_ts_##NAME *self = tl_allocate(tl_t_##NAME, sizeof(*self)); \
+    self->value = value;                                                \
+    return (tl) self;                                                   \
   }                                                                     \
-  static TYPE tl_##NAME##_(tl value) {                                  \
-    return ((struct tl_ts_##NAME *) value)->value;                      \
+  static TYPE tl_##NAME##_(tl self) {                                   \
+    return ((struct tl_ts_##NAME *) self)->value;                       \
   }
 
 #define WRAP_CT(TYPE,NAME)                                              \
   WRAP_CT1(TYPE,NAME)                                                   \
   typedef TYPE *NAME##P;                                                \
   WRAP_CT1(TYPE##P,NAME##P)                                             \
-  static tl tl_##NAME##_A(tl value) {                                   \
-    return tl_##NAME##P(&((struct tl_ts_##NAME *) value)->value);       \
+  static tl tl_##NAME##Pv(tl count, tl value) {                        \
+    size_t i;                                                           \
+    struct tl_ts_##NAME##P *self = tl_allocate(tl_t_##NAME##P, sizeof(*self)); \
+    self->size = count;                                                 \
+    self->value = tl_malloc(sizeof(self->value[0]) * tl_I(count));      \
+    for ( i = 0; i < tl_I(count); ++ i ) self->value[i] = tl_##NAME##_(value); \
+    return self;                                                        \
   }                                                                     \
-  static tl tl_##NAME##P_R(tl value) {                                  \
-    return tl_##NAME(*((struct tl_ts_##NAME##P *) value)->value);       \
+  static tl tl_##NAME##P_R(tl self, tl i) {                              \
+    return tl_##NAME(((struct tl_ts_##NAME##P *) self)->value[tl_I(i)]); \
   }                                                                     \
-  static tl tl_##NAME##P_W(tl dst, tl value) {                          \
-    *((struct tl_ts_##NAME##P *)dst)->value =                           \
+  static tl tl_##NAME##P_W(tl self, tl i, tl value) {                    \
+    ((struct tl_ts_##NAME##P *) self)->value[tl_I(i)] =                 \
       tl_##NAME##_(value);                                              \
-    return dst;                                                         \
-  }
+    return self;                                                        \
+  }                                                                     \
+  static tl tl_##NAME##_A(tl self) {                                    \
+    return tl_##NAME##P(&((struct tl_ts_##NAME *) self)->value);        \
+  }                                                                     \
 
 #endif
