@@ -17,6 +17,7 @@
   (tl_jit_context_build_end context)
   (let ( (fp (tl_jit_function_to_closure function)))
     (let ((prim (tl_m_prim (tl_voidP_ fp) "(jit)")))
+      ;; prints 3 * 5 + 2 => 17
       (write (tl_i (prim (tl_I 3) (tl_I 5) (tl_I 2))))(newline))
   (tl_jit_context_destroy context))
   )
