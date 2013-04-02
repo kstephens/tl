@@ -1041,7 +1041,7 @@ tl tl_stdenv(tl env)
   P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
-  P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
+  P(tl_apply); tl_p_apply = _v; P(tl_apply_2); P(tl_m_prim);
   Pf(tl_catch, tl_identity); tl_p__catch = _v; Pf(tl_throw, tl_identity); tl_p__throw = _v;
   P(tl_symbols);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);

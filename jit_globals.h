@@ -30,3 +30,12 @@ CG(jit_type_t, jit_type_sys_float)
 CG(jit_type_t, jit_type_sys_double)
 CG(jit_type_t, jit_type_sys_long_double)
 
+CG(jit_abi_t, jit_abi_cdecl)
+CG(jit_abi_t, jit_abi_vararg)
+CG(jit_abi_t, jit_abi_stdcall)
+CG(jit_abi_t, jit_abi_fastcall)
+
+CG(int, JIT_CALL_NOTHROW)
+CG(int, JIT_CALL_NORETURN)
+CG(int, JIT_CALL_TAIL)
+
