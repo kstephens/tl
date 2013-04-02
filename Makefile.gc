@@ -1,17 +1,28 @@
 # -*- makefile -*-
 
+bdwgc_commit=798e5fa71391800b89dee216c3fd7017c1f354e6
+libatomic_ops_commit=7b6b6925359baac3c3535dae37996b10ec18d260
+bdwgc_commit=master
+libatomic_ops_commit=master
+bdwgc_commit=macports-20130328
+libatomic_ops_commit=macports-20130328
+
 local/src/bdwgc/.git/config : # Makefile
 	mkdir -p local/src
 	cd local/src;         git clone git://github.com/ivmai/bdwgc.git
-	cd local/src/bdwgc;   git checkout 798e5fa71391800b89dee216c3fd7017c1f354e6
+	cd local/src/bdwgc;   git checkout $(bdwgc_commit)
 	cd local/src;                git clone git://github.com/ivmai/libatomic_ops.git
-	cd local/src/libatomic_ops;  git checkout 7b6b6925359baac3c3535dae37996b10ec18d260
+	cd local/src/libatomic_ops;  git checkout $(libatomic_ops_commit)
 
 local/src/bdwgc/configure : local/src/bdwgc/.git/config
-	cd local/src; ln -s ../libatomic_ops bdwgc/libatomic_ops
+	cd local/src; ln -sfn ../libatomic_ops bdwgc/libatomic_ops
+	set -ex ;\
+	cd local/src/libatomic_ops ;\
+	autoreconf -i -f --verbose ;\
+	automake --add-missing
 	set -ex ;\
 	cd local/src/bdwgc ;\
-	autoreconf -vif ;\
+	autoreconf -i -f --verbose ;\
 	automake --add-missing
 
 local/src/bdwgc/Makefile : local/src/bdwgc/configure Makefile.gc
