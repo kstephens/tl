@@ -74,7 +74,7 @@ all : $(EARLY_TARGETS) bin/$(tl)
 v :
 	echo "$(v)=$($v)"
 
-$(tl) : tl.c lispread.c
+$(tl) : tl.c lispread.c jit*.c jit*.h
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
 $(tl)-no-gc : tl.c Makefile
