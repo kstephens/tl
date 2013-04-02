@@ -77,7 +77,9 @@ v :
 lispread/lispread.c :
 	git submodule add --force http://github.com/kstephens/lispread.git lispread
 
-$(tl) : tl.c lispread/lispread.c
+JIT_C = jit*.c jit*.h
+
+$(tl) : tl.c lispread/lispread.c $(JIT_C)
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
 $(tl)-no-gc : tl.c Makefile
