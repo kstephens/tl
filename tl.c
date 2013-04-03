@@ -55,6 +55,7 @@ tl tl_m_thread(pthread_t rt, tl env, void *pt);
 tl* tl_rt_thread() {
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
+    assert(tl_rt_thread_key);
     tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
     tlp[0] = 0;
     ++ tlp; /* skip type */
@@ -64,16 +65,17 @@ tl* tl_rt_thread() {
   }
   return tlp;
 }
-
-#define tl_pthread (tl_rt_thread()[0])
-#define tl_rt_ (tl_rt_thread()[1])
-#define tl_env (tl_rt_thread()[2])
+#define TL_RT tl *_tl_thr_ = 0;
+#define _tl_thr (_tl_thr_ ? _tl_thr_ : (_tl_thr_ = tl_rt_thread()))
+#define tl_pthread (_tl_thr[0])
+#define tl_rt  (_tl_thr[1])
+#define tl_env (_tl_thr[2])
 #else
 static void tl_init_th()
 {
 }
-
-tl tl_rt_; // runtime.
+#define TL_RT
+tl tl_rt; // runtime.
 tl tl_env; // environment.
 #endif
 
@@ -97,7 +99,6 @@ static void tl_init(int argc, char **argv)
   tl_init_th();
 }
 
-#define tl_rt tl_rt_
 #define tl_nil ((tl) 0)
 #define tl_f ((tl) (tlw) 2)
 #define tl_t ((tl) (tlw) 4)
@@ -119,16 +120,16 @@ tl tl_allocate(tl type, size_t size)
   return o;
 }
 
-tl tl_set_runtime(tl rt) { tl old = tl_rt; tl_rt = rt; return old; }
+tl tl_set_runtime(tl rt) { TL_RT tl old = tl_rt; tl_rt = rt; return old; }
 
-tl tl_runtime() { return tl_rt; }
+tl tl_runtime() { TL_RT return tl_rt; }
 
 tl tl_m_type(tl name);
 tl tl_m_symbol(void *x);
 tl tl_cons(tl a, tl d);
 
 tl tl_m_runtime(tl parent)
-{
+{ TL_RT
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
   tl_rt = tl_allocate(0, size);
@@ -272,16 +273,16 @@ tl tl_m_runtime(tl parent)
   }
 }
 
-tl tl_c(int c) { return _tl_c(c); }
+tl tl_c(int c) { TL_RT return _tl_c(c); }
 #define tl_c(c)_tl_c(c)
 
 int tl_C(tl o) { return _tl_C(o); }
 #define tl_C(o)_tl_C(o)
 
-tl tl_get_env() { return tl_env; }
+tl tl_get_env() { TL_RT return tl_env; }
 
 tl tl_type(tl o)
-{
+{ TL_RT
 #define _tl_type(o)                           \
   (                                           \
    (o) == 0         ? tl_t_null :             \
@@ -292,7 +293,7 @@ tl tl_type(tl o)
 
 //#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl name)
-{
+{ TL_RT
   tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
   // Note: this layout is the same as an environment cons.
   o[0] = o[1] = tl_nil; // ((names . values ) . parent)
@@ -323,7 +324,7 @@ tl tl__error(tl msg, tl obj)
   return tl__error_abort(msg, obj);
 }
 tl tl_error(tl msg, tl obj, ...)
-{
+{ TL_RT
   char buf[1024];
   va_list vap;
   va_start(vap, obj);
@@ -343,7 +344,7 @@ tl tl_get(tl o, tl i)       { return ((tl*) o)[tl_I(i)]; }
 tl tl_set(tl o, tl i, tl v) { return ((tl*) o)[tl_I(i)] = v; }
 
 tl tl_m_string(void *x, size_t l)
-{
+{ TL_RT
   tl *o = tl_allocate(tl_t_string, sizeof(o) * 2);
   o[0] = x;
   o[1] = (tl) (tlw) l;
@@ -363,7 +364,7 @@ tl tl_type_cons(tl t, tl a, tl d)
   return o;
 }
 
-tl tl_cons(tl a, tl d) { return tl_type_cons(tl_t_pair, a, d); }
+tl tl_cons(tl a, tl d) { TL_RT return tl_type_cons(tl_t_pair, a, d); }
 #define cons tl_cons
 
 #define cadr(o) car(cdr(o))
@@ -374,7 +375,7 @@ tl tl_cdr(tl o) { return cdr(o); }
 tl tl_set_cdr(tl o, tl v) { return cdr(o) = v; }
 
 tl tl_make_symbol(void *name)
-{
+{ TL_RT
   tl *s = tl_allocate(tl_t_symbol, sizeof(tl) * 4); // name interned? keyword? spare
   name = name ?
     tl_m_string(GC_strdup(name), strlen(name)) : tl_f;
@@ -385,7 +386,7 @@ tl tl_make_symbol(void *name)
 }
 
 tl tl_m_symbol(void *x)
-{
+{ TL_RT
   tl l = car(tl_symbol_list);
   if ( ! strcmp(x, "\xCE\xBB") ) x = "lambda"; // UTF8 Lower-Case Lambda: λ
   while ( l != tl_nil ) {
@@ -401,7 +402,7 @@ tl tl_m_symbol(void *x)
   return s;
 }
 
-tl tl_symbols() { return car(tl_symbol_list); }
+tl tl_symbols() { TL_RT return car(tl_symbol_list); }
 
 #define tl__s(S) tl_m_symbol(S)
 #define _tl_s(N)tl_m_symbol(#N)
@@ -428,7 +429,7 @@ tl tl_fixnum_TO_string(tl o)
 }
 
 tl tl_m_prim(void *f, const char *name)
-{
+{ TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
 #define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
   o[0] = f; o[1] = (tl) name;
@@ -502,7 +503,7 @@ tl tl_closure_write(tl o, tl p)
 }
 tl tl_write_2(tl o, tl p, tl op);
 tl tl_pair_write(tl o, tl p, tl op)
-{
+{ TL_RT
   fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
@@ -521,7 +522,7 @@ tl tl_pair_write(tl o, tl p, tl op)
 }
 
 tl tl_write_2(tl o, tl p, tl op)
-{
+{ TL_RT
   tl t;
   if ( o == tl_nil )
     return tl_pair_write(o, p, op);
@@ -551,7 +552,7 @@ tl tl_write(tl o, tl p) { return tl_write_2(o, p, (tl) 1); }
 #undef FP
 
 tl tl_bind(tl vars, tl args, tl env)
-{
+{ TL_RT
   // if ( length(vars) != length(args) ) error
   // if ( vars == tl_nil ) return env;
   return cons(tl_set_type(cons(vars, args), tl_t_environment), env);
@@ -568,7 +569,7 @@ tl tl_let(tl var, tl val, tl env)
 }
 
 tl tl_lookup(tl var, tl env)
-{
+{ TL_RT
   while ( env != tl_nil ) {
     tl vv = car(env);
     tl vars = car(vv), vals = cdr(vv);
@@ -587,7 +588,7 @@ tl tl_lookup(tl var, tl env)
 }
 
 tl tl_define_here(tl var, tl val, tl env)
-{
+{ TL_RT
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
   // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_get(var, 0)), val); }
@@ -611,7 +612,7 @@ tl tl_eqQ(tl x, tl y)
 }
 
 tl tl_eqvQ(tl x, tl y)
-{
+{ TL_RT
   if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
@@ -626,7 +627,7 @@ tl tl_value(tl var, tl env)
 }
 
 tl tl_setE(tl var, tl val, tl env)
-{
+{ TL_RT
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("set!: not a symbol", var);
   slot = tl_lookup(var, env);
@@ -636,10 +637,7 @@ tl tl_setE(tl var, tl val, tl env)
 }
 
 tl tl_eval(tl exp, tl env)
-{
-  tl rt = tl_rt;
-#undef tl_rt
-#define tl_rt rt
+{ TL_RT
 #undef car
 #undef cdr
 #define car(o)((o) == tl_nil ? tl_nil : car_(o))
@@ -865,8 +863,6 @@ tl tl_eval(tl exp, tl env)
   if ( tl_t_(clink) == tl_t_form )
     { pop(exp); G(eval); }
   tl_error("tl_eval: invalid clink", clink); abort();
-#undef tl_rt
-#define tl_rt tl_rt_
 #undef car
 #undef cdr
 #undef nil
@@ -877,7 +873,7 @@ tl tl_eval(tl exp, tl env)
 tl tl_macro_expand(tl exp, tl env) { return exp; }
 
 tl tl_eval_top_level(tl exp, tl env)
-{
+{ TL_RT
   exp = tl_call(tl_s_tl_macro_expand, 2, exp, env);
   return tl_eval(exp, env);
 }
@@ -885,23 +881,23 @@ tl tl_eval_top_level(tl exp, tl env)
 tl tl_identity(tl x) { return x; }
 
 tl tl_quote(tl x)
-{
+{ TL_RT
   return cons(tl_s_quote, cons(x, tl_nil));
 }
 
 tl tl_apply(tl f, tl args)
-{
+{ TL_RT
   return tl_eval(cons(tl_p_apply, cons(tl_quote(f), cons(tl_quote(args), tl_nil))), tl_env);
 }
 
 tl tl_apply_2(tl obj, tl closure)
-{
+{ TL_RT
   tl_apply(closure, cons(obj, tl_nil));
   return tl_v;
 }
 
 tl tl_call(tl s, int n, ...)
-{
+{ TL_RT
   tl args = tl_nil, *lp = &args;
   va_list vap;
   va_start(vap, n);
@@ -913,7 +909,7 @@ tl tl_call(tl s, int n, ...)
 }
 
 tl tl_eval_print(tl expr, tl env, tl out)
-{
+{ TL_RT
   if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
   tl val = tl_eval_top_level(expr, env);
   if ( out && val != tl_v ) { tl_write(val, stdout); fprintf(stdout, "\n"); }
@@ -924,7 +920,7 @@ tl tl_stdenv(tl env);
 
 #ifdef tl_PTHREAD
 tl tl_m_thread(pthread_t pt, tl rt, tl env)
-{
+{ TL_RT
   tl *o = tl_allocate(tl_t_thread, sizeof(*o) * 16);
   memset(o, 0, sizeof(*o) * 16);
   o[0] = (tl) pt;
@@ -934,7 +930,7 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 }
 
 static void *tl_pthread_start(void *data)
-{
+{ TL_RT
   tl *pt = data, proc;
 
   ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, pt));
@@ -964,7 +960,7 @@ static void *tl_pthread_start(void *data)
 }
 
 tl tl_pthread_create(tl proc, tl env)
-{
+{ TL_RT
   pthread_t new_thread = 0;
   int result = 0;
   tl *pt;
@@ -991,7 +987,7 @@ tl tl_pthread_create(tl proc, tl env)
 }
 
 tl tl_pthread_self()
-{
+{ TL_RT
   tl *tp = tl_rt_thread();
   if ( ! tp[-1] ) tp[-1] = tl_t_thread;
   if ( ! tp[1] ) tp[1] = tl_rt;
@@ -1013,7 +1009,7 @@ tl tl_pthread_join(tl t)
 tl tl_read(tl stream);
 
 tl tl_repl(tl env, tl in, tl out, tl prompt)
-{
+{ TL_RT
   tl expr, result = tl_eos;
  again:
   if ( prompt ) fputs("> ", (FILE*)prompt);
@@ -1045,7 +1041,7 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 #include "cops.h"
 
 tl tl_load(tl env, const char *name)
-{
+{ TL_RT
   FILE *fp;
   char buf[1024];
   if ( name[0] != '/' ) {
@@ -1061,7 +1057,7 @@ tl tl_load(tl env, const char *name)
 }
 
 tl tl_stdenv(tl env)
-{
+{ TL_RT
   tl _v;
   tl_env = env = tl_let(tl__s("tl_rt"), tl_rt, env);
 #define Ds(N,V) tl_define_here(tl__s(N), _v = (tl) (V), env)
@@ -1137,8 +1133,9 @@ tl tl_stdenv(tl env)
 }
 
 int main(int argc, char **argv)
-{
+{ 
   tl_init(argc, argv);
+  {TL_RT
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv);
@@ -1146,10 +1143,12 @@ int main(int argc, char **argv)
   GC_gcollect();
   GC_invoke_finalizers();
   return 0;
+  }
 }
 
 #define VALUE tl
 #define READ_DECL tl tl_read(tl stream)
+#define READ_STATE TL_RT
 #define READ_CALL() tl_read(stream)
 #define FP(stream) ((FILE*)stream)
 #define GETC(stream) getc(FP(stream))
