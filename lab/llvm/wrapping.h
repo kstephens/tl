@@ -36,6 +36,9 @@
 #define CM2(RT,C,M,T1,A1,T2,A2)  \
   void *SCOPE(cm_##C##_##M##_##T1##_##T2)(AD(T1,A1), AD(T2,A2)) \
        BODY(return B(RT, C::M(AC(T1,A1), AC(T2,A2))))
+#define CM3(RT,C,M,T1,A1,T2,A2,T3,A3) \
+  void *SCOPE(cm_##C##_##M##_##T1##_##T2##_##T3)(AD(T1,A1), AD(T2,A2), AD(T3,A3)) \
+       BODY(return B(RT, C::M(AC(T1,A1), AC(T2,A2), AC(T3,A3))))
 
 #define IM0(RT,C,M)  \
   void *SCOPE(im_##C##_##m)(AD(C##P,_this))     \

@@ -13,6 +13,9 @@ void make_func(void **modp, void **funp)
   void *mod = llvm_c_Module_charP_LLVMContextR("test", cntx);
   *modp = mod;
 
+  void *fun = 0; // llvm_cm
+  void *block = llvm_cm_BasicBlock_Create_LLVMContextR_CcharP_FunctionP(cntx, "entry", fun);
+  void *builder = llvm_c_IRBuilderT_BasicBlockP(block);
 }
 
 int main_c(int arg, char **argv)

@@ -15,6 +15,9 @@ all : $(T_T)
 
 libjit.t : libjit.t.c
 
+jit.sexp : swig/jit/*.i
+	swig -sexp -module jit -o $@ swig/jit/*.i
+
 clean:
 	rm -f *.o *.t
 	rm -rf *.dSYM

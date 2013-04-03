@@ -16,11 +16,15 @@
 
 using namespace llvm;
 
-typedef LLVMContext *LLVMContextR;
-typedef IntegerType *IntegerTypeP;
-typedef Module *ModuleP;
-typedef Module *ModuleR;
-typedef PassManager *PassManagerP;
+#define TP(X) typedef X *X##R; typedef X *X##P;
+TP(LLVMContext);
+TP(IntegerType);
+TP(Module);
+TP(PassManager);
+TP(Function);
+TP(BasicBlock);
+typedef IRBuilder<> IRBuilderT;
+TP(IRBuilderT);
 
 extern "C" {
 #include "llvm_w.h"

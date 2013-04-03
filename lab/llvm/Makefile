@@ -1,7 +1,8 @@
 
 LLVM_CONFIG:=llvm-config-mp-3.3
 
-CPPFLAGS:=$(CPPFLAGS) $(shell $(LLVM_CONFIG) --cxxflags)
+CCFLAGS:=$(CCFLAGS) -I.
+CPPFLAGS:=$(CPPFLAGS) -I. $(shell $(LLVM_CONFIG) --cxxflags)
 LDFLAGS:=$(LDFLAGS) $(shell $(LLVM_CONFIG) --ldflags --libs engine bitreader scalaropts interpreter core jit linker)
 
 CPPFLAGS += -I/opt/local/include
@@ -18,6 +19,10 @@ llvm.t : llvm.t.cc
 
 llvm_w.o: llvm_w.cc
 llvm_w_t.o: llvm_w_t.c
+ct_llvm_cc.o: ct_llvm_cc.cc 
 
 llvm_w.t: llvm_w.t.cc llvm_w_t.o llvm_w.o
 
+clean:
+	rm -f *.o *.t
+	rm -rf *.dSYM
