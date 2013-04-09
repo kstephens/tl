@@ -143,8 +143,6 @@
 (define (keyword? o) (if (symbol? o) (tl_get o 2) #f))
 (define (make-symbol name) ;; not interned.
   (tl_make_symbol (if name (tl_S name) %NULL)))
-(define (gensym . args) (make-symbol #f))
-(define *gensym-counter* 0)
 (define gensym
   (let ((counter 0))
     (lambda args
