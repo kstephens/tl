@@ -394,7 +394,7 @@
     (if *load-verbose* (begin (display "load?: ")(display name)(newline)))
     (if (not (string-ends-with? name ".scm"))
       (set! name (string-append name ".scm")))
-    (set! pathname (locate-file-in-path name (cons (path-directory current-file) *load-path*)))
+    (set! pathname (locate-file name (cons (path-directory current-file) *load-path*)))
     (if (not pathname) (error "cannot locate" 'name name 'path *load-path*))
     (let ((in (open-file pathname "r"))
            (result #f))
