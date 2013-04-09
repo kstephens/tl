@@ -244,6 +244,8 @@
 (define (list-length-2 l n)
   (if (null? l) n
     (list-length-2 (cdr l) (+ n 1))))
+(define (list-ref l k)
+  (if (= k 0) (car l) (list-ref (cdr l) (- k 1))))
 (define length list-length)
 (define (reverse l) (%list-reverse-2 l '()))
 (define (%list-reverse-2 l e)
