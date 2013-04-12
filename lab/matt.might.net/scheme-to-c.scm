@@ -913,7 +913,7 @@
   (string-append
    "((struct __env_"
    (number->string (env-get->id exp)) "*)" 
-   (c-compile-exp (env-get->env exp) append-preamble) ".env.env)->" 
+   (c-compile-exp (env-get->env exp) append-preamble) ".env.env)->_"
    (mangle (env-get->field exp))))
 
 
@@ -993,7 +993,7 @@
      "struct __env_" (number->string id) " {\n" 
      (apply string-append (map (lambda (f)
                                  (string-append
-                                  " Value "
+                                  " Value _"
                                   (mangle f) 
                                   " ; \n"))
                                fields))
@@ -1003,7 +1003,7 @@
      "  " tyname "*" " t = malloc(sizeof(" tyname "))" ";\n"
      (apply string-append 
             (map (lambda (f)
-                   (string-append "  t->" (mangle f) " = " (mangle f) ";\n"))
+                   (string-append "  t->_" (mangle f) " = " (mangle f) ";\n"))
                  fields))
      "  return t;\n"
      "}\n\n"
