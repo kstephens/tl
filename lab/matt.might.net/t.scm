@@ -1,6 +1,6 @@
 (letrec (
           (foo (lambda (a b) 
-                 (display (+ bar (+ a b))))) 
+                 (display (* bar (+ a b)))))
           (bar 1)
           )
   (begin
