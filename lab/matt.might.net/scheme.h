@@ -91,8 +91,8 @@ static Value NewCell(Value initialValue) {
 }
 
 
-extern Value __sum ;
-extern Value __difference ;
-extern Value __product ;
-extern Value __display ;
-extern Value __numEqual ;
+static Value __sum ;
+static Value __difference ;
+static Value __product ;
+static Value __display ;
+static Value __numEqual ;

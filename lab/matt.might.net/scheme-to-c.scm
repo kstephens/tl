@@ -978,7 +978,7 @@
     (let ((formals (c-compile-formals (lambda->formals exp)))
           (body    (c-compile-exp     (lambda->exp exp) append-preamble)))
       (lambda (name)
-        (string-append "Value " name "(" formals ") {\n"
+        (string-append "static Value " name "(" formals ") {\n"
                        preamble
                        "  return " body " ;\n"
                        "}\n")))))
@@ -1040,11 +1040,11 @@
   
   ; Create storage for primitives:
   (emit "
-Value __sum ;
-Value __difference ;
-Value __product ;
-Value __display ;
-Value __numEqual ;
+static Value __sum ;
+static Value __difference ;
+static Value __product ;
+static Value __display ;
+static Value __numEqual ;
 ")
   
   (for-each 
@@ -1056,28 +1056,28 @@ Value __numEqual ;
 
   ;; Emit primitive procedures:
   (emit 
-   "Value __prim_sum(Value e, Value a, Value b) {
+   "static Value __prim_sum(Value e, Value a, Value b) {
   return MakeInt(a.z.value + b.z.value) ;
 }")
   
   (emit 
-   "Value __prim_product(Value e, Value a, Value b) {
+   "static Value __prim_product(Value e, Value a, Value b) {
   return MakeInt(a.z.value * b.z.value) ;
 }")
   
   (emit 
-   "Value __prim_difference(Value e, Value a, Value b) {
+   "static Value __prim_difference(Value e, Value a, Value b) {
   return MakeInt(a.z.value - b.z.value) ;
 }")
   
   (emit
-   "Value __prim_display(Value e, Value v) {
+   "static Value __prim_display(Value e, Value v) {
   printf(\"%i\\n\",v.z.value) ;
   return v ;
 }")
   
   (emit
-   "Value __prim_numEqual(Value e, Value a, Value b) {
+   "static Value __prim_numEqual(Value e, Value a, Value b) {
   return MakeBoolean(a.z.value == b.z.value) ;
 }")
   
@@ -1085,7 +1085,7 @@ Value __numEqual ;
   ; Print the prototypes:
   (for-each
    (lambda (l)
-     (emit (string-append "Value __lambda_" (number->string (car l)) "() ;")))
+     (emit (string-append "static Value __lambda_" (number->string (car l)) "() ;")))
    lambdas)
   
   (emit "")
