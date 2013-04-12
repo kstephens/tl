@@ -990,7 +990,8 @@
          (sid    (number->string id))
          (tyname (string-append "struct __env_" sid)))
     (string-append 
-     "struct __env_" (number->string id) " {\n" 
+     "struct __env_" (number->string id) " {\n"
+      " const char **names;\n"
      (apply string-append (map (lambda (f)
                                  (string-append
                                   " Value _"
@@ -1000,7 +1001,14 @@
      "} ;\n\n"
      tyname "*" " __alloc_env" sid 
      "(" (c-compile-formals fields) ")" "{\n"
+      "  static const char *names[] = { "
+      (apply string-append
+            (map (lambda (f)
+                   (string-append "\"" (symbol->string f) "\", "))
+                 fields))
+      " 0 };\n"
      "  " tyname "*" " t = malloc(sizeof(" tyname "))" ";\n"
+     "  t->names = names;\n"
      (apply string-append 
             (map (lambda (f)
                    (string-append "  t->_" (mangle f) " = " (mangle f) ";\n"))
