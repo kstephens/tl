@@ -52,11 +52,11 @@
 
 (define-macro (or . cases)
   (letrec ((%or
-             (lambda (tmp cases))
-             (if (null? cases) #f
-               `(begin
-                  (set! ,tmp ,(car cases))
-                  (if ,tmp ,tmp ,(%or tmp (cdr cases)))))))
+             (lambda (tmp cases)
+               (if (null? cases) #f
+                 `(begin
+                    (set! ,tmp ,(car cases))
+                    (if ,tmp ,tmp ,(%or tmp (cdr cases))))))))
     (cond
       ((null? cases)       #f)
       ((null? (cdr cases)) (car cases))
