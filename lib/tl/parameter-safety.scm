@@ -28,7 +28,7 @@
          (set! ,arg (car ,args))
          (if ,(%check-arg-expr constraint arg)
            ,(%check-args-list-1 f (cdr constraints) (list 'cdr args) arg (+ param 1))
-           (error "argument error: " '(:in ,f :parameter ,param :constraint ,constraint)))))))
+           (error "argument error: " '(:in ,f :parameter ,param :given ,(tl_type arg) :constraint ,constraint)))))))
 (define (%check-arg-expr constraint arg)
   (cond
     ((null? constraint)        #t)
@@ -82,5 +82,8 @@
 (check-args (open-file string? string?))
 (check-args (close-port port?))
 (check-args (load string?))
+
+(check-args (integer->char non-negative-fixnum?))
+(check-args (char->integer character?))
 
 ;; (set! *quasiquote-debug* #f)
