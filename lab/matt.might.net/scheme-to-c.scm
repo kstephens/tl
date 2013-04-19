@@ -202,7 +202,8 @@
 ; const? : exp -> boolean
 (define (const? exp)
   (or (integer? exp)
-      (boolean? exp)))
+      (boolean? exp)
+      (string? exp)))
 
 ; ref? : exp -> boolean
 (define (ref? exp)
@@ -829,6 +830,8 @@
                      "MakeInt(" (number->string exp) ")"))
     ((boolean? exp) (string-append
                      "MakeBoolean(" (if exp "1" "0") ")"))
+    ((string? exp)  (string-append
+                     "MakeString(" exp ", " (number->string (string-length exp)) ")"))
     (else           (error "unknown constant: " exp))))
 
 ; c-compile-prim : prim-exp -> string
@@ -1042,6 +1045,7 @@
 
   (emit "#include <stdlib.h>")
   (emit "#include <stdio.h>")
+  (emit "#include <string.h>")
   (emit "#include \"scheme.h\"")
   
   (emit "")
@@ -1080,7 +1084,13 @@ static Value __numEqual ;
   
   (emit
    "static Value __prim_display(Value e, Value v) {
-  printf(\"%i\\n\",v.z.value) ;
+  switch ( v.t ) {
+  case VOID:    break ;
+  case INT:     printf(\"%i\\n\",v.z.value) ; break ;
+  case BOOLEAN: printf(\"%s\\n\", v.b.value ? \"#t\" : \"#f\") ; break ;
+  case STRING:  printf(\"%s\\n\", v.s.value); break ;
+  default:      printf(\"#<%d >\\n\", v.t); break ;
+  }
   return v ;
 }")
   
