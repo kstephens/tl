@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <inttypes.h> /* strtoll() */
 #include <unistd.h>
 #include <stdarg.h>
@@ -190,6 +191,8 @@ tl tl_m_runtime(tl parent)
 #define tl_s__debug tl_(61)
 #define tl_s_list_TO_vector tl_(62)
 #define tl_s_tl__error tl_(63)
+#define tl_s_tl_string_escape tl_(64)
+#define tl_s_tl_string_unescape tl_(65)
 
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
@@ -253,6 +256,8 @@ tl tl_m_runtime(tl parent)
   tl_s__debug = tl_m_symbol("&debug");
   tl_s_list_TO_vector = tl_m_symbol("list->vector");
   tl_s_tl__error = tl_m_symbol("tl__error");
+  tl_s_tl_string_escape = tl_m_symbol("tl_string_escape");
+  tl_s_tl_string_unescape = tl_m_symbol("tl_string_unescape");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -461,8 +466,9 @@ tl tl_string_display(tl o, tl p)
 }
 
 tl tl_string_write(tl o, tl p)
-{
+{ TL_RT
   fwrite("\"", 1, 1, FP);
+  o = tl_call(tl_s_tl_string_escape, 1, o);
   tl_string_display(o, p);
   fwrite("\"", 1, 1, FP);
   return p;
@@ -1093,6 +1099,8 @@ tl tl_stdenv(tl env)
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
+  P(isalpha); P(isdigit); P(islower); P(isupper); P(isspace);
+  Pf(tl_string_unescape, tl_identity); Pf(tl_string_escape, tl_identity);
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(sleep); P(usleep);
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
@@ -1165,7 +1173,7 @@ int main(int argc, char **argv)
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_c(I)
 #define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
-#define STRING(S,L) tl_m_string((S), (L))
+#define STRING(S,L) tl_call(tl_s_tl_string_unescape, 1, tl_m_string((S), (L)))
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
