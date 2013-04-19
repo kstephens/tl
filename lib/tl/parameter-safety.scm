@@ -7,8 +7,8 @@
     result))
 
 (define (%check-args f constraints)
-  (let ((g     (gensym))
-         (args (gensym)))
+  (let ((g     (%gensym))
+         (args (%gensym)))
     ;; (set! *quasiquote-debug* #t)
     `(let ((,g ,f))
        (set! ,f

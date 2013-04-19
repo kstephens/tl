@@ -1,7 +1,7 @@
 (define (%match-syntax val cases)
   (define (match-cases val cases)
-    (let ((val-name (gensym 'match-val))
-           (result-name (gensym 'match-result)))
+    (let ((val-name (%gensym 'match-val))
+           (result-name (%gensym 'match-result)))
       `(let ((,val-name ,val))
          ;; result-name holds a cons containing a match result or #f.
          (let ((,result-name (or ,@(match-cases-list val-name cases))))
@@ -39,8 +39,8 @@
       ((pair? pat)
         (if (unquote-splicing? (car pat))
           (match-var (cadr (car pat)) val t)
-          (let ( (car-val (gensym 'car-))
-                 (cdr-val (gensym 'cdr-)))
+          (let ( (car-val (%gensym 'car-))
+                 (cdr-val (%gensym 'cdr-)))
             `(and
                (pair? ,val)
                (let ( (,car-val (car ,val))

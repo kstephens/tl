@@ -5,7 +5,7 @@
       `(let () ,@body))))
 |#
 
-;; requires (gensym BASENAME), %unspec
+;; requires (%gensym BASENAME), %unspec
 (define-macro (define n . b)
   (if (pair? n)
     `(define ,(car n) (lambda ,(cdr n) ,@b))
@@ -61,7 +61,7 @@
       ((null? cases)       #f)
       ((null? (cdr cases)) (car cases))
       (else 
-        (let ((tmp (gensym 'or-)))
+        (let ((tmp (%gensym 'or-)))
           `(let ((,tmp #f))
              ,(%or tmp cases)))))))
 
@@ -77,7 +77,7 @@
     (%and cases)))
 
 (define-macro (case val-expr . cases)
-  (letrec ((val (gensym 'case))
+  (letrec ((val (%gensym 'case))
 	   (%case 
 	     (lambda (cases)
 	       (if (null? cases) `',%unspec
@@ -109,7 +109,7 @@
 
 ;; MISC.
 (define-macro (macro-bind bindings . body)
-  (let ((anon-bindings (map (lambda (b) (cons (gensym 'macro-bind) b)) bindings)))
+  (let ((anon-bindings (map (lambda (b) (cons (%gensym 'macro-bind) b)) bindings)))
    `(let ,(map (lambda (b) `(,(cadr b) ,(car b))) anon-bindings)
      (let ,(map (lambda (b) `(,(car b) ,(caddr b))) anon-bindings)
        ,@body))))
