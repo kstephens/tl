@@ -1,9 +1,33 @@
-#|
-(define (%tl_string_escape s i t j)
-(define (tl_string_escape s) (%tl_string_escape s 0 (make-string (* 4 (string-length s))) 0)
-|#
+(define (%string-escape-1 s i t j)
+  (define (ac c)
+    (string-set! t j c)
+    (set! j (+ j 1)))
+  (define (ao i)
+    (ac (integer->char (+ (char->integer #\0) (truncate-remainder i 8)))))
+  (if (>= i (string-length s))
+    (%string-truncate! t j)
+    (let ((k (char->integer (string-ref s i))))
+      (case k
+        ((10) (ac #\\) (ac #\n))
+        ((13) (ac #\\) (ac #\r))
+        ((9)  (ac #\\) (ac #\t))
+        ((7)  (ac #\\) (ac #\b))
+        ((27) (ac #\\) (ac #\e))
+        ((92 34) (ac #\\) (ac (integer->char k)))
+        (else
+          (if (and (>= k 32) (< k 127))
+            (ac (integer->char k))
+            (begin
+              (ac #\\)
+              (ao (truncate-quotient k 64))
+              (ao (truncate-quotient k 8))
+              (ao k)
+              ))))
+      (%string-escape-1 s (+ i 1) t j))))
+(define (%string-escape s)
+  (%string-escape-1 s 0 (make-string (* 4 (string-length s))) 0))
 
-(define (%tl_string_unescape-1 s i j)
+(define (%string-unescape-1 s i j)
   (if (>= i (string-length s))
     (%string-truncate! s j)
     (begin
@@ -17,12 +41,12 @@
                       ((#\t) (integer->char 9))
                       ((#\b) (integer->char 7))
                       ((#\e) (integer->char 27))
-                      ((#\x #\X) c)
-                      ((#\0)     c)
+                      ((#\x #\X) c) ;; FIXME
+                      ((#\0)     c) ;; FIXME
                       (else      c)
                       ))
             (string-set! s j c)))
         (string-set! s j (string-ref s i)))
-      (%tl_string_unescape-1 s (+ i 1) (+ j 1)))))
-(define (%tl_string_unescape s) (%tl_string_unescape-1 s 0 0))
-(define tl_string_unescape %tl_string_unescape)
+      (%string-unescape-1 s (+ i 1) (+ j 1)))))
+(define (%string-unescape s) (%string-unescape-1 s 0 0))
+

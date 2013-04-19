@@ -485,6 +485,8 @@
 (load "tl/r5rs-math")
 (load "tl/parameter-safety")
 (load "tl/string")
+(define tl_string_escape %string-escape)
+(define tl_string_unescape %string-unescape)
 (load "tl/repl")
 (load "tl/main")
 
