@@ -5,7 +5,7 @@ all : t t.csi.c t.tl.c
 t : t.c
 
 t.csi.c : t.scm scheme-to-c.scm
-	csi -s scheme-to-c.scm < t.scm | tee $@
+	csi -nq -I ../../lib -s scheme-to-c.scm < t.scm | tee $@
 	cp $@ t.c
 
 t.tl.c : ../../bin/tl ../../lib/tl/*.scm t.scm scheme-to-c.scm

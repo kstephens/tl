@@ -6,6 +6,6 @@
           )
   (begin
     (foo 1 2)
-    (set! bar 2)
+    (set! bar "a string")
     (foo 3 4))
 )

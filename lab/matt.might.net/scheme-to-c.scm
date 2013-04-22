@@ -83,6 +83,7 @@
 
 
 ;; Utilities.
+(load "tl/string.scm")
 
 ; void : -> void
 (define (void) (if #f #t))
@@ -831,7 +832,7 @@
     ((boolean? exp) (string-append
                      "MakeBoolean(" (if exp "1" "0") ")"))
     ((string? exp)  (string-append
-                     "MakeString(" exp ", " (number->string (string-length exp)) ")"))
+                     "MakeString(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
     (else           (error "unknown constant: " exp))))
 
 ; c-compile-prim : prim-exp -> string
