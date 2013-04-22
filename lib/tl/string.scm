@@ -27,6 +27,13 @@
 (define (%string-escape s)
   (%string-escape-1 s 0 (make-string (* 4 (string-length s))) 0))
 
+(define (%char->digit c)
+  (cond
+    ((and (char<=? #\0 c) (char<=? c #\9))    (- (char->integer c) (char->integer #\0)))
+    ((and (char<=? #\a c) (char<=? c #\z)) (+ (- (char->integer c) (char->integer #\a)) 10))
+    ((and (char<=? #\A c) (char<=? c #\Z)) (+ (- (char->integer c) (char->integer #\A)) 10))
+    (else #f)))
+
 (define (%string-unescape-1 s i j)
   (if (>= i (string-length s))
     (%string-truncate! s j)
