@@ -142,6 +142,7 @@
 (define (integer->char x) (tl_c (tl_I x)))
 (define (char<? a b) (< (char->integer a) (char->integer b)))
 (define (char=? a b) (= (char->integer a) (char->integer b)))
+(define (char<=? a b) (<= (char->integer a) (char->integer b)))
 (define (char-alphabetic? c) (tl_b (isalpha (tl_C c))))
 (define (char-numeric? c) (tl_b (isdigit (tl_C c))))
 
