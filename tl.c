@@ -22,19 +22,14 @@ typedef ssize_t tlsw;
 void *GC_malloc(size_t s) { return malloc(s); }
 void *GC_malloc_atomic(size_t s) { return malloc(s); }
 void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
+void GC_free(void *p) { free(p); }
 void GC_gcollect() { }
 void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
 int  GC_general_register_disappearing_link(void **link) { return 0; }
 #define GC_INIT() (void) 0
+char *GC_strdup(const char *x) { return strcpy(GC_malloc_atomic(strlen(x) + 1), x); }
 #endif
-
-#define tl_malloc(S) GC_malloc(S)
-#define tl_realloc(P,S) GC_realloc(P,S)
-char *GC_strdup(const char *x)
-{
-  return strcpy(GC_malloc_atomic(strlen(x) + 1), x);
-}
 
 #define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
 
@@ -57,7 +52,7 @@ tl* tl_rt_thread() {
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
     assert(tl_rt_thread_key);
-    tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
+    tlp = GC_malloc(sizeof(*tlp) * (16 + 1));
     tlp[0] = 0;
     ++ tlp; /* skip type */
     ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, tlp));
@@ -114,7 +109,7 @@ tlw tl_B(tl i) { return _tl_B(i); }
 
 tl tl_allocate(tl type, size_t size)
 {
-  tl *o = tl_malloc(sizeof(tl) + size);
+  tl *o = GC_malloc(sizeof(tl) + size);
   *(o ++) = type;
 #define tl_t_(o) ((tl*)(o))[-1]
   memset(o, 0, size);
@@ -1179,6 +1174,7 @@ int main(int argc, char **argv)
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
 #define ERROR(msg,args...) tl_error(msg, tl_s(read), ##args)
-#define MALLOC(S) tl_malloc(S)
-#define REALLOC(P,S) tl_realloc(P,S)
+#define MALLOC(S) GC_malloc_atomic(S)
+#define REALLOC(P,S) GC_realloc(P,S)
+#define FREE(P) GC_free(P)
 #include "lispread.c"
