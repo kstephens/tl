@@ -83,6 +83,16 @@
 
 
 ;; Utilities.
+(define (string-copy! to at from start end)
+  (if (and (< at (string-length to)) (< start end))
+    (begin
+      (string-set! to at (string-ref from start))
+      (string-copy! to (+ at 1) from (+ start 1) end)
+      )))
+(define (%string-truncate! s l)
+  (let ((t (make-string l)))
+    (string-copy! t 0 s 0 l)
+    t))
 (load "tl/string.scm")
 
 ; void : -> void
