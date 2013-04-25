@@ -172,7 +172,6 @@
   (let ((o (%allocate <string> (* 2 %word-size))))
     (tl_set o 0 ptr)
     (tl_set o 1 (tl_I size))
-    (tl_uchar_set (%+ ptr (tl_I size)) (tl_I 0)) ; null-terminator
     o))
 (define tl_S %string-ptr)
 (define (tl_s ptr) (%make-string ptr (tl_i (strlen ptr))))
