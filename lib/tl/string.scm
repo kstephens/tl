@@ -11,8 +11,9 @@
         ((10) (ac #\\) (ac #\n))
         ((13) (ac #\\) (ac #\r))
         ((9)  (ac #\\) (ac #\t))
-        ((7)  (ac #\\) (ac #\b))
-        ((27) (ac #\\) (ac #\e))
+        ((7)  (ac #\\) (ac #\a))
+        ((8)  (ac #\\) (ac #\b))
+        ((27) (ac #\\) (ac #\e)) ;; alt
         ((92 34) (ac #\\) (ac (integer->char k)))
         (else
           (if (and (>= k 32) (< k 127))
@@ -46,8 +47,9 @@
                       ((#\n) (integer->char 10))
                       ((#\r) (integer->char 13))
                       ((#\t) (integer->char 9))
-                      ((#\b) (integer->char 7))
-                      ((#\e) (integer->char 27))
+                      ((#\b) (integer->char 8))
+                      ((#\a) (integer->char 7))
+                      ((#\e) (integer->char 27)) ;; alt
                       ((#\x #\X) c) ;; FIXME
                       ((#\0)     c) ;; FIXME
                       (else      c)
@@ -57,3 +59,23 @@
       (%string-unescape-1 s (+ i 1) (+ j 1)))))
 (define (%string-unescape s) (%string-unescape-1 s 0 0))
 
+(define (string-copy! to at from start end)
+  (if (and (< at (string-length to)) (< start end))
+    (begin
+      (string-set! to at (string-ref from start))
+      (string-copy! to (+ at 1) from (+ start 1) end)
+      )))
+
+(define (%string-fill! string fill start end)
+  (if (and (< start (string-length to)) (< start end))
+    (begin
+      (string-set! string start fill)
+      (%string-fill! string (+ start 1) end)
+      )))
+(define (string-fill string fill . opts)
+  (let ((start 0) (end (string-length string)))
+    (if (not (null? opts))
+      (set! start (car opts)))
+    (if (not (null? (cdr opts)))
+      (set! end (cadr opts)))
+    (%string-fill! string fill start end)))
