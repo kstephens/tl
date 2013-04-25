@@ -11,8 +11,9 @@
         ((10) (ac #\\) (ac #\n))
         ((13) (ac #\\) (ac #\r))
         ((9)  (ac #\\) (ac #\t))
-        ((7)  (ac #\\) (ac #\b))
-        ((27) (ac #\\) (ac #\e))
+        ((7)  (ac #\\) (ac #\a))
+        ((8)  (ac #\\) (ac #\b))
+        ((27) (ac #\\) (ac #\e)) ;; alt
         ((92 34) (ac #\\) (ac (integer->char k)))
         (else
           (if (and (>= k 32) (< k 127))
@@ -46,8 +47,9 @@
                       ((#\n) (integer->char 10))
                       ((#\r) (integer->char 13))
                       ((#\t) (integer->char 9))
-                      ((#\b) (integer->char 7))
-                      ((#\e) (integer->char 27))
+                      ((#\b) (integer->char 8))
+                      ((#\a) (integer->char 7))
+                      ((#\e) (integer->char 27)) ;; alt
                       ((#\x #\X) c) ;; FIXME
                       ((#\0)     c) ;; FIXME
                       (else      c)
