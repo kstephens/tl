@@ -59,3 +59,23 @@
       (%string-unescape-1 s (+ i 1) (+ j 1)))))
 (define (%string-unescape s) (%string-unescape-1 s 0 0))
 
+(define (string-copy! to at from start end)
+  (if (and (< at (string-length to)) (< start end))
+    (begin
+      (string-set! to at (string-ref from start))
+      (string-copy! to (+ at 1) from (+ start 1) end)
+      )))
+
+(define (%string-fill! string fill start end)
+  (if (and (< start (string-length to)) (< start end))
+    (begin
+      (string-set! string start fill)
+      (%string-fill! string (+ start 1) end)
+      )))
+(define (string-fill string fill . opts)
+  (let ((start 0) (end (string-length string)))
+    (if (not (null? opts))
+      (set! start (car opts)))
+    (if (not (null? (cdr opts)))
+      (set! end (cadr opts)))
+    (%string-fill! string fill start end)))
