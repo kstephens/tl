@@ -186,7 +186,6 @@
 (define (string-length o) (tl_i (%string-len o)))
 (define (%string-set! s i c) (tl_c (tl_uchar_set (%string-ref s i) (tl_C c))))
 (define (%string-truncate! s l)
-  (%string-set! s l (integer->char 0))
   (tl_set s 1 (tl_I l))
   s)
 (define (string-ref o i)
