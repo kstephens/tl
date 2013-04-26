@@ -1124,9 +1124,8 @@ static Value __numEqual ;
 
 ;; Compile and emit:
 
-(define the-program (read))
-
-(c-compile-and-emit emit the-program)
+; (define the-program (read))
+; (c-compile-and-emit emit the-program)
 
 ; Suitable definitions for the cell functions:
 ;(define (cell value) (lambda (get? new-value) 
