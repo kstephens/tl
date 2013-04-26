@@ -313,12 +313,12 @@
 (define (vector-set! o i v) (tl_set o (+ i 1) v))
 (define (vector-equal? a b)
   (if (eq? (tl_type a) (tl_type b))
-    (if (eqv? (vector-length a) (vector-length b))
+    (if (= (vector-length a) (vector-length b))
       (vector-equal?-2 a b 0)
       #f)
     #f))
 (define (vector-equal?-2 a b i)
-  (if (eqv? (vector-length a) i)
+  (if (= (vector-length a) i)
     #t
     (if (equal? (vector-ref a i) (vector-ref b i))
       (vector-equal?-2 a b (+ i 1))
@@ -356,7 +356,7 @@
     #t
     (if (eq? (tl_type a) (tl_type b))
       (if (eq? (tl_type a) <fixnum>)
-        (eqv? a b)
+        (tl_fixnum_EQ a b)
         (if (eq? (tl_type a) <character>)
           (tl_b (tl_word_EQ (tl_C a) (tl_C b)))
           (if (eq? (tl_type a) <string>)
@@ -367,6 +367,8 @@
                 (vector-equal? a b)
                 #f)))))
       #f)))
+(define (eqv? a b)
+  (if (tl_eqvQ a b) #t (equal? a b)))
 
 ;; ## ;; logical EOF
 (set! tl_progpath (tl_s+ tl_progpath))
@@ -387,7 +389,7 @@
 
 (define _X_OK 1)(define _W_OK 2)(define _R_OK 4)
 (define (file-readable? name)
-  (eqv? 0 (tl_i (access (%string-ptr name) (tl_I _R_OK)))))
+  (= 0 (tl_i (access (%string-ptr name) (tl_I _R_OK)))))
 (define (locate-file name)
   (if (eqv? (string-ref name 0) #\/)
     name
