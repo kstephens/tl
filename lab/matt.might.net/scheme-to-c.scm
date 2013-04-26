@@ -877,7 +877,7 @@
        ","
        $tmp ".clo.lam("
        "MakeEnv(" $tmp ".clo.env)"
-       (if (null? args) "" ",")
+       (if (null? args) "" ", ")
        (c-compile-args args append-preamble) "))"))))
   
 ; c-compile-if : if-exp -> string
@@ -963,7 +963,7 @@
     (string-append
      "MakeClosure("
      "__lambda_" (number->string lid)
-     ","
+     ", "
      (c-compile-exp env append-preamble)
      ")")))
 
