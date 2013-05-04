@@ -1,24 +1,18 @@
 CFLAGS += -O3 -g
+T_SCM_FILES := $(shell ls t*.scm)
+T_C_FILES := $(T_SCM_FILES:%.scm=%.csi.c) $(T_SCM_FILES:%.scm=%.tl.c)
+T_FILES := $(T_C_FILES:%.c=%.t)
 
-all : t t.csi.c t.tl.c
+all : $(T_FILES)
 
-t : t.c
+%.t : %.c
+	$(CC) $(CFLAGS) -o $@ $*.c
 
-t.csi.c : t.scm scheme-to-c.scm
-	csi -nq -I ../../lib -s compile-stdin.scm < t.scm | tee $@
-	cp $@ t.c
+%.csi.c : %.scm
+	csi -nq -I ../../lib -s compile-stdin.scm < $*.scm | ./filter-c-code.rb | tee $@
 
-t.tl.c : ../../bin/tl ../../lib/tl/*.scm t.scm scheme-to-c.scm
-	../../bin/tl compile-stdin.scm < t.scm | tee $@
-	cp $@ t.c
-
-t.c : t.csi.c t.tl.c
-
-t.s : t.c scheme.h
-	$(CC) $(CFLAGS) -S -o - $(@:.s=.c) | ../../tool/asm-source > $@
-
-../../bin/tl : ../../tl.c
-	$(MAKE) -C ../..
+%.tl.c : %.scm
+	../../bin/tl compile-stdin.scm < $*.scm  | ./filter-c-code.rb | tee $@
 
 clean:
-	rm -f t t.c t.csi.c t.tl.c t.s
+	rm -f *.t *.c

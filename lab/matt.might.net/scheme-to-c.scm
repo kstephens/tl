@@ -911,7 +911,7 @@
 ; c-compile-env-make : env-make-exp (string -> void) -> string
 (define (c-compile-env-make exp append-preamble)
   (string-append
-   "MakeEnv(__alloc_env" (number->string (env-make->id exp))
+   "MakeEnv(__alloc_env_" (number->string (env-make->id exp))
    "(" 
    (c-compile-args (env-make->values exp) append-preamble)
    "))"))
@@ -1007,7 +1007,7 @@
                                   " ; \n"))
                                fields))
      "} ;\n\n"
-     tyname "*" " __alloc_env" sid 
+     tyname "*" " __alloc_env_" sid
      "(" (c-compile-formals fields) ")" "{\n"
       "  static const char *names[] = { "
       (apply string-append
