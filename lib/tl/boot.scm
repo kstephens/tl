@@ -225,7 +225,7 @@
       (memcpy (%string-ptr o) (%+ (%string-ptr s) (tl_I i)) (tl_I l))
       o)))
 (define (string-append . strs)
-  (let ((s (make-string (tl:reduce + (map string-length strs)))))
+  (let ((s (make-string (tl:reduce + 0 (map string-length strs)))))
     (%string-set (%string-ptr s) strs)
     s))
 (define (string-ends-with? a b)
@@ -246,10 +246,10 @@
       (%map f (%map-1 cdr lists)))))
 (define (map f . lists) (%map f lists))
 (define for-each map)
-(define (tl:reduce f l)
-  (if (null? (cdr l))
-    (car l)
-    (f (car l) (tl:reduce f (cdr l)))))
+(define (tl:reduce f a l)
+  (if (null? l)
+    a
+    (f (car l) (tl:reduce f a (cdr l)))))
 (define (%append-2 a b)
   (if (null? a) b
     (cons (car a) (%append-2 (cdr a) b))))
