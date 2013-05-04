@@ -637,6 +637,9 @@ tl tl_setE(tl var, tl val, tl env)
   return car(slot) = val;
 }
 
+static int _tl_eval_debug;
+tl tl_eval_debug(tl val) { _tl_eval_debug = tl_B(val) ? 1 : 0; return val; }
+
 tl tl_eval(tl exp, tl env)
 { TL_RT
 #undef car
@@ -692,16 +695,15 @@ tl tl_eval(tl exp, tl env)
   G(eval);
 
   L(evexp);
-  val = tl_lookup(car(exp), env);
-  if ( car(exp) == tl_s_quote )
-    { val = cadr(exp); G(rtn); }
-  if ( car(exp) == tl_s_if ) G(if1);
-  if ( car(exp) == tl_s_lambda ) G(proc);
-  if ( car(exp) == tl_s_let ) { exp = cdr(exp); G(let); }
-  if ( car(exp) == tl_s_define ) G(define);
-  if ( car(exp) == tl_s_setE ) G(setE);
-  if ( car(exp) == tl_s_begin ) 
-    { exp = cdr(exp); G(evlist); }
+  if ( _tl_eval_debug > 0 ) { _tl_eval_debug --; fprintf(stderr, "  ;=> "); tl_write(exp, stderr); fprintf(stderr, "\n"); _tl_eval_debug ++; }
+  val = car(exp);
+  if ( val == tl_s_quote ) { val = cadr(exp); G(rtn); }
+  if ( val == tl_s_if ) G(if1);
+  if ( val == tl_s_lambda ) G(proc);
+  if ( val == tl_s_let ) { exp = cdr(exp); G(let); }
+  if ( val == tl_s_define ) G(define);
+  if ( val == tl_s_setE ) G(setE);
+  if ( val == tl_s_begin ) { exp = cdr(exp); G(evlist); }
 
   // L(evcomb);
   args = argp = tl_nil;
@@ -732,8 +734,9 @@ tl tl_eval(tl exp, tl env)
   L(let);
   args = argp = nil; val = car(exp);
   while ( val != nil ) {
-    argp = cons(car(car(val)), argp);
-    args = cons(cadr(car(val)), args);
+    tl b = car(val);
+    argp = cons(car(b), argp);
+    args = cons(cadr(b), args);
     val = cdr(val);
   }
   val = exp;
@@ -1082,7 +1085,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
+  P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
