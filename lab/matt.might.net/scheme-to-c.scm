@@ -874,7 +874,7 @@
            (fun      (app->fun exp)))
       (string-append
        "("  $tmp " = " (c-compile-exp fun append-preamble) 
-       ","
+       ", "
        $tmp ".clo.lam("
        "MakeEnv(" $tmp ".clo.env)"
        (if (null? args) "" ", ")
@@ -998,6 +998,7 @@
          (sid    (number->string id))
          (tyname (string-append "struct __env_" sid)))
     (string-append 
+     "static "
      "struct __env_" (number->string id) " {\n"
       " const char **names;\n"
      (apply string-append (map (lambda (f)
@@ -1091,7 +1092,7 @@ static Value __numEqual ;
    "static Value __prim_display(Value e, Value v) {
   switch ( v.t ) {
   case VOID:    break ;
-  case INT:     printf(\"%i\\n\",v.z.value) ; break ;
+  case INT:     printf(\"%i\\n\", v.z.value) ; break ;
   case BOOLEAN: printf(\"%s\\n\", v.b.value ? \"#t\" : \"#f\") ; break ;
   case STRING:  printf(\"%s\\n\", v.s.value); break ;
   default:      printf(\"#<%d >\\n\", v.t); break ;
