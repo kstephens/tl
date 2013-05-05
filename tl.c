@@ -1060,6 +1060,12 @@ tl tl_load(tl env, const char *name)
     return tl_error("Cannot load %s", tl_rt, name);
 }
 
+static tl tl_memcmp(tl a, tl b, tl as, tl bs)
+{
+  int cmp = memcmp(a, b, tl_I(as) < tl_I(bs) ? tl_I(as) : tl_I(bs));
+  return tl_i(cmp ? (cmp < 0 ? -1 : 1) : (tl_I(as) == tl_I(bs) ? 0 : (tl_I(as) < tl_I(bs) ? -1 : 1)));
+}
+
 tl tl_stdenv(tl env)
 { TL_RT
   tl _v;
@@ -1096,7 +1102,7 @@ tl tl_stdenv(tl env)
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
-  P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
+  P(strlen); P(strcpy); P(memset); P(memcpy); P(tl_memcmp);
   P(isalpha); P(isdigit); P(islower); P(isupper); P(isspace);
   Pf(tl_string_unescape, tl_identity); Pf(tl_string_escape, tl_identity);
   P(exit); P(abort); P(getenv); P(setenv); P(system);

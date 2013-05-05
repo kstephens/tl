@@ -61,7 +61,7 @@
 (check-args (string-length string?))
 (check-args (string-ref string? non-negative-fixnum?))
 (check-args (string-set! string? non-negative-fixnum?))
-(check-args (string-equal? string? string?))
+(check-args (string=? string? string?))
 (check-args (make-string non-negative-fixnum?))
 (check-args (string-copy string?))
 (check-args (substring string? non-negative-fixnum? non-negative-fixnum?))
