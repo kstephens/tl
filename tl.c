@@ -61,7 +61,7 @@ tl tl_env; // environment.
 #endif
 
 FILE *tl_stdin, *tl_stdout, *tl_stderr;
-char *tl_progpath, *tl_progname, *tl_progdir;
+char *tl_progpath, *tl_progname, *tl_progdir, *tl_libdir;
 
 static void tl_init(int argc, char **argv)
 {
@@ -75,6 +75,10 @@ static void tl_init(int argc, char **argv)
     tl_progname = r + 1;
   } else {
     tl_progdir = ".";
+  }
+  if ( ! (tl_libdir = getenv("TL_LIBDIR")) ) {
+    tl_libdir = malloc(strlen(tl_progdir) + sizeof("/../lib"));
+    strcat(strcpy(tl_libdir, tl_progdir), "/../lib");
   }
   GC_INIT();
   tl_init_th();
@@ -1008,7 +1012,7 @@ tl tl_load(tl env, const char *name)
   FILE *fp;
   char buf[1024];
   if ( name[0] != '/' ) {
-    snprintf(buf, sizeof(buf), "%s/../lib/%s", tl_progdir, name);
+    snprintf(buf, sizeof(buf), "%s/%s", tl_libdir, name);
     name = buf;
   }
   if ( (fp = fopen(name, "r")) ) {
@@ -1037,7 +1041,7 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
   DD(tl_stdin); DD(tl_stdout); DD(tl_stderr);
-  DD(tl_progpath); DD(tl_progname); DD(tl_progdir);
+  DD(tl_progpath); DD(tl_progname); DD(tl_progdir); DD(tl_libdir);
 #define Pf(N, F) D(N, tl_m_prim((F), #N))
 #define P(N) Pf(N, N)
   P(tl_allocate);
