@@ -100,7 +100,6 @@ tl tl_m_runtime(tl parent)
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
   tl_rt = tl_allocate(0, size);
-#define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
 
 #define tl_t_type tl_(0)
@@ -383,9 +382,16 @@ tl tl_fixnum_TO_string(tl o)
 
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
 #define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
-  o[0] = f; o[1] = (tl) name;
+  o[0] = f; o[1] = (tl) name; o[2] = 0;
+  return o;
+}
+
+tl tl_m_closure(void *f, void *e)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
+  o[0] = f; o[1] = (tl) ""; o[2] = e;
   return o;
 }
 

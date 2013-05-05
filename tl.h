@@ -44,4 +44,6 @@ static inline tlsw tl_I(tl o) { return _tl_I(o); }
    ((tlw) (o)) & 1  ? tl_t_fixnum :           \
    (o) <= tl_t      ? tl_t_boolean : tl_t_(o) )
 
+#define tl_iv(o,n) ((tl*)(o))[n]
+
 #endif
