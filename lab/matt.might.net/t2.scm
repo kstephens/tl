@@ -1,11 +1,8 @@
-(letrec (
-          (foo (lambda (a b) 
-                 (display (* bar (+ a b)))))
-          (bar 1)
-          (baz! 2)
+(letrec ((bar 5)
+         (foo (lambda (a b) 
+                (display (* bar (+ a b)))))
           )
   (begin
     (foo 1 2)
-    (set! bar "a string")
     (foo 3 4))
 )
