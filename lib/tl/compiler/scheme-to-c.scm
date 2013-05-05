@@ -787,7 +787,7 @@
                             (set! preamble (string-append preamble "  " s "\n"))))
          (body (c-compile-exp exp append-preamble)))
     (string-append 
-     "int main (int argc, char* argv[]) {\n"
+     "int _tl_main (int argc, char* argv[]) {\n"
      preamble 
      "  __sum         = tl_m_prim(__prim_sum, \"+\") ;\n"
      "  __product     = tl_m_prim(__prim_product, \"*\") ;\n"
@@ -869,8 +869,8 @@
       (string-append
        "("  $tmp " = " (c-compile-exp fun append-preamble) 
        ", "
-       $tmp ".clo.lam("
-       "MakeEnv(" $tmp ".clo.env)"
+       "tl_FP(" $tmp ",tl,())("
+       "tl_m_env(tl_ENV(" $tmp "))"
        (if (null? args) "" ", ")
        (c-compile-args args append-preamble) "))"))))
   
@@ -884,28 +884,27 @@
 ; c-compile-set-cell! : set-cell!-exp (string -> void) -> string 
 (define (c-compile-set-cell! exp append-preamble)
   (string-append
-   "(*"
-   "(" (c-compile-exp (set-cell!->cell exp) append-preamble) ".cell.addr)" " = "
+   "("
+   "(*(tl*) " (c-compile-exp (set-cell!->cell exp) append-preamble) ")"
+   " = "
    (c-compile-exp (set-cell!->value exp) append-preamble)
    ")"))
 
 ; c-compile-cell-get : cell-get-exp (string -> void) -> string 
 (define (c-compile-cell-get exp append-preamble)
   (string-append
-   "(*("
-   (c-compile-exp (cell-get->cell exp) append-preamble)
-   ".cell.addr"
-   "))"))
+   "(*(tl*) " (c-compile-exp (cell-get->cell exp) append-preamble) ")"
+    ))
 
 ; c-compile-cell : cell-exp (string -> void) -> string
 (define (c-compile-cell exp append-preamble)
   (string-append
-   "NewCell(" (c-compile-exp (cell->value exp) append-preamble) ")"))
+   "tl_m_cell(" (c-compile-exp (cell->value exp) append-preamble) ")"))
 
 ; c-compile-env-make : env-make-exp (string -> void) -> string
 (define (c-compile-env-make exp append-preamble)
   (string-append
-   "MakeEnv(__alloc_env_" (number->string (env-make->id exp))
+   "tl_m_env(__alloc_env_" (number->string (env-make->id exp))
    "(" 
    (c-compile-args (env-make->values exp) append-preamble)
    "))"))
@@ -914,8 +913,8 @@
 (define (c-compile-env-get exp append-preamble)
   (string-append
    "((struct __env_"
-   (number->string (env-get->id exp)) "*)" 
-   (c-compile-exp (env-get->env exp) append-preamble) ".env.env)->_"
+   (number->string (env-get->id exp)) "*) "
+   "tl_ENV(" (c-compile-exp (env-get->env exp) append-preamble) "))->_"
    (mangle (env-get->field exp))))
 
 
@@ -1009,7 +1008,7 @@
                    (string-append "\"" (symbol->string f) "\", "))
                  fields))
       " 0 };\n"
-     "  " tyname "*" " t = malloc(sizeof(" tyname "))" ";\n"
+     "  " tyname "*" " t = GC_malloc(sizeof(" tyname "))" ";\n"
      "  t->names = names;\n"
      (apply string-append 
             (map (lambda (f)
@@ -1041,7 +1040,7 @@
   (set! input-program (closure-convert input-program))
   
 
-
+  (emit "#define _tl_main _tl_main")
   (emit "#include \"tl.c\"")
   
   (emit "")
@@ -1081,7 +1080,7 @@ static tl __numEqual ;
   (emit
    "static tl __prim_display(tl e, tl v) {
   tl_write(v, stdout) ;
-  fprintf(stdout, \"\n\");
+  fprintf(stdout, \"\\n\");
   return v ;
 }")
   
