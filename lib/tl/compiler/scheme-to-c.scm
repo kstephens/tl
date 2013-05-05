@@ -992,7 +992,6 @@
          (sid    (number->string id))
          (tyname (string-append "struct __env_" sid)))
     (string-append 
-     "static "
      "struct __env_" (number->string id) " {\n"
       " const char **names;\n"
      (apply string-append (map (lambda (f)
