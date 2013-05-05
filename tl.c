@@ -1,20 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <inttypes.h> /* strtoll() */
-#include <unistd.h>
-#include <stdarg.h>
-#include <setjmp.h>
-#include <assert.h>
-
-#ifdef tl_PTHREAD
-#define GC_THREADS
-#endif
-
-typedef void *tl;
-typedef size_t tlw;
-typedef ssize_t tlsw;
+#include "tl.h"
 
 #ifndef tl_NO_GC
 #include "gc/gc.h"
@@ -48,7 +32,8 @@ static void tl_init_th()
 }
 
 tl tl_m_thread(pthread_t rt, tl env, void *pt);
-tl* tl_rt_thread() {
+tl* tl_rt_thread()
+{
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
     assert(tl_rt_thread_key);
@@ -95,29 +80,15 @@ static void tl_init(int argc, char **argv)
   tl_init_th();
 }
 
-#define tl_nil ((tl) 0)
-#define tl_f ((tl) (tlw) 2)
-#define tl_t ((tl) (tlw) 4)
-#define _tl_b(x) ((x) ? tl_t : tl_f)
-#define _tl_B(x) ((x) != tl_f)
-
-tl tl_b(tlw i) { return _tl_b(i); }
-#define tl_b(x)_tl_b(x)
-
-tlw tl_B(tl i) { return _tl_B(i); }
-#define tl_B(x)_tl_B(x)
-
 tl tl_allocate(tl type, size_t size)
 {
   tl *o = GC_malloc(sizeof(tl) + size);
   *(o ++) = type;
-#define tl_t_(o) ((tl*)(o))[-1]
   memset(o, 0, size);
   return o;
 }
 
 tl tl_set_runtime(tl rt) { TL_RT tl old = tl_rt; tl_rt = rt; return old; }
-
 tl tl_runtime() { TL_RT return tl_rt; }
 
 tl tl_m_type(tl name);
@@ -281,15 +252,7 @@ int tl_C(tl o) { return _tl_C(o); }
 
 tl tl_get_env() { TL_RT return tl_env; }
 
-tl tl_type(tl o)
-{ TL_RT
-#define _tl_type(o)                           \
-  (                                           \
-   (o) == 0         ? tl_t_null :             \
-   ((tlw) (o)) & 1  ? tl_t_fixnum :           \
-   (o) <= tl_t      ? tl_t_boolean : tl_t_(o) )
-  return _tl_type(o);
-}
+tl tl_type(tl o) { TL_RT return _tl_type(o); }
 
 //#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl name)
@@ -302,10 +265,7 @@ tl tl_m_type(tl name)
   return o;
 }
 
-tl tl_set_type(tl o, tl t)
-{
-  tl_t_(o) = t; return o;
-}
+tl tl_set_type(tl o, tl t) { tl_t_(o) = t; return o; }
 
 tl tl_write(tl o, tl p);
 tl tl_m_string(void *x, size_t l);
@@ -332,13 +292,6 @@ tl tl_error(tl msg, tl obj, ...)
   va_end(vap);
   return tl_call(tl_s_tl__error, 2, tl_m_string(GC_strdup(buf), strlen(buf)), obj);
 }
-
-#define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) | 1))
-#define _tl_I(o) (((tlsw) (o)) >> 1)
-tl tl_i(tlsw x) { return _tl_i(x); }
-tlsw tl_I(tl o) { return _tl_I(o); }
-#define tl_i(x)_tl_i(x)
-#define tl_I(o)_tl_I(o)
 
 tl tl_get(tl o, tl i)       { return ((tl*) o)[tl_I(i)]; }
 tl tl_set(tl o, tl i, tl v) { return ((tl*) o)[tl_I(i)] = v; }
