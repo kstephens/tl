@@ -46,4 +46,7 @@ static inline tlsw tl_I(tl o) { return _tl_I(o); }
 
 #define tl_iv(o,n) ((tl*)(o))[n]
 
+#define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
+#define tl_ENV(o) tl_iv(o,2)
+
 #endif

@@ -128,6 +128,8 @@ tl tl_m_runtime(tl parent)
 #define tl_t_setE tl_(18)
 #define tl_t_begin tl_(19)
 #define tl_t_form tl_(20)
+#define tl_t_cell tl_(21)
+#define tl_t_env tl_(22)
 
 #define tl_v tl_(30)
 #define tl_symbol_list tl_(31)
@@ -191,6 +193,9 @@ tl tl_m_runtime(tl parent)
   tl_t_closure = tl_m_type("closure");
   tl_t_form   = tl_m_type("form");
   tl_t_thread = tl_m_type("thread");
+
+  tl_t_cell   = tl_m_type("cell");
+  tl_t_env   = tl_m_type("env");
 
   tl_t_if2 = tl_m_type("if2");
   tl_t_evcom3 = tl_m_type("evcom3");
@@ -387,7 +392,6 @@ tl tl_fixnum_TO_string(tl o)
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-#define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
   o[0] = f; o[1] = (tl) name; o[2] = 0;
   return o;
 }
@@ -396,6 +400,20 @@ tl tl_m_closure(void *f, void *e)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
   o[0] = f; o[1] = (tl) ""; o[2] = e;
+  return o;
+}
+
+tl tl_m_env(tl v)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_env, sizeof(tl) * 1);
+  o[0] = v;
+  return o;
+}
+
+tl tl_m_cell(tl v)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_cell, sizeof(tl) * 1);
+  o[0] = v;
   return o;
 }
 
