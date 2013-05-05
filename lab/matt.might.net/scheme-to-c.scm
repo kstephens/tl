@@ -113,20 +113,14 @@
 
 ; gensym : symbol -> symbol
 (define gensym (lambda params
-                 (if (null? params)
-                     (begin
-                       (set! gensym-count (+ gensym-count 1))
-                       (string->symbol (string-append
-                                        "$"
-                                        (number->string gensym-count))))
-                     (begin
-                       (set! gensym-count (+ gensym-count 1))
+                 (set! gensym-count (+ gensym-count 1))
                        (string->symbol (string-append 
+                                        (if (null? params) ""
                                         (if (symbol? (car params))
                                             (symbol->string (car params))
-                                            (car params))
+                                            (car params)))
                                         "$"
-                                        (number->string gensym-count)))))))
+                                        (number->string gensym-count)))))
 
 ; member : symbol sorted-set[symbol] -> boolean
 (define (member sym S)
