@@ -1097,13 +1097,17 @@ tl tl_stdenv(tl env)
   return env;
 }
 
+#ifndef _tl_main
+#define _tl_main(argc, argv) tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv)
+#endif
+
 int main(int argc, char **argv)
 { 
   tl_init(argc, argv);
   {TL_RT
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
-  tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv);
+  _tl_main(argc, argv);
   tl_env = tl_nil;
   GC_gcollect();
   GC_invoke_finalizers();
