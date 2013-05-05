@@ -789,11 +789,11 @@
     (string-append 
      "int main (int argc, char* argv[]) {\n"
      preamble 
-     "  __sum         = MakePrimitive(__prim_sum) ;\n" 
-     "  __product     = MakePrimitive(__prim_product) ;\n" 
-     "  __difference  = MakePrimitive(__prim_difference) ;\n" 
-     "  __display     = MakePrimitive(__prim_display) ;\n" 
-     "  __numEqual    = MakePrimitive(__prim_numEqual) ;\n"      
+     "  __sum         = tl_m_prim(__prim_sum, \"+\") ;\n"
+     "  __product     = tl_m_prim(__prim_product, \"*\") ;\n"
+     "  __difference  = tl_m_prim(__prim_difference, \"-\") ;\n"
+     "  __display     = tl_m_prim(__prim_display, \"display\") ;\n"
+     "  __numEqual    = tl_m_prim(__prim_numEqual, \"eq?\") ;\n"
      "  " body " ;\n"
      "  return 0;\n"
      " }\n")))
@@ -826,11 +826,11 @@
 (define (c-compile-const exp)
   (cond
     ((integer? exp) (string-append 
-                     "MakeInt(" (number->string exp) ")"))
+                     "tl_i(" (number->string exp) ")"))
     ((boolean? exp) (string-append
-                     "MakeBoolean(" (if exp "1" "0") ")"))
+                     "tl_b(" (if exp "1" "0") ")"))
     ((string? exp)  (string-append
-                     "MakeString(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
+                     "tl_m_string(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
     (else           (error "unknown constant: " exp))))
 
 ; c-compile-prim : prim-exp -> string
@@ -862,7 +862,7 @@
   (let (($tmp (mangle (gensym 'tmp))))
     
     (append-preamble (string-append
-                      "Value " $tmp " ; "))
+                      "tl " $tmp " ; "))
     
     (let* ((args     (app->args exp))
            (fun      (app->fun exp)))
@@ -877,7 +877,7 @@
 ; c-compile-if : if-exp -> string
 (define (c-compile-if exp append-preamble)
   (string-append
-   "(" (c-compile-exp (if->condition exp) append-preamble) ").b.value ? "
+   "tl_B(" (c-compile-exp (if->condition exp) append-preamble) ") ? "
    "(" (c-compile-exp (if->then exp) append-preamble)      ") : "
    "(" (c-compile-exp (if->else exp) append-preamble)      ")"))
 
@@ -955,7 +955,7 @@
          (env (closure->env exp))
          (lid (allocate-lambda (c-compile-lambda lam))))
     (string-append
-     "MakeClosure("
+     "tl_m_closure("
      "__lambda_" (number->string lid)
      ", "
      (c-compile-exp env append-preamble)
@@ -966,7 +966,7 @@
   (if (not (pair? formals))
       ""
       (string-append
-       "Value "
+       "tl "
        (mangle (car formals))
        (if (pair? (cdr formals))
            (string-append ", " (c-compile-formals (cdr formals)))
@@ -980,7 +980,7 @@
     (let ((formals (c-compile-formals (lambda->formals exp)))
           (body    (c-compile-exp     (lambda->exp exp) append-preamble)))
       (lambda (name)
-        (string-append "static Value " name "(" formals ") {\n"
+        (string-append "static tl " name "(" formals ") {\n"
                        preamble
                        "  return " body " ;\n"
                        "}\n")))))
@@ -997,7 +997,7 @@
       " const char **names;\n"
      (apply string-append (map (lambda (f)
                                  (string-append
-                                  " Value _"
+                                  " tl _"
                                   (mangle f) 
                                   " ; \n"))
                                fields))
@@ -1043,20 +1043,17 @@
   
 
 
-  (emit "#include <stdlib.h>")
-  (emit "#include <stdio.h>")
-  (emit "#include <string.h>")
-  (emit "#include \"scheme.h\"")
+  (emit "#include \"tl.c\"")
   
   (emit "")
   
   ; Create storage for primitives:
   (emit "
-static Value __sum ;
-static Value __difference ;
-static Value __product ;
-static Value __display ;
-static Value __numEqual ;
+static tl __sum ;
+static tl __difference ;
+static tl __product ;
+static tl __display ;
+static tl __numEqual ;
 ")
   
   (for-each 
@@ -1068,42 +1065,37 @@ static Value __numEqual ;
 
   ;; Emit primitive procedures:
   (emit 
-   "static Value __prim_sum(Value e, Value a, Value b) {
-  return MakeInt(a.z.value + b.z.value) ;
+   "static tl __prim_sum(tl e, tl a, tl b) {
+  return tl_fixnum_ADD(a, b) ;
 }")
   
   (emit 
-   "static Value __prim_product(Value e, Value a, Value b) {
-  return MakeInt(a.z.value * b.z.value) ;
+   "static tl __prim_product(tl e, tl a, tl b) {
+  return tl_fixnum_MUL(a, b) ;
 }")
   
   (emit 
-   "static Value __prim_difference(Value e, Value a, Value b) {
-  return MakeInt(a.z.value - b.z.value) ;
+   "static tl __prim_difference(tl e, tl a, tl b) {
+  return tl_fixnum_SUB(a, b) ;
 }")
   
   (emit
-   "static Value __prim_display(Value e, Value v) {
-  switch ( v.t ) {
-  case VOID:    break ;
-  case INT:     printf(\"%i\\n\", v.z.value) ; break ;
-  case BOOLEAN: printf(\"%s\\n\", v.b.value ? \"#t\" : \"#f\") ; break ;
-  case STRING:  printf(\"%s\\n\", v.s.value); break ;
-  default:      printf(\"#<%d >\\n\", v.t); break ;
-  }
+   "static tl __prim_display(tl e, tl v) {
+  tl_write(v, stdout) ;
+  fprintf(stdout, \"\n\");
   return v ;
 }")
   
   (emit
-   "static Value __prim_numEqual(Value e, Value a, Value b) {
-  return MakeBoolean(a.z.value == b.z.value) ;
+   "static tl __prim_numEqual(tl e, tl a, tl b) {
+  return tl_eqQ(a, b) ;
 }")
   
   ;; Emit lambdas:
   ; Print the prototypes:
   (for-each
    (lambda (l)
-     (emit (string-append "static Value __lambda_" (number->string (car l)) "() ;")))
+     (emit (string-append "static tl __lambda_" (number->string (car l)) "() ;")))
    lambdas)
   
   (emit "")
