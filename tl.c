@@ -959,8 +959,8 @@ tl tl_pthread_create(tl proc, tl env)
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
   ASSERT_ZERO(result = pthread_create(&new_thread, 0, tl_pthread_start, pt));
-  while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) 
-    ;                          // wait for thread to start.
+  // wait for thread to start.
+  while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) ;
 
 #if 0
   fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
