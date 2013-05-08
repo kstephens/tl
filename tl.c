@@ -38,18 +38,17 @@ tl* tl_rt_thread()
   if ( ! tlp ) {
     assert(tl_rt_thread_key);
     tlp = GC_malloc(sizeof(*tlp) * (16 + 1));
-    tlp[0] = 0;
+    memset(tlp, 0, sizeof(*tlp) * (16 + 1));
     ++ tlp; /* skip type */
+    tlp[1] = (tl) pthread_self();
     ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, tlp));
-    memset(tlp, 0, sizeof(*tlp) * 16);
-    tlp[0] = (tl) pthread_self();
   }
   return tlp;
 }
 #define TL_RT tl *_tl_thr_ = 0;
 #define _tl_thr (_tl_thr_ ? _tl_thr_ : (_tl_thr_ = tl_rt_thread()))
-#define tl_pthread (_tl_thr[0])
-#define tl_rt  (_tl_thr[1])
+#define tl_rt  (_tl_thr[0])
+#define tl_pthread (_tl_thr[1])
 #define tl_env (_tl_thr[2])
 #else
 static void tl_init_th()
@@ -908,8 +907,8 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 { TL_RT
   tl *o = tl_allocate(tl_t_thread, sizeof(*o) * 16);
   memset(o, 0, sizeof(*o) * 16);
-  o[0] = (tl) pt;
-  o[1] = rt;
+  o[0] = rt;
+  o[1] = (tl) pt;
   o[2] = env;
   return o;
 }
@@ -919,8 +918,8 @@ static void *tl_pthread_start(void *data)
   tl *pt = data, proc;
 
   ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, pt));
-  pt[0] = (tl) pthread_self();
-  tl_rt = pt[1];
+  tl_rt = pt[0];
+  pt[1] = (tl) pthread_self();
   tl_env = pt[2];
   proc = pt[10];
   pt[10] = 0;
@@ -960,7 +959,7 @@ tl tl_pthread_create(tl proc, tl env)
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
   ASSERT_ZERO(result = pthread_create(&new_thread, 0, tl_pthread_start, pt));
-  while ( ! ((pthread_t) pt[0] == new_thread && pt[10] == 0) ) 
+  while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) 
     ;                          // wait for thread to start.
 
 #if 0
