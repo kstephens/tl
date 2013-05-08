@@ -143,7 +143,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_let tl_(43)
 #define tl_s_tl_object_write tl_(44)
 #define tl_s_tl_macro_expand tl_(45)
-  // #define tl_s__argval tl_(46)
+
 #define tl_s_cons tl_(47)
 #define tl_s_car tl_(48)
 #define tl_s_cdr tl_(49)
@@ -152,7 +152,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_quasiquote tl_(52)
 #define tl_s_unquote_splicing tl_(53)
 #define tl_s_unquote tl_(54)
-    // #define tl_s__callrtn tl_(55)
+
 #define tl_s_begin tl_(56)
 #define tl_s_define tl_(57)
 #define tl_s_setE tl_(58)
@@ -216,14 +216,10 @@ tl tl_m_runtime(tl parent)
   tl_s_let = tl_m_symbol("let");
   tl_s_tl_object_write = tl_m_symbol("tl_object_write");
   tl_s_tl_macro_expand = tl_m_symbol("tl_macro_expand");
-  //  tl_s__closure = tl_m_symbol("&closure");
-  //  tl_s__argval = tl_m_symbol("&argval");
   tl_s_cons = tl_m_symbol("cons");
   tl_s_car = tl_m_symbol("car");
   tl_s_cdr = tl_m_symbol("cdr");
   tl_s_t = tl_m_symbol("t");
-  // tl_s__callrtn = tl_m_symbol("&callrtn");
-  // tl_s__stmt = tl_m_symbol("&stmt");
   tl_s__env = tl_m_symbol("&env");
   tl_s__depth = tl_m_symbol("&depth");
   tl_s__debug = tl_m_symbol("&debug");
@@ -261,7 +257,6 @@ tl tl_get_env() { TL_RT return tl_env; }
 
 tl tl_type(tl o) { TL_RT return _tl_type(o); }
 
-//#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl name)
 { TL_RT
   tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
@@ -391,7 +386,7 @@ tl tl_fixnum_TO_string(tl o)
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-  o[0] = f; o[1] = (tl) name; o[2] = 0;
+  o[0] = f; o[1] = (tl) name; o[2] = tl_nil;
   return o;
 }
 
@@ -533,8 +528,6 @@ tl tl_write(tl o, tl p) { return tl_write_2(o, p, (tl) 1); }
 
 tl tl_bind(tl vars, tl args, tl env)
 { TL_RT
-  // if ( length(vars) != length(args) ) error
-  // if ( vars == tl_nil ) return env;
   return cons(tl_set_type(cons(vars, args), tl_t_environment), env);
 }
 
@@ -921,24 +914,9 @@ static void *tl_pthread_start(void *data)
   pt[1] = (tl) pthread_self();
   tl_env = pt[2];
   proc = pt[10];
-  pt[10] = 0;
-
-#if 0
-  fprintf(stderr, "\n  pthread %p object %p in rt %p applying ", pthread_self(), pt, tl_rt);
-  tl_write(proc, stderr);
-  fprintf(stderr, " in env ");
-  tl_write(tl_env, stderr);
-  fprintf(stderr, "\n"); fflush(stderr);
-#endif
-
+  pt[10] = 0;        // proc is "running".
   pt[5] = tl_apply(proc, tl_nil);
   pt[6] = tl_t;      // result is ready.
-
-#if 0
-  fprintf(stderr, "\n  pthread %p object %p in rt %p returning ", pthread_self(), pt, tl_rt);
-  tl_write(pt[5], stderr);
-  fprintf(stderr, "\n"); fflush(stderr);
-#endif
   return tl_result; // pthread_exit(tl_result);
 }
 
@@ -961,11 +939,6 @@ tl tl_pthread_create(tl proc, tl env)
   // wait for thread to start.
   while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) ;
 
-#if 0
-  fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
-          result, pthread_self(), tl_rt, 
-          new_thread, pt, rt);
-#endif
   return pt;
 }
 
@@ -982,9 +955,7 @@ tl tl_pthread_join(tl t)
   void *value = 0;
   int result;
   ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 0), &value));
-  // assert(value == tl_iv(t, 5));
   assert(tl_iv(t, 6) == tl_t);
-  // tl_iv(t, 5) = 0;
   return tl_iv(t, 5);
 }
 #endif /* tl_PTHREAD */
