@@ -870,7 +870,7 @@
        "("  $tmp " = " (c-compile-exp fun append-preamble) 
        ", "
        "tl_FP(" $tmp ",tl,())("
-       "tl_m_env(tl_ENV(" $tmp "))"
+       "tl_closure_env(" $tmp ")"
        (if (null? args) "" ", ")
        (c-compile-args args append-preamble) "))"))))
   
@@ -904,17 +904,15 @@
 ; c-compile-env-make : env-make-exp (string -> void) -> string
 (define (c-compile-env-make exp append-preamble)
   (string-append
-   "tl_m_env(__alloc_env_" (number->string (env-make->id exp))
-   "(" 
-   (c-compile-args (env-make->values exp) append-preamble)
-   "))"))
+   "__alloc_env_" (number->string (env-make->id exp))
+   "(" (c-compile-args (env-make->values exp) append-preamble) ")"))
 
 ; c-compile-env-get : env-get (string -> void) -> string
 (define (c-compile-env-get exp append-preamble)
   (string-append
    "((struct __env_"
    (number->string (env-get->id exp)) "*) "
-   "tl_ENV(" (c-compile-exp (env-get->env exp) append-preamble) "))->_"
+   (c-compile-exp (env-get->env exp) append-preamble) ")->_"
    (mangle (env-get->field exp))))
 
 
@@ -1008,7 +1006,7 @@
                    (string-append "\"" (symbol->string f) "\", "))
                  fields))
       " 0 };\n"
-     "  " tyname "*" " t = GC_malloc(sizeof(" tyname "))" ";\n"
+     "  " tyname "*" " t = tl_m_env(sizeof(" tyname "))" ";\n"
      "  t->names = names;\n"
      (apply string-append 
             (map (lambda (f)
