@@ -108,7 +108,6 @@ tl tl_m_runtime(tl parent)
 #define tl_t_type tl_(0)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
-#define tl_t_boolean tl_(21) // FIXME
 #define tl_t_fixnum tl_(3)
 #define tl_t_character tl_(4)
 #define tl_t_string tl_(5)
@@ -129,6 +128,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_form tl_(20)
 #define tl_t_cell tl_(21)
 #define tl_t_env tl_(22)
+#define tl_t_boolean tl_(29) // FIXME
 
 #define tl_v tl_(30)
 #define tl_symbol_list tl_(31)
