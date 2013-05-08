@@ -402,10 +402,9 @@ tl tl_m_closure(void *f, void *e)
   return o;
 }
 
-tl tl_m_env(tl v)
+tl tl_m_env(size_t size)
 { TL_RT
-  tl *o = tl_allocate(tl_t_env, sizeof(tl) * 1);
-  o[0] = v;
+  tl *o = tl_allocate(tl_t_env, size);
   return o;
 }
 
