@@ -599,10 +599,10 @@
     ((ref? exp)        exp)
     ((lambda? exp)     `(lambda ,(lambda->formals exp)
                           ,(desugar (body=>begin (lambda->body exp)))))
-    ((set!? exp)       `(set! ,(set!->var exp) ,(set!->exp exp)))
-    ((if? exp)         `(if ,(if->condition exp)
-                            ,(if->then exp)
-                            ,(if->else exp)))
+    ((set!? exp)       `(set! ,(set!->var exp) ,(desugar (set!->exp exp))))
+    ((if? exp)         `(if ,(desugar (if->condition exp))
+                            ,(desugar (if->then exp))
+                            ,(desugar (if->else exp))))
     
     ; Sugar:
     ((let? exp)        (desugar (let=>lambda exp)))
