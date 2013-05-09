@@ -54,6 +54,9 @@
 (define (type? x) (eq? (tl_type x) <type>))
 (define (make-type n) (tl_m_type (->char* n)))
 
+(define <void> (tl_type tl_v))
+(define (void? x) (eq? (tl_type x) <void>))
+
 (define <boolean> (tl_type #t))
 (define (boolean? x) (eq? (tl_type x) <boolean>))
 (define (not x) (if x #f #t))
