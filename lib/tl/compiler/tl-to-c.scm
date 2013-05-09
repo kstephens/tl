@@ -493,7 +493,7 @@
 (define (capture-literal exp)
   (let ((lit (find-literal exp)))
     (if lit (car lit)
-      (let ((var (gensym 'lit)))
+      (let ((var (gensym '%lit)))
         (set! literals (cons (list exp var) literals))
         var))))
 
@@ -948,7 +948,7 @@
 
 ; c-compile-ref : ref-exp -> string
 (define (c-compile-ref exp)
-  (mangle exp))
+  (string-append "_" (mangle exp)))
   
 ; c-compile-args : list[exp] (string -> void) -> string
 (define (c-compile-args args append-preamble)
@@ -1095,7 +1095,7 @@
       ""
       (string-append
        "tl "
-       (mangle (car formals))
+       (c-compile-ref (car formals))
        (if (pair? (cdr formals))
            (string-append ", " (c-compile-formals (cdr formals)))
            ""))))
@@ -1141,7 +1141,7 @@
      "  t->names = names;\n"
      (apply string-append 
             (map (lambda (f)
-                   (string-append "  t->_" (mangle f) " = " (mangle f) ";\n"))
+                   (string-append "  t->_" (mangle f) " = _" (mangle f) ";\n"))
                  fields))
      "  return t;\n"
      "}\n\n"
