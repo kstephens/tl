@@ -232,6 +232,8 @@
 ; let->exp : let-exp -> exp
 (define (let->exp exp)
   (caddr exp))
+(define (let->body exp)
+  (cddr exp))
 
 ; let->bound-vars : let-exp -> list[symbol]
 (define (let->bound-vars exp)
@@ -252,6 +254,8 @@
 ; letrec->exp : letrec-exp -> exp
 (define (letrec->exp exp)
   (caddr exp))
+(define (letrec->body exp)
+  (cddr exp))
 
 ; letrec->exp : letrec-exp -> list[symbol]
 (define (letrec->bound-vars exp)
@@ -272,6 +276,8 @@
 ; lambda->exp : lambda-exp -> exp
 (define (lambda->exp exp)
   (caddr exp))
+(define (lambda->body exp)
+  (cddr exp))
 
 ; if? : exp -> boolean
 (define (if? exp)
@@ -540,6 +546,12 @@
     
 ;; Desugaring.
 
+(define (body=>begin body)
+  (cond
+    ((null? body) #f)
+    ((not (pair? (cdr body))) (car body))
+    (else `(begin @,body))))
+
 ; let=>lambda : let-exp -> app-exp
 (define (let=>lambda exp)
   (if (let? exp)
@@ -585,7 +597,7 @@
     ((prim? exp)       exp)
     ((ref? exp)        exp)
     ((lambda? exp)     `(lambda ,(lambda->formals exp)
-                          ,(desugar (lambda->exp exp))))
+                          ,(desugar (body=>begin (lambda->body exp)))))
     ((set!? exp)       `(set! ,(set!->var exp) ,(set!->exp exp)))
     ((if? exp)         `(if ,(if->condition exp)
                             ,(if->then exp)
@@ -594,7 +606,7 @@
     ; Sugar:
     ((let? exp)        (desugar (let=>lambda exp)))
     ((letrec? exp)     (desugar (letrec=>lets+sets exp)))
-    ((begin? exp)      (desugar (begin=>let exp)))
+    ;;  ((begin? exp)      (desugar (begin=>let exp)))
     
     ; IR (1):
     ((cell? exp)       `(cell ,(desugar (cell->value exp))))
@@ -852,6 +864,7 @@
     ((if? exp)           `(if ,(closure-convert (if->condition exp))
                               ,(closure-convert (if->then exp))
                               ,(closure-convert (if->else exp))))
+    ((begin? exp)        `(begin ,@(map closure-convert (begin->exps exp))))
     ((set!? exp)         `(set! ,(set!->var exp)
                                 ,(closure-convert (set!->exp exp))))
     
@@ -894,6 +907,7 @@
     ((c-var? exp)       (c-compile-c-var exp))
     ((ref?   exp)       (c-compile-ref exp))
     ((if? exp)          (c-compile-if exp append-preamble))
+    ((begin? exp)       (c-compile-body (begin->exps exp) append-preamble))
 
     ; IR (1):
     ((cell? exp)        (c-compile-cell exp append-preamble))
@@ -942,6 +956,18 @@
            (string-append ", " (c-compile-args (cdr args) append-preamble))
            ""))))
 
+
+(define (c-compile-body body append-preamble)
+  (string-append "(" (c-compile-body-exprs body append-preamble) ")"))
+
+(define (c-compile-body-exprs body append-preamble)
+  (if (not (pair? body))
+      ""
+      (string-append
+       (c-compile-exp (car body) append-preamble)
+       (if (pair? (cdr body))
+           (string-append ",\n  " (c-compile-body-exprs (cdr body) append-preamble))
+           ""))))
 
 ; c-compile-app : app-exp (string -> void) -> string
 (define (c-compile-app exp append-preamble)
@@ -1076,7 +1102,7 @@
          (append-preamble (lambda (s)
                             (set! preamble (string-append preamble "  " s "\n")))))
     (let ((formals (c-compile-formals (lambda->formals exp)))
-          (body    (c-compile-exp     (lambda->exp exp) append-preamble)))
+          (body    (c-compile-body    (lambda->body exp) append-preamble)))
       (lambda (name)
         (string-append "static tl " name "(" formals ") {\n"
                        preamble
