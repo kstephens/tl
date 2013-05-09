@@ -80,8 +80,6 @@
 ;;        |  (env-get <env-num> <symbol> <exp>)
 
 
-
-
 ;; Utilities.
 (define (%string-truncate! s l)
   (let ((t (make-string l)))
@@ -280,6 +278,11 @@
 (define (lambda->body exp)
   (cddr exp))
 
+(define (restarg? exp)
+  (and (tagged-list? '&rest exp) (restarg->name exp)))
+(define (restarg->name exp)
+  (cadr exp))
+
 ; if? : exp -> boolean
 (define (if? exp)
   (tagged-list? 'if exp))
@@ -442,7 +445,7 @@
     ((prim? exp)        exp)
     ((ref? exp)         (substitute-var env exp))
     ((lambda? exp)      `(lambda ,(lambda->formals exp)
-                           ,(substitute (assq-remove-keys env (lambda->formals exp)) 
+                           ,(substitute (assq-remove-keys env (formals=>names (lambda->formals exp))) 
                                         (lambda->exp exp))))
     ((set!? exp)        `(set! ,(substitute-var env (set!->var exp))
                                ,(substitute env (set!->exp exp))))
@@ -547,6 +550,37 @@
     
 ;; Desugaring.
 
+(define (formals=>restarg formals)
+  (cond
+    ((null? formals)    formals)
+    ((symbol? formals)  `((&rest ,formals)))
+    ((pair? formals)    (cons (car formals) (formals=>restarg (cdr formals))))
+    (else               (formals=>restarg (cdr formals)))))
+
+(define (formal->name formal)
+  (cond
+    ((restarg? formal)  (restarg->name formal))
+    (else               formal)))
+
+(define (formals=>names formals)
+  (cond
+    ((null? formals)    formals)
+    ((symbol? formals)  (cons formals '()))
+    ((pair? formals)    (cons (formal->name (car formals)) (formals=>names (cdr formals))))
+    (else               (error "formals=>names"))))
+
+(define (formals-restarg? formals)
+  (define (find-lastarg-restarg last formals)
+    (cond
+      ((null? formals)    #f)
+      ((symbol? formals)  (cons last formals))
+      ((pair? formals)    (let* ((cur (car formals))
+                                  (rest (restarg? cur)))
+                            (or (and rest (cons last rest))
+                              (find-lastarg-restarg cur (cdr formals)))))
+      (else               (error "formals-restarg?"))))
+  (find-lastarg-restarg #f formals))
+
 (define (body=>begin body)
   (cond
     ((null? body) `',tl_v)
@@ -597,7 +631,7 @@
     ((c-var? exp)      exp)
     ((prim? exp)       exp)
     ((ref? exp)        exp)
-    ((lambda? exp)     `(lambda ,(lambda->formals exp)
+    ((lambda? exp)     `(lambda ,(formals=>restarg (lambda->formals exp))
                           ,(desugar (body=>begin (lambda->body exp)))))
     ((set!? exp)       `(set! ,(set!->var exp) ,(desugar (set!->exp exp))))
     ((if? exp)         `(if ,(desugar (if->condition exp))
@@ -645,7 +679,7 @@
     ((prim? exp)     '())
     ((ref? exp)      (list exp))
     ((lambda? exp)   (difference (free-vars (lambda->exp exp))
-                                 (lambda->formals exp)))
+                                 (formals=>names (lambda->formals exp))))
     ((if? exp)       (union (free-vars (if->condition exp))
                             (union (free-vars (if->then exp))
                                    (free-vars (if->else exp)))))
@@ -770,7 +804,7 @@
                          exp))
     ((prim? exp)     exp)
     ((lambda? exp)   `(lambda ,(lambda->formals exp)
-                        ,(wrap-mutable-formals (lambda->formals exp)
+                        ,(wrap-mutable-formals (formals=>names (lambda->formals exp))
                                                (wrap-mutables (lambda->exp exp)))))
     ((set!? exp)     `(set-cell! ,(set!->var exp) ,(wrap-mutables (set!->exp exp))))
     ((if? exp)       `(if ,(wrap-mutables (if->condition exp))
@@ -856,7 +890,7 @@
     ((ref? exp)          exp)
     ((lambda? exp)       (let* (($env (gensym 'env))
                                 (body  (closure-convert (lambda->exp exp)))
-                                (fv    (difference (free-vars body) (lambda->formals exp)))
+                                (fv    (difference (free-vars body) (formals=>names (lambda->formals exp))))
                                 (id    (allocate-environment fv))
                                 (sub  (map (lambda (v)
                                              (list v `(env-get ,id ,v ,$env)))
@@ -995,7 +1029,7 @@
     (append-preamble (string-append
                       "tl " $tmp " ; "))
     
-    (let* ((args     (app->args exp))
+    (let  ((args     (app->args exp))
            (fun      (app->fun exp)))
       (string-append
        "("  $tmp " = " (c-compile-exp fun append-preamble) 
@@ -1003,7 +1037,9 @@
        "tl_FP(" $tmp ",tl,())("
        "tl_closure_env(" $tmp ")"
        (if (null? args) "" ", ")
-       (c-compile-args args append-preamble) "))"))))
+       (c-compile-args args append-preamble)
+       ", tl_MARK"
+       "))"))))
   
 ; c-compile-if : if-exp -> string
 (define (c-compile-if exp append-preamble)
@@ -1070,7 +1106,7 @@
 (define (allocate-lambda lam)
   (let ((id num-lambdas))
     (set! num-lambdas (+ 1 num-lambdas))
-    (set! lambdas (cons (list id lam) lambdas))
+    (set! lambdas (cons (list id lam (c-compile-lambda lam)) lambdas))
     id))
 
 ; get-lambda : lambda-id -> (symbol -> string)
@@ -1081,7 +1117,7 @@
 (define (c-compile-closure exp append-preamble)
   (let* ((lam (closure->lam exp))
          (env (closure->env exp))
-         (lid (allocate-lambda (c-compile-lambda lam))))
+         (lid (allocate-lambda lam)))
     (string-append
      "tl_m_closure("
      "__lambda_" (number->string lid)
@@ -1094,19 +1130,34 @@
   (if (not (pair? formals))
       ""
       (string-append
-       "tl "
-       (c-compile-ref (car formals))
+        (c-compile-formal (car formals))
        (if (pair? (cdr formals))
            (string-append ", " (c-compile-formals (cdr formals)))
            ""))))
+
+(define (c-compile-formal formal)
+  (cond
+    ((restarg? formal)  (string-append
+                          "..." " /* " (symbol->string (restarg->name formal)) " */" ))
+    (else               (string-append
+                          "tl " (c-compile-ref formal) " /* " (symbol->string formal) " */"))))
 
 ; c-compile-lambda : lamda-exp (string -> void) -> (string -> string)
 (define (c-compile-lambda exp)
   (let* ((preamble "")
          (append-preamble (lambda (s)
-                            (set! preamble (string-append preamble "  " s "\n")))))
+                            (set! preamble (string-append preamble "  " s "\n"))))
+         (restarg (formals-restarg? (lambda->formals exp))))
     (let ((formals (c-compile-formals (lambda->formals exp)))
           (body    (c-compile-body    (lambda->body exp) append-preamble)))
+      (if restarg
+        (begin
+          (append-preamble (string-append "tl " (c-compile-ref (cdr restarg)) " ;"))
+          (append-preamble "{ va_list vap ;")
+          (append-preamble (string-append "va_start(vap, " (c-compile-ref (car restarg)) ") ;"))
+          (append-preamble (string-append (c-compile-ref (cdr restarg)) " = tl_va_restarg(&vap) ;"))
+          (append-preamble "va_end(vap) ; }")
+          ))
       (lambda (name)
         (string-append "static tl " name "(" formals ") {\n"
                        preamble
@@ -1154,11 +1205,12 @@
 (define (emit line)
   (display line)
   (newline))
-  
+
 ; c-compile-and-emit : (string -> A) exp -> void
 (define (c-compile-and-emit emit input-program)
 
   (define compiled-program "")
+  (set! lambdas '())
 
   (set! input-program (tl_macro_expand input-program))
   ;; (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
@@ -1197,7 +1249,8 @@
   ; Print the prototypes:
   (for-each
    (lambda (l)
-     (emit (string-append "static tl __lambda_" (number->string (car l)) "() ;")))
+     (emit (string-append "static tl __lambda_" (number->string (car l))
+             "(" (c-compile-formals (lambda->formals (cadr l))) ") ;")))
    lambdas)
   
   (emit "")
@@ -1205,7 +1258,7 @@
   ; Print the definitions:
   (for-each
    (lambda (l)
-     (emit ((cadr l) (string-append "__lambda_" (number->string (car l))))))
+     (emit ((caddr l) (string-append "__lambda_" (number->string (car l))))))
    lambdas)
   
   (emit compiled-program))

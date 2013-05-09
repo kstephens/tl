@@ -329,6 +329,16 @@ tl tl_set_car(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); }
 tl tl_set_cdr(tl o, tl v) { return cdr(o) = v; }
 
+tl tl_va_restarg(va_list *vap)
+{
+  tl l = tl_nil, *lp = &l, x;
+  while ( (x = va_arg(*vap, tl)) != tl_MARK ) {
+    *lp = tl_cons(x, tl_nil);
+    lp = &cdr_(*lp);
+  }
+  return l;
+}
+
 tl tl_make_symbol(void *name)
 { TL_RT
   tl *s = tl_allocate(tl_t_symbol, sizeof(tl) * 4); // name interned? keyword? spare

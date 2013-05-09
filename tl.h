@@ -53,4 +53,6 @@ static inline tl tl_t_(tl o) { return tl_iv(o, -1); }
 
 static inline tl tl_closure_env(tl o) { return tl_iv(o, 2); }
 
+#define tl_MARK ((tl) (tlsw) -2)
+
 #endif
