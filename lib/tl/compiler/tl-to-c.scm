@@ -203,6 +203,7 @@
 (define (const? exp)
   (or (integer? exp)
       (boolean? exp)
+      (character? exp)
       (string? exp)))
 
 (define (c-var? exp)
@@ -846,6 +847,8 @@
                      "tl_i(" (number->string exp) ")"))
     ((boolean? exp) (string-append
                      "tl_b(" (if exp "1" "0") ")"))
+    ((character? exp) (string-append
+                     "tl_c(" (char->integer exp) ")"))
     ((string? exp)  (string-append
                      "tl_m_string(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
     (else           (error "unknown constant: " exp))))
