@@ -1,3 +1,4 @@
-*.c
-*.t
-*.c.diff
+t/*.c
+t/*.t
+t/*.c.diff
+t/*.out
