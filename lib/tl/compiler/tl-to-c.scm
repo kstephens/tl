@@ -540,7 +540,7 @@
 (define (encode-literal exp)
   (cond
     ((null? exp)   `(quote ,exp))
-    ((symbol? exp) (list '(&c:func tl_m_symbol) (symbol->string exp)))
+    ((symbol? exp) `((&c:func tl_m_symbol) ((&c:func tl_S) ,(symbol->string exp))))
     ((pair? exp)   (list '(&c:func tl_cons) (encode-literal (car exp)) (encode-literal (cdr exp))))
     ((vector? exp) (list 'list->vector (encode-literal (vector->list exp))))
     (else          exp)))
@@ -938,7 +938,7 @@
     ((string? exp)  (string-append
                      "tl_m_string(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
     ((symbol? exp)  (string-append
-                     "tl_m_symbol(" (c-compile-const (symbol->string exp)) ")"))
+                     "tl_m_symbol(\"" (%string-escape (symbol->string exp)) "\")"))
     ((null? exp)    "tl_nil")
     ((void? exp)    "tl_v")
     (else           (error "c-compile-const: unknown constant: " exp))))
