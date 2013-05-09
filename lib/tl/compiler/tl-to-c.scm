@@ -558,7 +558,7 @@
   (if (let? exp)
       (let ((vars (map car (let->bindings exp)))
             (args (map cadr (let->bindings exp))))
-        `((lambda (,@vars) ,(let->exp exp)) ,@args))
+        `((lambda (,@vars) ,@(let->body exp)) ,@args))
       exp))
 
 ; letrec=>lets+sets : letrec-exp -> exp
@@ -572,7 +572,7 @@
                              bindings))
              (args      (letrec->args exp)))
         `(let ,namings
-           (begin ,@(append sets (list (letrec->exp exp))))))))
+           (begin ,@(append sets (letrec->body exp)))))))
 
 ; begin=>let : begin-exp -> let-exp
 (define (begin=>let exp)
