@@ -204,7 +204,8 @@
   (or (integer? exp)
       (boolean? exp)
       (character? exp)
-      (string? exp)))
+      (string? exp)
+      (void? exp)))
 
 (define (quote? exp)
   (tagged-list? 'quote exp))
@@ -937,7 +938,8 @@
     ((symbol? exp)  (string-append
                      "tl_m_symbol(" (c-compile-const (symbol->string exp)) ")"))
     ((null? exp)    "tl_nil")
-    (else           (error "unknown constant: " exp))))
+    ((void? exp)    "tl_v")
+    (else           (error "c-compile-const: unknown constant: " exp))))
 
 (define (c-compile-c-var exp)
   (symbol->string (cadr exp)))
