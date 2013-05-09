@@ -480,7 +480,7 @@
     
     ; Application:
     ((app? exp)         (map (substitute-with env) exp))
-    (else               (error "unhandled expression type in substitution: " exp))))
+    (else               (error "substitute: unhandled expression type: " exp))))
 
 
 
@@ -525,7 +525,7 @@
 
     ; Applications:
     ((app? exp)        (map convert-literals exp))
-    (else              (error "unknown exp: " exp))))
+    (else              (error "convert-literals: unknown exp: " exp))))
 
 (define (convert-literals-binding b)
   (list (car b) (convert-literals (cadr b))))
@@ -626,7 +626,7 @@
     
     ; Applications:
     ((app? exp)        (map desugar exp))    
-    (else              (error "unknown exp: " exp))))
+    (else              (error "desugar: unknown exp: " exp))))
     
 
 
@@ -670,7 +670,7 @@
 
     ; Application:
     ((app? exp)       (reduce union (map free-vars exp) '()))
-    (else             (error "unknown expression: " exp))))
+    (else             (error "free-vars: unknown expression: " exp))))
 
 
 
@@ -745,7 +745,7 @@
     ((app? exp)      (begin 
                        (map analyze-mutable-variables exp)
                        (void)))
-    (else            (error "unknown expression type: " exp))))
+    (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
 
 
 ; wrap-mutables : exp -> exp
@@ -778,7 +778,7 @@
     
     ; Application:
     ((app? exp)      (map wrap-mutables exp))
-    (else            (error "unknown expression type: " exp))))
+    (else            (error "wrap-mutables: unknown expression type: " exp))))
                         
 
 
@@ -877,7 +877,7 @@
     
     ; Applications:
     ((app? exp)          (map closure-convert exp))
-    (else                (error "unhandled exp: " exp))))
+    (else                (error "closure-convert: unhandled exp: " exp))))
     
 
 
@@ -921,7 +921,7 @@
     
     ; Application:      
     ((app? exp)         (c-compile-app exp append-preamble))
-    (else               (error "unknown exp in c-compile-exp: " exp))))
+    (else               (error "c-compile-exp: unknown exp " exp))))
 
 ; c-compile-const : const-exp -> string
 (define (c-compile-const exp)
