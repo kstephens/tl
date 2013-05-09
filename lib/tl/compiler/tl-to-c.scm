@@ -1159,19 +1159,19 @@
 (define (c-compile-and-emit emit input-program)
 
   (define compiled-program "")
-  
+
+  (set! input-program (tl_macro_expand input-program))
+  ;; (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
+
   (set! input-program (desugar input-program))
 
   (let ((exp #f))
     (set! literals '())
     (set! exp (convert-literals input-program))
     ;; (display ";; literals\n" tl_stderr)(write literals tl_stderr)(display "\n\n" tl_stderr)
-    (set! exp (bind-literals literals exp))
-    (set! exp (desugar exp))
-    ;; (display ";; exp\n" tl_stderr)(write exp tl_stderr)(display "\n\n" tl_stderr)
-    (set! input-program exp)
+    (set! input-program (desugar (bind-literals literals exp)))
+    ;; (display ";; after bind-literals:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
     )
-  ;;(set! input-program (desugar (convert-literals input-program)))
 
   (set! mutable-variables '())
   (analyze-mutable-variables input-program)
