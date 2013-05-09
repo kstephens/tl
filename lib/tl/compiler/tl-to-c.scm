@@ -206,6 +206,11 @@
       (character? exp)
       (string? exp)))
 
+(define (quote? exp)
+  (tagged-list? 'quote exp))
+(define (quote->value exp)
+  (cadr exp))
+
 (define (c-var? exp)
   (tagged-list? '&c:var exp))
 
@@ -473,7 +478,66 @@
 
 
 
+;; literals.
 
+(define literals '())
+(define (find-literal exp)
+  (assoc exp literals))
+(define (capture-literal exp)
+  (let ((lit (find-literal exp)))
+    (if lit (car lit)
+      (let ((var (gensym 'lit)))
+        (set! literals (cons (list exp var) literals))
+        var))))
+
+(define (convert-literals exp)
+  ;; (display "convert-literals " tl_stderr) (write exp tl_stderr) (display "\n" tl_stderr)
+  (cond
+    ; Core forms:
+    ((quote? exp)      (capture-literal (quote->value exp)))
+    ((string? exp)     (capture-literal exp))
+    ((const? exp)      exp)
+    ((c-var? exp)      exp)
+    ((prim? exp)       exp)
+    ((ref? exp)        exp)
+    ((lambda? exp)     `(lambda ,(lambda->formals exp)
+                          ,@(map convert-literals (lambda->body exp))))
+    ((set!? exp)       `(set! ,(set!->var exp) ,(convert-literals (set!->exp exp))))
+    ((if? exp)         `(if ,(convert-literals (if->condition exp))
+                            ,(convert-literals (if->then exp))
+                            ,(convert-literals (if->else exp))))
+
+    ; Sugar:
+    ((let? exp)      `(let
+                       ,(map convert-literals-binding (let->bindings exp))
+                       ,@(map convert-literals (let->body exp))))
+    ((letrec? exp)   `(letrec
+                       ,(map convert-literals-binding (letrec->bindings exp)))
+                       ,@(map convert-literals (letrec->body exp)))
+    ((begin? exp)    `(begin
+                       ,@(map convert-literals (begin->exps exp))))
+
+    ; Applications:
+    ((app? exp)        (map convert-literals exp))
+    (else              (error "unknown exp: " exp))))
+
+(define (convert-literals-binding b)
+  (list (car b) (convert-literals (cadr b))))
+
+(define (bind-literals literals exp)
+  `(let ,(map literal-binding literals) ,exp))
+
+(define (literal-binding lit)
+  `(,(cadr lit) ,(encode-literal (car lit))))
+
+(define (encode-literal exp)
+  (cond
+    ((null? exp)   `(quote ,exp))
+    ((symbol? exp) (list '(&c:func tl_m_symbol) (symbol->string exp)))
+    ((pair? exp)   (list '(&c:func tl_cons) (encode-literal (car exp)) (encode-literal (cdr exp))))
+    ((vector? exp) (list 'list->vector (encode-literal (vector->list exp))))
+    (else          exp)))
+    
 ;; Desugaring.
 
 ; let=>lambda : let-exp -> app-exp
@@ -515,6 +579,7 @@
 (define (desugar exp)
   (cond
     ; Core forms:
+    ((quote? exp)      exp)
     ((const? exp)      exp)
     ((c-var? exp)      exp)
     ((prim? exp)       exp)
@@ -561,6 +626,7 @@
 (define (free-vars exp)
   (cond
     ; Core forms:
+    ((quote? exp)    '())
     ((const? exp)    '())
     ((c-var? exp)    '())
     ((prim? exp)     '())
@@ -639,6 +705,7 @@
 (define (analyze-mutable-variables exp)
   (cond 
     ; Core forms:
+    ((quote? exp)    (void))
     ((const? exp)    (void))
     ((c-var? exp)    (void))
     ((prim? exp)     (void))
@@ -682,6 +749,7 @@
   
   (cond
     ; Core forms:
+    ((quote? exp)    exp)
     ((const? exp)    exp)
     ((c-var? exp)    exp)
     ((ref? exp)      (if (is-mutable? exp)
@@ -766,6 +834,7 @@
 ; closure-convert : exp -> exp
 (define (closure-convert exp)
   (cond
+    ((quote? exp)        exp)
     ((const? exp)        exp)
     ((c-var? exp)        exp)
     ((prim? exp)         exp)
@@ -820,6 +889,7 @@
 (define (c-compile-exp exp append-preamble)
   (cond
     ; Core forms:
+    ((quote? exp)       (c-compile-const (quote->value exp)))
     ((const? exp)       (c-compile-const exp))
     ((c-var? exp)       (c-compile-c-var exp))
     ((prim?  exp)       (c-compile-prim exp))
@@ -1070,6 +1140,18 @@
   
   (set! input-program (desugar input-program))
 
+  (let ((exp #f))
+    (set! literals '())
+    (set! exp (convert-literals input-program))
+    ;; (display ";; literals\n" tl_stderr)(write literals tl_stderr)(display "\n\n" tl_stderr)
+    (set! exp (bind-literals literals exp))
+    (set! exp (desugar exp))
+    ;; (display ";; exp\n" tl_stderr)(write exp tl_stderr)(display "\n\n" tl_stderr)
+    (set! input-program exp)
+    )
+  ;;(set! input-program (desugar (convert-literals input-program)))
+
+  (set! mutable-variables '())
   (analyze-mutable-variables input-program)
 
   (set! input-program (desugar (wrap-mutables input-program)))
