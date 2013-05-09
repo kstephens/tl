@@ -549,7 +549,7 @@
 
 (define (body=>begin body)
   (cond
-    ((null? body) #f)
+    ((null? body) `',tl_v)
     ((not (pair? (cdr body))) (car body))
     (else `(begin @,body))))
 
