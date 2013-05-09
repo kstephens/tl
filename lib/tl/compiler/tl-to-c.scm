@@ -551,7 +551,7 @@
   (cond
     ((null? body) `',tl_v)
     ((not (pair? (cdr body))) (car body))
-    (else `(begin @,body))))
+    (else `(begin ,@body))))
 
 ; let=>lambda : let-exp -> app-exp
 (define (let=>lambda exp)
