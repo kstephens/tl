@@ -834,10 +834,12 @@
 
 ; allocate-environment : list[symbol] -> env-id
 (define (allocate-environment fields)
-  (let ((id num-environments))
-    (set! num-environments (+ 1 num-environments))
-    (set! environments (cons (cons id fields) environments))
-    id))
+  (let ((env (assoc fields environments)))
+    (if env (cadr env)
+      (let ((id num-environments))
+        (set! num-environments (+ 1 num-environments))
+        (set! environments (cons (list fields id) environments))
+        id))))
 
 ; get-environment : natural -> list[symbol]
 (define (get-environment id)
@@ -1113,8 +1115,8 @@
   
 ; c-compile-env-struct : list[symbol] -> string
 (define (c-compile-env-struct env)
-  (let* ((id     (car env))
-         (fields (cdr env))
+  (let* ((id     (cadr env))
+         (fields (car env))
          (sid    (number->string id))
          (tyname (string-append "struct __env_" sid)))
     (string-append 
