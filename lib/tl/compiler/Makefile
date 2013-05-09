@@ -18,6 +18,9 @@ diff-files : $(C_DIFF_FILES)
 %.t : %.c
 	$(CC) $(CFLAGS) -o $@ $*.c -L$(ROOT_DIR)/local/lib -lgc
 
+%.c.s : %.c
+	$(CC) $(CFLAGS) -S -o $@ $*.c
+
 %.out : %
 	./$< > $@
 	@if [ -e $<.exp ] ;\
