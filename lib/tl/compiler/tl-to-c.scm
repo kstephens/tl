@@ -892,7 +892,6 @@
     ((quote? exp)       (c-compile-const (quote->value exp)))
     ((const? exp)       (c-compile-const exp))
     ((c-var? exp)       (c-compile-c-var exp))
-    ((prim?  exp)       (c-compile-prim exp))
     ((ref?   exp)       (c-compile-ref exp))
     ((if? exp)          (c-compile-if exp append-preamble))
 
@@ -921,20 +920,13 @@
                      "tl_c(" (char->integer exp) ")"))
     ((string? exp)  (string-append
                      "tl_m_string(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
+    ((symbol? exp)  (string-append
+                     "tl_m_symbol(" (c-compile-const (symbol->string exp)) ")"))
+    ((null? exp)    "tl_nil")
     (else           (error "unknown constant: " exp))))
 
 (define (c-compile-c-var exp)
   (symbol->string (cadr exp)))
-
-; c-compile-prim : prim-exp -> string
-(define (c-compile-prim p)
-  (cond
-    ((eq? '+ p)       "__sum")
-    ((eq? '- p)       "__difference")
-    ((eq? '* p)       "__product")
-    ((eq? '= p)       "__numEqual")
-    ((eq? 'display p) "__display")
-    (else             (error "unhandled primitive: " p))))
 
 ; c-compile-ref : ref-exp -> string
 (define (c-compile-ref exp)
