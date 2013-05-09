@@ -53,7 +53,7 @@
 ;; <exp> ::= <const>
 ;;        |  <prim>
 ;;        |  <var>
-;;        |  (lambda (<var> ...) <exp>)
+;;        |  (lambda (<var> ...) <exp> ...)
 ;;        |  (if <exp> <exp> <exp>)
 ;;        |  (set! <var> <exp>)
 ;;        |  (<exp> <exp> ...)
@@ -63,8 +63,8 @@
 
 ;; Syntactic sugar:
 
-;; <exp> ::+ (let ((<var> <exp>) ...) <exp>)
-;;        |  (letrec ((<var> <exp>) ...) <exp>)
+;; <exp> ::+ (let ((<var> <exp>) ...) <exp> ...)
+;;        |  (letrec ((<var> <exp>) ...) <exp> ...)
 ;;        |  (begin <exp> ...)
 
 ;; Intermediate language (1)
