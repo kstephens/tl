@@ -95,7 +95,8 @@
 ; tagged-list? : symbol value -> boolean
 (define (tagged-list? tag l)
   (and (pair? l)
-       (eq? tag (car l))))
+       (eq? tag (car l))
+       l))
 
 ; char->natural : char -> natural
 (define (char->natural c)
@@ -204,6 +205,12 @@
       (boolean? exp)
       (string? exp)))
 
+(define (c-var? exp)
+  (tagged-list? '&c:var exp))
+
+(define (c-func? exp)
+  (tagged-list? '&c:func exp))
+
 ; ref? : exp -> boolean
 (define (ref? exp)
   (symbol? exp))
@@ -295,16 +302,14 @@
 
 ; prim? : exp -> boolean
 (define (prim? exp)
-  (or (eq? exp '+)
-      (eq? exp '-)
-      (eq? exp '*)
-      (eq? exp '=)
-      (eq? exp 'display)))
+  (or (c-func? exp)
+    (and (symbol? exp)
+      (let ((slot (tl_lookup_slot exp)))
+        (and slot (primitive? (cdr slot)) (cdr slot))))))
 
-(define (prim? exp)
-  (and (symbol? exp)
-    (let ((slot (tl_lookup_slot exp)))
-      (and slot (primitive? (cdr slot)) (cdr slot)))))
+(define (prim->name prim)
+  (if (c-func? prim) (symbol->string (cadr prim))
+    (primitive->name prim)))
 
 ; begin? : exp -> boolean
 (define (begin? exp) 
@@ -420,6 +425,7 @@
     ; Core forms:    
     ((null? env)        exp)
     ((const? exp)       exp)
+    ((c-var? exp)       exp)
     ((prim? exp)        exp)
     ((ref? exp)         (substitute-var env exp))
     ((lambda? exp)      `(lambda ,(lambda->formals exp)
@@ -509,6 +515,7 @@
   (cond
     ; Core forms:
     ((const? exp)      exp)
+    ((c-var? exp)      exp)
     ((prim? exp)       exp)
     ((ref? exp)        exp)
     ((lambda? exp)     `(lambda ,(lambda->formals exp)
@@ -554,7 +561,8 @@
   (cond
     ; Core forms:
     ((const? exp)    '())
-    ((prim? exp)     '())    
+    ((c-var? exp)    '())
+    ((prim? exp)     '())
     ((ref? exp)      (list exp))
     ((lambda? exp)   (difference (free-vars (lambda->exp exp))
                                  (lambda->formals exp)))
@@ -631,6 +639,7 @@
   (cond 
     ; Core forms:
     ((const? exp)    (void))
+    ((c-var? exp)    (void))
     ((prim? exp)     (void))
     ((ref? exp)      (void))
     ((lambda? exp)   (analyze-mutable-variables (lambda->exp exp)))
@@ -673,6 +682,7 @@
   (cond
     ; Core forms:
     ((const? exp)    exp)
+    ((c-var? exp)    exp)
     ((ref? exp)      (if (is-mutable? exp)
                          `(cell-get ,exp)
                          exp))
@@ -756,6 +766,7 @@
 (define (closure-convert exp)
   (cond
     ((const? exp)        exp)
+    ((c-var? exp)        exp)
     ((prim? exp)         exp)
     ((ref? exp)          exp)
     ((lambda? exp)       (let* (($env (gensym 'env))
@@ -799,11 +810,6 @@
     (string-append 
      "int _tl_main (int argc, char* argv[]) {\n"
      preamble 
-     "  __sum         = tl_m_prim(__prim_sum, \"+\") ;\n"
-     "  __product     = tl_m_prim(__prim_product, \"*\") ;\n"
-     "  __difference  = tl_m_prim(__prim_difference, \"-\") ;\n"
-     "  __display     = tl_m_prim(__prim_display, \"display\") ;\n"
-     "  __numEqual    = tl_m_prim(__prim_numEqual, \"eq?\") ;\n"
      "  " body " ;\n"
      "  return 0;\n"
      " }\n")))
@@ -814,6 +820,7 @@
   (cond
     ; Core forms:
     ((const? exp)       (c-compile-const exp))
+    ((c-var? exp)       (c-compile-c-var exp))
     ((prim?  exp)       (c-compile-prim exp))
     ((ref?   exp)       (c-compile-ref exp))
     ((if? exp)          (c-compile-if exp append-preamble))
@@ -843,6 +850,9 @@
                      "tl_m_string(\"" (%string-escape exp) "\", " (number->string (string-length exp)) ")"))
     (else           (error "unknown constant: " exp))))
 
+(define (c-compile-c-var exp)
+  (symbol->string (cadr exp)))
+
 ; c-compile-prim : prim-exp -> string
 (define (c-compile-prim p)
   (cond
@@ -867,8 +877,24 @@
            (string-append ", " (c-compile-args (cdr args) append-preamble))
            ""))))
 
+
 ; c-compile-app : app-exp (string -> void) -> string
 (define (c-compile-app exp append-preamble)
+  (let ((prim (prim? (app->fun exp))))
+    (if prim
+      (c-compile-app-prim exp prim append-preamble)
+      (c-compile-app-closure exp append-preamble))))
+
+; c-compile-app : app-exp (string -> void) -> string
+(define (c-compile-app-prim exp prim append-preamble)
+  (let ((args     (app->args exp))
+        (fun      (app->fun exp)))
+    (string-append
+      "(" (prim->name prim)
+      "(" (c-compile-args args append-preamble) "))")))
+
+; c-compile-app : app-exp (string -> void) -> string
+(define (c-compile-app-closure exp append-preamble)
   (let (($tmp (mangle (gensym 'tmp))))
     
     (append-preamble (string-append
@@ -1053,15 +1079,6 @@
   
   (emit "")
   
-  ; Create storage for primitives:
-  (emit "
-static tl __sum ;
-static tl __difference ;
-static tl __product ;
-static tl __display ;
-static tl __numEqual ;
-")
-  
   (for-each 
    (lambda (env)
      (emit (c-compile-env-struct env)))
@@ -1069,34 +1086,6 @@ static tl __numEqual ;
 
   (set! compiled-program  (c-compile-program input-program))
 
-  ;; Emit primitive procedures:
-  (emit 
-   "static tl __prim_sum(tl e, tl a, tl b) {
-  return tl_fixnum_ADD(a, b) ;
-}")
-  
-  (emit 
-   "static tl __prim_product(tl e, tl a, tl b) {
-  return tl_fixnum_MUL(a, b) ;
-}")
-  
-  (emit 
-   "static tl __prim_difference(tl e, tl a, tl b) {
-  return tl_fixnum_SUB(a, b) ;
-}")
-  
-  (emit
-   "static tl __prim_display(tl e, tl v) {
-  tl_write(v, stdout) ;
-  fprintf(stdout, \"\\n\");
-  return v ;
-}")
-  
-  (emit
-   "static tl __prim_numEqual(tl e, tl a, tl b) {
-  return tl_eqQ(a, b) ;
-}")
-  
   ;; Emit lambdas:
   ; Print the prototypes:
   (for-each

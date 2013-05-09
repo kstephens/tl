@@ -60,6 +60,8 @@
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
+(define (primitive->name prim)
+  (tl_s (tl_cdr prim)))
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
 (define (procedure? x)
