@@ -1,6 +1,6 @@
 ROOT_DIR=../../..#
 export TL_LIBDIR=$(ROOT_DIR)/lib
-CFLAGS += -g -I$(ROOT_DIR) -I$(ROOT_DIR)/local/include
+CFLAGS += -O3 -g -I$(ROOT_DIR) -I$(ROOT_DIR)/local/include
 T_SCM_FILES := $(shell ls t/t*.scm)
 T_TL_FILES := $(shell ls t/t*.tl)
 T_C_FILES := \
