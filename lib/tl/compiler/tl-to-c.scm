@@ -499,7 +499,7 @@
 (define (capture-literal exp)
   (if (immediate-const? exp) exp
   (let ((lit (find-literal exp)))
-    (if lit (car lit)
+    (if lit (cadr lit)
       (let ((var (gensym '%lit)))
         (set! literals (cons (list exp var) literals))
         var)))))
