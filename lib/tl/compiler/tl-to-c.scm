@@ -494,15 +494,15 @@
 ;; literals.
 
 (define literals '())
-(define (find-literal exp)
-  (assoc exp literals))
-(define (capture-literal exp)
-  (if (immediate-const? exp) exp
-  (let ((lit (find-literal exp)))
-    (if lit (cadr lit)
-      (let ((var (gensym '%lit)))
-        (set! literals (cons (list exp var) literals))
-        var)))))
+(define (find-literal val)
+  (assoc val literals))
+(define (capture-literal val)
+  (if (immediate-const? val) val
+    (let ((lit (find-literal val)))
+      (if lit (cadr lit)
+        (let ((var (gensym '%lit)))
+          (set! literals (cons (list val var) literals))
+          var)))))
 
 (define (convert-literals exp)
   ;; (display "convert-literals " tl_stderr) (write exp tl_stderr) (display "\n" tl_stderr)
