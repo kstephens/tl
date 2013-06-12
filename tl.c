@@ -378,7 +378,7 @@ tl tl_string_TO_number(tl o, int radix)
 {
   long long i = 0; char *endptr = 0;
   const char *str = tl_S(o), *strend = strchr(str, '\0');
-  if ( radix < 1 ) radix = 10;
+  if ( radix < 2 ) radix = 10;
   i = strtoll(str, &endptr, radix);
   if ( endptr == strend ) {
     tl o = tl_i(i);
