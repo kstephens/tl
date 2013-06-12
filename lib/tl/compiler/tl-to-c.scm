@@ -508,7 +508,7 @@
   ;; (display "convert-literals " tl_stderr) (write exp tl_stderr) (display "\n" tl_stderr)
   (cond
     ; Core forms:
-    ((quote? exp)      (capture-literal (quote->value exp)))
+    ((quote? exp)      (if (null? (quote->value exp)) exp (capture-literal (quote->value exp))))
     ((string? exp)     (capture-literal exp))
     ((const? exp)      exp)
     ((c-var? exp)      exp)
