@@ -31,7 +31,7 @@
 (define-macro (cond . cases)
   (letrec ((%cond 
              (lambda (cases)
-               (if (null? cases) ',%unspec
+               (if (null? cases) `',%unspec
                  (let ((case (car cases)))
                    (if (eq? 'else (car case))
                      `(begin ,@(cdr case))
