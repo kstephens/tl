@@ -197,13 +197,16 @@
 
 ;; Data type predicates and accessors.
 
-; const? : exp -> boolean
-(define (const? exp)
+(define (immediate-const? exp)
   (or (integer? exp)
       (boolean? exp)
       (character? exp)
-      (string? exp)
       (void? exp)))
+
+; const? : exp -> boolean
+(define (const? exp)
+  (or (immediate-const? exp)
+      (string? exp)))
 
 (define (quote? exp)
   (tagged-list? 'quote exp))
@@ -494,11 +497,12 @@
 (define (find-literal exp)
   (assoc exp literals))
 (define (capture-literal exp)
+  (if (immediate-const? exp) exp
   (let ((lit (find-literal exp)))
     (if lit (car lit)
       (let ((var (gensym '%lit)))
         (set! literals (cons (list exp var) literals))
-        var))))
+        var)))))
 
 (define (convert-literals exp)
   ;; (display "convert-literals " tl_stderr) (write exp tl_stderr) (display "\n" tl_stderr)
