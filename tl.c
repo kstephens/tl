@@ -21,9 +21,11 @@ char *GC_strdup(const char *x) { return strcpy(GC_malloc_atomic(strlen(x) + 1), 
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
 pthread_key_t tl_rt_thread_key;
+static int tl_rt_thread_key_init;
 static void tl_init_()
 {
   ASSERT_ZERO(pthread_key_create(&tl_rt_thread_key, 0));
+  ++ tl_rt_thread_key_init;
 }
 
 static void tl_init_th()
@@ -36,7 +38,7 @@ tl* tl_rt_thread()
 {
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
-    assert(tl_rt_thread_key);
+    assert(tl_rt_thread_key_init);
     tlp = GC_malloc(sizeof(*tlp) * (16 + 1));
     memset(tlp, 0, sizeof(*tlp) * (16 + 1));
     ++ tlp; /* skip type */
