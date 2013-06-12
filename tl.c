@@ -306,6 +306,7 @@ tl tl_m_string(void *x, size_t l)
   return o;
 }
 #define tl_S(o) (*(void**) (o))
+#define tl_Sl(o) ((tlw*) (o))[1]
 
 tl tl_type_cons(tl t, tl a, tl d)
 {
