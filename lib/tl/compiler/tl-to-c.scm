@@ -443,6 +443,7 @@
   (cond
     ; Core forms:    
     ((null? env)        exp)
+    ((quote? exp)       exp)
     ((const? exp)       exp)
     ((c-var? exp)       exp)
     ((prim? exp)        exp)
@@ -587,7 +588,8 @@
 
 (define (body=>begin body)
   (cond
-    ((null? body) `',tl_v)
+    ((null? body) (list 'quote tl_v))
+    ;; ((null? body) `',tl_v)
     ((not (pair? (cdr body))) (car body))
     (else `(begin ,@body))))
 
