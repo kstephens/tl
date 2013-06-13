@@ -86,6 +86,7 @@
     (string-copy! t 0 s 0 l)
     t))
 (load "tl/string.scm")
+(load "expand-load.scm")
 
 ; void : -> void
 (define (void) (if #f #t))
@@ -1218,8 +1219,11 @@
   (define compiled-program "")
   (set! lambdas '())
 
+  (display ";; before expand-load:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
+  (set! input-program (expand-load input-program *load-path*))
+  (display ";; after expand-load:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
   (set! input-program (tl_macro_expand input-program))
-  ;; (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
+  (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
 
   (set! input-program (desugar input-program))
 
