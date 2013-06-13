@@ -54,12 +54,17 @@
 (define (type? x) (eq? (tl_type x) <type>))
 (define (make-type n) (tl_m_type (->char* n)))
 
+(define <void> (tl_type tl_v))
+(define (void? x) (eq? (tl_type x) <void>))
+
 (define <boolean> (tl_type #t))
 (define (boolean? x) (eq? (tl_type x) <boolean>))
 (define (not x) (if x #f #t))
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
+(define (primitive->name prim)
+  (tl_s (tl_cdr prim)))
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
 (define (procedure? x)
@@ -257,14 +262,14 @@
   (if (null? lists) l
     (%append-3 (%append-2 l (car lists)) (cdr lists))))
 (define (append l . lists) (%append-3 l lists))
-(define (assp f l)
+(define (%assp f l)
   (if (null? l) #f
     (if (f (car (car l)))
       (car l)
-      (assp f (cdr l)))))
-(define (assq x l) (assp (lambda (y) (eq? x y)) l))
-(define (assv x l) (assp (lambda (y) (eqv? x y)) l))
-(define (assoc x l) (assp (lambda (y) (equal? x y)) l))
+      (%assp f (cdr l)))))
+(define (assq x l) (%assp (lambda (y) (eq? x y)) l))
+(define (assv x l) (%assp (lambda (y) (eqv? x y)) l))
+(define (assoc x l) (%assp (lambda (y) (equal? x y)) l))
 (define (pair-equal? a b)
   (if (equal? (car a) (car b))
     (equal? (cdr a) (cdr b))
@@ -372,6 +377,7 @@
 ;; ## ;; logical EOF
 (set! tl_progpath (tl_s+ tl_progpath))
 (set! tl_progdir (tl_s+ tl_progdir))
+(set! tl_libdir (tl_s+ tl_libdir))
 (set! tl_progname (tl_s+ tl_progname))
 (define %getenv getenv)
 (define (getenv v)
