@@ -516,6 +516,7 @@ tl tl_write_2(tl o, tl p, tl op)
     return tl_pair_write(o, p, op);
   if ( o == tl_f ) { fputs("#f", p); return p; }
   if ( o == tl_t ) { fputs("#t", p); return p; }
+  if ( o == tl_v ) { fputs("#<void>", p); return p; }
   t = tl_type(o);
   if ( t == tl_t_fixnum )
     return tl_fixnum_write(o, p);
