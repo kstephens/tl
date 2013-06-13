@@ -240,7 +240,12 @@
       (apply f (%map-1 car lists))
       (%map f (%map-1 cdr lists)))))
 (define (map f . lists) (%map f lists))
-(define for-each map)
+(define (%for-each f lists)
+  (if (null? (car lists)) tl_v
+    (begin
+      (apply f (%map-1 car lists))
+      (%for-each f (%map-1 cdr lists)))))
+(define (for-each f . lists) (%for-each f lists))
 (define (tl:reduce f a l)
   (if (null? l)
     a
