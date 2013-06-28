@@ -968,7 +968,7 @@ tl tl_pthread_join(tl t)
 {
   void *value = 0;
   int result;
-  ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 0), &value));
+  ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 1), &value));
   assert(tl_iv(t, 6) == tl_t);
   return tl_iv(t, 5);
 }
