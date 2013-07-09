@@ -7,8 +7,8 @@
     result))
 
 (define (%check-args f constraints)
-  (let ((g     (gensym))
-         (args (gensym)))
+  (let ((g     (%gensym))
+         (args (%gensym)))
     ;; (set! *quasiquote-debug* #t)
     `(let ((,g ,f))
        (set! ,f
@@ -28,7 +28,7 @@
          (set! ,arg (car ,args))
          (if ,(%check-arg-expr constraint arg)
            ,(%check-args-list-1 f (cdr constraints) (list 'cdr args) arg (+ param 1))
-           (error "argument error: " '(:in ,f :parameter ,param :constraint ,constraint)))))))
+           (error "argument error: " '(:in ,f :parameter ,param :given ,(tl_type arg) :constraint ,constraint)))))))
 (define (%check-arg-expr constraint arg)
   (cond
     ((null? constraint)        #t)
@@ -61,7 +61,7 @@
 (check-args (string-length string?))
 (check-args (string-ref string? non-negative-fixnum?))
 (check-args (string-set! string? non-negative-fixnum?))
-(check-args (string-equal? string? string?))
+(check-args (string=? string? string?))
 (check-args (make-string non-negative-fixnum?))
 (check-args (string-copy string?))
 (check-args (substring string? non-negative-fixnum? non-negative-fixnum?))
@@ -82,5 +82,8 @@
 (check-args (open-file string? string?))
 (check-args (close-port port?))
 (check-args (load string?))
+
+(check-args (integer->char non-negative-fixnum?))
+(check-args (char->integer character?))
 
 ;; (set! *quasiquote-debug* #f)

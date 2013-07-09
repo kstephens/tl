@@ -36,7 +36,7 @@
               (load file)) *command-line-load-files*)
   (map
     (lambda (file)
-      (if (string-equal? file "-p")
+      (if (string=? file "-p")
         (begin
           (display "TL: Ready!")(newline)
           (let ((in tl_stdin) (output tl_stdout) (prompt '()))

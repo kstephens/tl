@@ -17,12 +17,12 @@
 (define thread-proc 
   (lambda ()
     (display "thread_proc thread ")(write (current-thread))(newline)
-    (count-down 1000)
+    (count-down 100)
     (display "thread_proc thread DONE: ")(write (current-thread))(newline)
     'OK!
     ))
 (newline)(display "In main thread.  ")(newline)(io-flush)
-(set! new-thread (make-thread thread-proc))
+(set! new-thread (make-thread thread-proc :name 'thread-1))
 (thread-proc)
 ; (write "Waiting for other thread to finish")(newline)
 (define new-thread-result (thread-join new-thread))

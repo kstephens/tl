@@ -113,7 +113,7 @@
  'next
  (p "    \"Turtles all the way down.\"")
  'next
- (p "    \"Class is subclass of Object.")
+ (p "    \"Class is subclass of Object.\"")
  'next
  (p "    \"Object is an instance of Class.\"")
  'next
@@ -159,7 +159,7 @@
  (item "Closures")
  (item "Primitive Procedures")
  (item "Tail-recursion")
- (item "Enviroments")
+ (item "Environments")
  )
 
 (slide

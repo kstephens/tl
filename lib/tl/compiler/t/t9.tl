@@ -1,0 +1,6 @@
+(load "tl/compiler/expand-load")
+(define (show x)
+  ((&c:func tl_write) x (&c:var stdout))
+  ((&c:func tl_display) "\n" (&c:var stdout))
+  )
+(show expand-load)

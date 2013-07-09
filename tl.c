@@ -1,19 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <inttypes.h> /* strtoll() */
-#include <unistd.h>
-#include <stdarg.h>
-#include <setjmp.h>
-#include <assert.h>
-
-#ifdef tl_PTHREAD
-#define GC_THREADS
-#endif
-
-typedef void *tl;
-typedef size_t tlw;
-typedef ssize_t tlsw;
+#include "tl.h"
 
 #ifndef tl_NO_GC
 #include "gc/gc.h"
@@ -21,19 +6,14 @@ typedef ssize_t tlsw;
 void *GC_malloc(size_t s) { return malloc(s); }
 void *GC_malloc_atomic(size_t s) { return malloc(s); }
 void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
+void GC_free(void *p) { free(p); }
 void GC_gcollect() { }
 void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
 int  GC_general_register_disappearing_link(void **link) { return 0; }
 #define GC_INIT() (void) 0
+char *GC_strdup(const char *x) { return strcpy(GC_malloc_atomic(strlen(x) + 1), x); }
 #endif
-
-#define tl_malloc(S) GC_malloc(S)
-#define tl_realloc(P,S) GC_realloc(P,S)
-char *GC_strdup(const char *x)
-{
-  return strcpy(GC_malloc_atomic(strlen(x) + 1), x);
-}
 
 #define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
 
@@ -41,9 +21,11 @@ char *GC_strdup(const char *x)
 #include <pthread.h>
 static pthread_once_t tl_init_once = PTHREAD_ONCE_INIT;
 pthread_key_t tl_rt_thread_key;
+static int tl_rt_thread_key_init;
 static void tl_init_()
 {
   ASSERT_ZERO(pthread_key_create(&tl_rt_thread_key, 0));
+  ++ tl_rt_thread_key_init;
 }
 
 static void tl_init_th()
@@ -52,23 +34,23 @@ static void tl_init_th()
 }
 
 tl tl_m_thread(pthread_t rt, tl env, void *pt);
-tl* tl_rt_thread() {
+tl* tl_rt_thread()
+{
   tl *tlp = pthread_getspecific(tl_rt_thread_key);
   if ( ! tlp ) {
-    assert(tl_rt_thread_key);
-    tlp = tl_malloc(sizeof(*tlp) * (16 + 1));
-    tlp[0] = 0;
+    assert(tl_rt_thread_key_init);
+    tlp = GC_malloc(sizeof(*tlp) * (16 + 1));
+    memset(tlp, 0, sizeof(*tlp) * (16 + 1));
     ++ tlp; /* skip type */
+    tlp[1] = (tl) pthread_self();
     ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, tlp));
-    memset(tlp, 0, sizeof(*tlp) * 16);
-    tlp[0] = (tl) pthread_self();
   }
   return tlp;
 }
 #define TL_RT tl *_tl_thr_ = 0;
 #define _tl_thr (_tl_thr_ ? _tl_thr_ : (_tl_thr_ = tl_rt_thread()))
-#define tl_pthread (_tl_thr[0])
-#define tl_rt  (_tl_thr[1])
+#define tl_rt  (_tl_thr[0])
+#define tl_pthread (_tl_thr[1])
 #define tl_env (_tl_thr[2])
 #else
 static void tl_init_th()
@@ -80,7 +62,7 @@ tl tl_env; // environment.
 #endif
 
 FILE *tl_stdin, *tl_stdout, *tl_stderr;
-char *tl_progpath, *tl_progname, *tl_progdir;
+char *tl_progpath, *tl_progname, *tl_progdir, *tl_libdir;
 
 static void tl_init(int argc, char **argv)
 {
@@ -95,33 +77,23 @@ static void tl_init(int argc, char **argv)
   } else {
     tl_progdir = ".";
   }
+  if ( ! (tl_libdir = getenv("TL_LIBDIR")) ) {
+    tl_libdir = malloc(strlen(tl_progdir) + sizeof("/../lib"));
+    strcat(strcpy(tl_libdir, tl_progdir), "/../lib");
+  }
   GC_INIT();
   tl_init_th();
 }
 
-#define tl_nil ((tl) 0)
-#define tl_f ((tl) (tlw) 2)
-#define tl_t ((tl) (tlw) 4)
-#define _tl_b(x) ((x) ? tl_t : tl_f)
-#define _tl_B(x) ((x) != tl_f)
-
-tl tl_b(tlw i) { return _tl_b(i); }
-#define tl_b(x)_tl_b(x)
-
-tlw tl_B(tl i) { return _tl_B(i); }
-#define tl_B(x)_tl_B(x)
-
 tl tl_allocate(tl type, size_t size)
 {
-  tl *o = tl_malloc(sizeof(tl) + size);
+  tl *o = GC_malloc(sizeof(tl) + size);
   *(o ++) = type;
-#define tl_t_(o) ((tl*)(o))[-1]
   memset(o, 0, size);
   return o;
 }
 
 tl tl_set_runtime(tl rt) { TL_RT tl old = tl_rt; tl_rt = rt; return old; }
-
 tl tl_runtime() { TL_RT return tl_rt; }
 
 tl tl_m_type(tl name);
@@ -133,13 +105,11 @@ tl tl_m_runtime(tl parent)
   tl tl_rt_save = tl_rt;
   size_t size = sizeof(tl) * (128 + 256 /* characters */);
   tl_rt = tl_allocate(0, size);
-#define tl_iv(o,n) ((tl*)(o))[n]
 #define tl_(n) tl_iv(tl_rt,n)
 
 #define tl_t_type tl_(0)
 #define tl_t_runtime tl_(1)
 #define tl_t_void tl_(2)
-#define tl_t_boolean tl_(21) // FIXME
 #define tl_t_fixnum tl_(3)
 #define tl_t_character tl_(4)
 #define tl_t_string tl_(5)
@@ -158,6 +128,9 @@ tl tl_m_runtime(tl parent)
 #define tl_t_setE tl_(18)
 #define tl_t_begin tl_(19)
 #define tl_t_form tl_(20)
+#define tl_t_cell tl_(21)
+#define tl_t_env tl_(22)
+#define tl_t_boolean tl_(29) // FIXME
 
 #define tl_v tl_(30)
 #define tl_symbol_list tl_(31)
@@ -172,7 +145,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_let tl_(43)
 #define tl_s_tl_object_write tl_(44)
 #define tl_s_tl_macro_expand tl_(45)
-  // #define tl_s__argval tl_(46)
+
 #define tl_s_cons tl_(47)
 #define tl_s_car tl_(48)
 #define tl_s_cdr tl_(49)
@@ -181,7 +154,7 @@ tl tl_m_runtime(tl parent)
 #define tl_s_quasiquote tl_(52)
 #define tl_s_unquote_splicing tl_(53)
 #define tl_s_unquote tl_(54)
-    // #define tl_s__callrtn tl_(55)
+
 #define tl_s_begin tl_(56)
 #define tl_s_define tl_(57)
 #define tl_s_setE tl_(58)
@@ -190,6 +163,8 @@ tl tl_m_runtime(tl parent)
 #define tl_s__debug tl_(61)
 #define tl_s_list_TO_vector tl_(62)
 #define tl_s_tl__error tl_(63)
+#define tl_s_tl_string_escape tl_(64)
+#define tl_s_tl_string_unescape tl_(65)
 
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
@@ -220,6 +195,9 @@ tl tl_m_runtime(tl parent)
   tl_t_form   = tl_m_type("form");
   tl_t_thread = tl_m_type("thread");
 
+  tl_t_cell   = tl_m_type("cell");
+  tl_t_env   = tl_m_type("env");
+
   tl_t_if2 = tl_m_type("if2");
   tl_t_evcom3 = tl_m_type("evcom3");
   tl_t_define = tl_m_type("define");
@@ -240,19 +218,17 @@ tl tl_m_runtime(tl parent)
   tl_s_let = tl_m_symbol("let");
   tl_s_tl_object_write = tl_m_symbol("tl_object_write");
   tl_s_tl_macro_expand = tl_m_symbol("tl_macro_expand");
-  //  tl_s__closure = tl_m_symbol("&closure");
-  //  tl_s__argval = tl_m_symbol("&argval");
   tl_s_cons = tl_m_symbol("cons");
   tl_s_car = tl_m_symbol("car");
   tl_s_cdr = tl_m_symbol("cdr");
   tl_s_t = tl_m_symbol("t");
-  // tl_s__callrtn = tl_m_symbol("&callrtn");
-  // tl_s__stmt = tl_m_symbol("&stmt");
   tl_s__env = tl_m_symbol("&env");
   tl_s__depth = tl_m_symbol("&depth");
   tl_s__debug = tl_m_symbol("&debug");
   tl_s_list_TO_vector = tl_m_symbol("list->vector");
   tl_s_tl__error = tl_m_symbol("tl__error");
+  tl_s_tl_string_escape = tl_m_symbol("tl_string_escape");
+  tl_s_tl_string_unescape = tl_m_symbol("tl_string_unescape");
 
   tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
@@ -281,17 +257,8 @@ int tl_C(tl o) { return _tl_C(o); }
 
 tl tl_get_env() { TL_RT return tl_env; }
 
-tl tl_type(tl o)
-{ TL_RT
-#define _tl_type(o)                           \
-  (                                           \
-   (o) == 0         ? tl_t_null :             \
-   ((tlw) (o)) & 1  ? tl_t_fixnum :           \
-   (o) <= tl_t      ? tl_t_boolean : tl_t_(o) )
-  return _tl_type(o);
-}
+tl tl_type(tl o) { TL_RT return _tl_type(o); }
 
-//#define tl_type(o)_tl_type(o)
 tl tl_m_type(tl name)
 { TL_RT
   tl *o = tl_allocate(tl_t_type, sizeof(tl) * 8);
@@ -302,10 +269,7 @@ tl tl_m_type(tl name)
   return o;
 }
 
-tl tl_set_type(tl o, tl t)
-{
-  tl_t_(o) = t; return o;
-}
+tl tl_set_type(tl o, tl t) { tl_t_(o) = t; return o; }
 
 tl tl_write(tl o, tl p);
 tl tl_m_string(void *x, size_t l);
@@ -333,13 +297,6 @@ tl tl_error(tl msg, tl obj, ...)
   return tl_call(tl_s_tl__error, 2, tl_m_string(GC_strdup(buf), strlen(buf)), obj);
 }
 
-#define _tl_i(x) ((tl) ((((tlsw) (x)) << 1) | 1))
-#define _tl_I(o) (((tlsw) (o)) >> 1)
-tl tl_i(tlsw x) { return _tl_i(x); }
-tlsw tl_I(tl o) { return _tl_I(o); }
-#define tl_i(x)_tl_i(x)
-#define tl_I(o)_tl_I(o)
-
 tl tl_get(tl o, tl i)       { return ((tl*) o)[tl_I(i)]; }
 tl tl_set(tl o, tl i, tl v) { return ((tl*) o)[tl_I(i)] = v; }
 
@@ -351,6 +308,7 @@ tl tl_m_string(void *x, size_t l)
   return o;
 }
 #define tl_S(o) (*(void**) (o))
+#define tl_Sl(o) ((tlw*) (o))[1]
 
 tl tl_type_cons(tl t, tl a, tl d)
 {
@@ -373,6 +331,16 @@ tl tl_car(tl o) { return car(o); }
 tl tl_set_car(tl o, tl v) { return car(o) = v; }
 tl tl_cdr(tl o) { return cdr(o); }
 tl tl_set_cdr(tl o, tl v) { return cdr(o) = v; }
+
+tl tl_va_restarg(va_list *vap)
+{
+  tl l = tl_nil, *lp = &l, x;
+  while ( (x = va_arg(*vap, tl)) != tl_MARK ) {
+    *lp = tl_cons(x, tl_nil);
+    lp = &cdr_(*lp);
+  }
+  return l;
+}
 
 tl tl_make_symbol(void *name)
 { TL_RT
@@ -412,7 +380,7 @@ tl tl_string_TO_number(tl o, int radix)
 {
   long long i = 0; char *endptr = 0;
   const char *str = tl_S(o), *strend = strchr(str, '\0');
-  if ( radix < 1 ) radix = 10;
+  if ( radix < 2 ) radix = 10;
   i = strtoll(str, &endptr, radix);
   if ( endptr == strend ) {
     tl o = tl_i(i);
@@ -430,9 +398,28 @@ tl tl_fixnum_TO_string(tl o)
 
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 2);
-#define tl_FP(o,r,p) ((r(*)p)tl_iv(o, 0))
-  o[0] = f; o[1] = (tl) name;
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
+  o[0] = f; o[1] = (tl) name; o[2] = tl_nil;
+  return o;
+}
+
+tl tl_m_closure(void *f, void *e)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
+  o[0] = f; o[1] = (tl) ""; o[2] = e;
+  return o;
+}
+
+tl tl_m_env(size_t size)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_env, size);
+  return o;
+}
+
+tl tl_m_cell(tl v)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_cell, sizeof(tl) * 1);
+  o[0] = v;
   return o;
 }
 
@@ -461,8 +448,9 @@ tl tl_string_display(tl o, tl p)
 }
 
 tl tl_string_write(tl o, tl p)
-{
+{ TL_RT
   fwrite("\"", 1, 1, FP);
+  o = tl_call(tl_s_tl_string_escape, 1, o);
   tl_string_display(o, p);
   fwrite("\"", 1, 1, FP);
   return p;
@@ -501,10 +489,10 @@ tl tl_closure_write(tl o, tl p)
   fprintf(FP, " >");
   return p;
 }
+
 tl tl_write_2(tl o, tl p, tl op);
-tl tl_pair_write(tl o, tl p, tl op)
+tl tl_pair_write_1(tl o, tl p, tl op)
 { TL_RT
-  fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
   if ( tl_type(o) == tl_t_pair ) {
@@ -517,7 +505,25 @@ tl tl_pair_write(tl o, tl p, tl op)
   fwrite(". ", 2, 1, FP);
   tl_write_2(o, p, op);
  rtn:
+  return p;
+}
+tl tl_pair_write(tl o, tl p, tl op)
+{ TL_RT
+  fwrite("(", 1, 1, FP);
+  tl_pair_write_1(o, p, op);
   fwrite(")", 1, 1, FP);
+  return p;
+}
+tl tl_thread_write(tl o, tl p)
+{
+  tl opts = tl_get(o, tl_i(3));
+  fprintf(FP, "#<%s ", tl_type_name(tl_type(o)));
+  if ( opts == tl_nil ) {
+    fprintf(FP, "@%p", o);
+  } else {
+    tl_pair_write_1(opts, p, tl_nil);
+  }
+  fprintf(FP, ">");
   return p;
 }
 
@@ -528,6 +534,7 @@ tl tl_write_2(tl o, tl p, tl op)
     return tl_pair_write(o, p, op);
   if ( o == tl_f ) { fputs("#f", p); return p; }
   if ( o == tl_t ) { fputs("#t", p); return p; }
+  if ( o == tl_v ) { fputs("#<void>", p); return p; }
   t = tl_type(o);
   if ( t == tl_t_fixnum )
     return tl_fixnum_write(o, p);
@@ -545,6 +552,8 @@ tl tl_write_2(tl o, tl p, tl op)
     return tl_prim_write(o, p);
   if ( t == tl_t_closure )
     return tl_closure_write(o, p);
+  if ( t == tl_t_thread )
+    return tl_thread_write(o, p);
   return tl_call(tl_s_tl_object_write, 3, o, p, op);
 }
 tl tl_display(tl o, tl p) { return tl_write_2(o, p, (tl) 0); }
@@ -553,8 +562,6 @@ tl tl_write(tl o, tl p) { return tl_write_2(o, p, (tl) 1); }
 
 tl tl_bind(tl vars, tl args, tl env)
 { TL_RT
-  // if ( length(vars) != length(args) ) error
-  // if ( vars == tl_nil ) return env;
   return cons(tl_set_type(cons(vars, args), tl_t_environment), env);
 }
 
@@ -636,6 +643,9 @@ tl tl_setE(tl var, tl val, tl env)
   return car(slot) = val;
 }
 
+static int _tl_eval_debug;
+tl tl_eval_debug(tl val) { _tl_eval_debug = tl_B(val) ? 1 : 0; return val; }
+
 tl tl_eval(tl exp, tl env)
 { TL_RT
 #undef car
@@ -691,16 +701,15 @@ tl tl_eval(tl exp, tl env)
   G(eval);
 
   L(evexp);
-  val = tl_lookup(car(exp), env);
-  if ( car(exp) == tl_s_quote )
-    { val = cadr(exp); G(rtn); }
-  if ( car(exp) == tl_s_if ) G(if1);
-  if ( car(exp) == tl_s_lambda ) G(proc);
-  if ( car(exp) == tl_s_let ) { exp = cdr(exp); G(let); }
-  if ( car(exp) == tl_s_define ) G(define);
-  if ( car(exp) == tl_s_setE ) G(setE);
-  if ( car(exp) == tl_s_begin ) 
-    { exp = cdr(exp); G(evlist); }
+  if ( _tl_eval_debug > 0 ) { _tl_eval_debug --; fprintf(stderr, "  ;=> "); tl_write(exp, stderr); fprintf(stderr, "\n"); _tl_eval_debug ++; }
+  val = car(exp);
+  if ( val == tl_s_quote ) { val = cadr(exp); G(rtn); }
+  if ( val == tl_s_if ) G(if1);
+  if ( val == tl_s_lambda ) G(proc);
+  if ( val == tl_s_let ) { exp = cdr(exp); G(let); }
+  if ( val == tl_s_define ) G(define);
+  if ( val == tl_s_setE ) G(setE);
+  if ( val == tl_s_begin ) { exp = cdr(exp); G(evlist); }
 
   // L(evcomb);
   args = argp = tl_nil;
@@ -731,8 +740,9 @@ tl tl_eval(tl exp, tl env)
   L(let);
   args = argp = nil; val = car(exp);
   while ( val != nil ) {
-    argp = cons(car(car(val)), argp);
-    args = cons(cadr(car(val)), args);
+    tl b = car(val);
+    argp = cons(car(b), argp);
+    args = cons(cadr(b), args);
     val = cdr(val);
   }
   val = exp;
@@ -923,8 +933,8 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 { TL_RT
   tl *o = tl_allocate(tl_t_thread, sizeof(*o) * 16);
   memset(o, 0, sizeof(*o) * 16);
-  o[0] = (tl) pt;
-  o[1] = rt;
+  o[0] = rt;
+  o[1] = (tl) pt;
   o[2] = env;
   return o;
 }
@@ -934,34 +944,20 @@ static void *tl_pthread_start(void *data)
   tl *pt = data, proc;
 
   ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, pt));
-  pt[0] = (tl) pthread_self();
-  tl_rt = pt[1];
+  tl_rt = pt[0];
+  pt[1] = (tl) pthread_self();
   tl_env = pt[2];
   proc = pt[10];
-  pt[10] = 0;
-
-#if 0
-  fprintf(stderr, "\n  pthread %p object %p in rt %p applying ", pthread_self(), pt, tl_rt);
-  tl_write(proc, stderr);
-  fprintf(stderr, " in env ");
-  tl_write(tl_env, stderr);
-  fprintf(stderr, "\n"); fflush(stderr);
-#endif
-
+  pt[10] = 0;        // proc is "running".
   pt[5] = tl_apply(proc, tl_nil);
   pt[6] = tl_t;      // result is ready.
-
-#if 0
-  fprintf(stderr, "\n  pthread %p object %p in rt %p returning ", pthread_self(), pt, tl_rt);
-  tl_write(pt[5], stderr);
-  fprintf(stderr, "\n"); fflush(stderr);
-#endif
   return tl_result; // pthread_exit(tl_result);
 }
 
-tl tl_pthread_create(tl proc, tl env)
+tl tl_pthread_create(tl proc, tl opts)
 { TL_RT
   pthread_t new_thread = 0;
+  tl env;
   int result = 0;
   tl *pt;
   tl tl_rt_save = tl_rt;       // save current runtime.
@@ -971,18 +967,15 @@ tl tl_pthread_create(tl proc, tl env)
   tl_rt = tl_rt_save;          // restore current runtime
 
   pt = tl_m_thread(0, rt, env); // new thread object.
+  pt[2] = env;                  // new environment for thread.
+  pt[3] = opts;                 // thread opts.
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
   ASSERT_ZERO(result = pthread_create(&new_thread, 0, tl_pthread_start, pt));
-  while ( ! ((pthread_t) pt[0] == new_thread && pt[10] == 0) ) 
-    ;                          // wait for thread to start.
+  // wait for thread to start.
+  while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) ;
 
-#if 0
-  fprintf(stderr, "\n  result=%d pthread %p in rt %p, spawned new pthread %p object %p in rt %p\n", 
-          result, pthread_self(), tl_rt, 
-          new_thread, pt, rt);
-#endif
   return pt;
 }
 
@@ -998,10 +991,8 @@ tl tl_pthread_join(tl t)
 {
   void *value = 0;
   int result;
-  ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 0), &value));
-  // assert(value == tl_iv(t, 5));
+  ASSERT_ZERO(result = pthread_join((pthread_t) tl_iv(t, 1), &value));
   assert(tl_iv(t, 6) == tl_t);
-  // tl_iv(t, 5) = 0;
   return tl_iv(t, 5);
 }
 #endif /* tl_PTHREAD */
@@ -1045,7 +1036,7 @@ tl tl_load(tl env, const char *name)
   FILE *fp;
   char buf[1024];
   if ( name[0] != '/' ) {
-    snprintf(buf, sizeof(buf), "%s/../lib/%s", tl_progdir, name);
+    snprintf(buf, sizeof(buf), "%s/%s", tl_libdir, name);
     name = buf;
   }
   if ( (fp = fopen(name, "r")) ) {
@@ -1057,6 +1048,12 @@ tl tl_load(tl env, const char *name)
 }
 
 #include "jit.h"
+
+static tl tl_memcmp(tl a, tl b, tl as, tl bs)
+{
+  int cmp = memcmp(a, b, tl_I(as) < tl_I(bs) ? tl_I(as) : tl_I(bs));
+  return tl_i(cmp ? (cmp < 0 ? -1 : 1) : (tl_I(as) == tl_I(bs) ? 0 : (tl_I(as) < tl_I(bs) ? -1 : 1)));
+}
 
 tl tl_stdenv(tl env)
 { TL_RT
@@ -1070,20 +1067,21 @@ tl tl_stdenv(tl env)
   V(eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
   DD(tl_stdin); DD(tl_stdout); DD(tl_stderr);
-  DD(tl_progpath); DD(tl_progname); DD(tl_progdir);
+  DD(tl_progpath); DD(tl_progname); DD(tl_progdir); DD(tl_libdir);
 #define Pf(N, F) D(N, tl_m_prim((F), #N))
 #define P(N) Pf(N, N)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
+  P(tl_t_); P(tl_iv); P(tl_closure_env);
   P(tl_get); P(tl_set);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
-  P(tl_eval); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
+  P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2); P(tl_m_prim);
@@ -1094,7 +1092,9 @@ tl tl_stdenv(tl env)
   P(tl_read); P(tl_write_2); P(tl_object_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
-  P(strlen); P(strcpy); P(memset); P(memcpy); P(memcmp);
+  P(strlen); P(strcpy); P(memset); P(memcpy); P(tl_memcmp);
+  P(isalpha); P(isdigit); P(islower); P(isupper); P(isspace);
+  Pf(tl_string_unescape, tl_identity); Pf(tl_string_escape, tl_identity);
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(sleep); P(usleep);
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
@@ -1137,13 +1137,17 @@ tl tl_stdenv(tl env)
 
 #include "jit.c"
 
+#ifndef _tl_main
+#define _tl_main(argc, argv) tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv)
+#endif
+
 int main(int argc, char **argv)
 { 
   tl_init(argc, argv);
   {TL_RT
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
-  tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv);
+  _tl_main(argc, argv);
   tl_env = tl_nil;
   GC_gcollect();
   GC_invoke_finalizers();
@@ -1170,12 +1174,13 @@ int main(int argc, char **argv)
 #define SET_CDR(C,R) cdr(C) = (R)
 #define MAKE_CHAR(I) tl_c(I)
 #define LIST_2_VECTOR(X) tl_call(tl_s_list_TO_vector, 1, (X))
-#define STRING(S,L) tl_m_string((S), (L))
+#define STRING(S,L) tl_call(tl_s_tl_string_unescape, 1, tl_m_string((S), (L)))
 #define SYMBOL_DOT tl_s_DOT
 #define SYMBOL(N) tl_s_##N
 #define STRING_2_NUMBER(s, radix) tl_string_TO_number(s, radix)
 #define STRING_2_SYMBOL(s) tl_m_symbol(tl_S(s))
-#define ERROR(msg,args...) tl_error(msg, tl_s(read), #args)
-#define MALLOC(S) tl_malloc(S)
-#define REALLOC(P,S) tl_realloc(P,S)
-#include "lispread.c"
+#define ERROR(msg,args...) tl_error(msg, tl_s(read), ##args)
+#define MALLOC(S) GC_malloc_atomic(S)
+#define REALLOC(P,S) GC_realloc(P,S)
+#define FREE(P) GC_free(P)
+#include "lispread/lispread.c"

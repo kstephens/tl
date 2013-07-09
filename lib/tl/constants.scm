@@ -4,6 +4,7 @@
 (define-constant %eos %eos)
 
 (define-constant <type> <type>)
+(define-constant <void> <void>)
 (define-constant <boolean> <boolean>)
 (define-constant <primitive> <primitive>)
 (define-constant <closure> <closure>)

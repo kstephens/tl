@@ -19,4 +19,4 @@
 (define b (lambda (n)
             (display "b")(display n)(newline)
             (if (> n 0) (a (- n 1)))))
-(a 100000)
+(a 10)

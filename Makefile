@@ -74,7 +74,10 @@ all : $(EARLY_TARGETS) bin/$(tl)
 v :
 	echo "$(v)=$($v)"
 
-$(tl) : tl.c lispread.c jit*.c jit*.h
+lispread/lispread.c :
+	git submodule add --force http://github.com/kstephens/lispread.git lispread
+
+$(tl) : tl.c lispread/lispread.c jit*.c jit*.h
 	$(CC) $(CFLAGS) -o $@ tl.c $(LDFLAGS)
 
 $(tl)-no-gc : tl.c Makefile

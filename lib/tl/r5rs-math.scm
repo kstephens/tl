@@ -1,4 +1,7 @@
 ;; (write (tl_macro_expand '
+;; > r5rs?
+(define (truncate-quotient n1 n2)  (tl_fixnum_DIV n1 n2))
+(define (truncate-remainder n1 n2) (tl_fixnum_MOD n1 n2))
 
 (let ((%+ +) (%* *) (%- -) (%/ /))
   (define (type-check-2 f fn)
