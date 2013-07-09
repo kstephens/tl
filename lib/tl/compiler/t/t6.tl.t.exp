@@ -1,0 +1,8 @@
+1
+#t
+"foo"
+sym
+()
+(1 2 3)
+(a list of symbols)
+("a" "list" "of" "strings")

@@ -1,0 +1,10 @@
+(define (read-list port)
+  (define (r a)
+    (let ((x (read port)))
+      (if (not (eof-object? x))
+        (begin
+          (set-cdr! a (cons x '()))
+          (r (cdr a))))))
+  (define l (list #f))
+  (r l)
+  (cdr l))

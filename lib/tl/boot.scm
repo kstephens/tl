@@ -54,12 +54,17 @@
 (define (type? x) (eq? (tl_type x) <type>))
 (define (make-type n) (tl_m_type (->char* n)))
 
+(define <void> (tl_type tl_v))
+(define (void? x) (eq? (tl_type x) <void>))
+
 (define <boolean> (tl_type #t))
 (define (boolean? x) (eq? (tl_type x) <boolean>))
 (define (not x) (if x #f #t))
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
+(define (primitive->name prim)
+  (tl_s (tl_cdr prim)))
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
 (define (procedure? x)
@@ -240,7 +245,12 @@
       (apply f (%map-1 car lists))
       (%map f (%map-1 cdr lists)))))
 (define (map f . lists) (%map f lists))
-(define for-each map)
+(define (%for-each f lists)
+  (if (null? (car lists)) tl_v
+    (begin
+      (apply f (%map-1 car lists))
+      (%for-each f (%map-1 cdr lists)))))
+(define (for-each f . lists) (%for-each f lists))
 (define (tl:reduce f a l)
   (if (null? l)
     a
@@ -252,14 +262,14 @@
   (if (null? lists) l
     (%append-3 (%append-2 l (car lists)) (cdr lists))))
 (define (append l . lists) (%append-3 l lists))
-(define (assp f l)
+(define (%assp f l)
   (if (null? l) #f
     (if (f (car (car l)))
       (car l)
-      (assp f (cdr l)))))
-(define (assq x l) (assp (lambda (y) (eq? x y)) l))
-(define (assv x l) (assp (lambda (y) (eqv? x y)) l))
-(define (assoc x l) (assp (lambda (y) (equal? x y)) l))
+      (%assp f (cdr l)))))
+(define (assq x l) (%assp (lambda (y) (eq? x y)) l))
+(define (assv x l) (%assp (lambda (y) (eqv? x y)) l))
+(define (assoc x l) (%assp (lambda (y) (equal? x y)) l))
 (define (pair-equal? a b)
   (if (equal? (car a) (car b))
     (equal? (cdr a) (cdr b))
@@ -367,6 +377,7 @@
 ;; ## ;; logical EOF
 (set! tl_progpath (tl_s+ tl_progpath))
 (set! tl_progdir (tl_s+ tl_progdir))
+(set! tl_libdir (tl_s+ tl_libdir))
 (set! tl_progname (tl_s+ tl_progname))
 (define %getenv getenv)
 (define (getenv v)
@@ -384,10 +395,10 @@
 (define _X_OK 1)(define _W_OK 2)(define _R_OK 4)
 (define (file-readable? name)
   (= 0 (tl_i (access (%string-ptr name) (tl_I _R_OK)))))
-(define (locate-file name)
+(define (locate-file name load-path)
   (if (eqv? (string-ref name 0) #\/)
     name
-    (locate-file-in-path name *load-path*)))
+    (locate-file-in-path name load-path)))
 (define (locate-file-in-path name path-list) 
   (if (null? path-list) #f
     (let ((path-name (string-append (car path-list) "/" name)))
@@ -431,18 +442,23 @@
   (tl_repl env (->FILE* in)
     (if out (->FILE* out) %NULL)
     (if prompt (->FILE* prompt) %NULL)))
+(define (load-locate-file name load-path current-file)
+  (if current-file
+    (set! load-path (cons (path-directory current-file) load-path)))
+  (let ((pathname (locate-file name load-path)))
+    (if (not pathname)
+      (if (not (string-ends-with? name ".scm"))
+        (begin
+          (set! name (string-append name ".scm"))
+          (set! pathname (locate-file name load-path)))))
+    pathname))
 (define (load name . opts)
   (let ((verbose (not (null? opts))) (pathname name)
          (current-file *load-current-file*))
     (if *load-debug* (set! verbose #t))
     (if *load-verbose* (begin (display "load?: ")(display name)(newline)))
-    (set! pathname (locate-file name (cons (path-directory current-file) *load-path*)))
-    (if (not pathname)
-      (begin
-        (if (not (string-ends-with? name ".scm"))
-          (set! name (string-append name ".scm")))
-        (set! pathname (locate-file name (cons (path-directory current-file) *load-path*)))))
-    (if (not pathname) (error "cannot locate" 'name name 'path *load-path*))
+    (set! pathname (load-locate-file name *load-path* current-file))
+    (if (not pathname) (error "cannot locate" 'name name 'path *load-path* 'current-file current-file))
     (let ((in (open-file pathname "r"))
            (result #f))
       (if (not in) (error "cannot open" pathname)
