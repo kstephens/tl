@@ -17,7 +17,7 @@
 (define thread-proc 
   (lambda ()
     (display "thread_proc thread ")(write (current-thread))(newline)
-    (count-down 1000)
+    (count-down 100)
     (display "thread_proc thread DONE: ")(write (current-thread))(newline)
     'OK!
     ))
