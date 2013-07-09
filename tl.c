@@ -934,9 +934,10 @@ static void *tl_pthread_start(void *data)
   return tl_result; // pthread_exit(tl_result);
 }
 
-tl tl_pthread_create(tl proc, tl env)
+tl tl_pthread_create(tl proc, tl opts)
 { TL_RT
   pthread_t new_thread = 0;
+  tl env;
   int result = 0;
   tl *pt;
   tl tl_rt_save = tl_rt;       // save current runtime.
@@ -946,6 +947,8 @@ tl tl_pthread_create(tl proc, tl env)
   tl_rt = tl_rt_save;          // restore current runtime
 
   pt = tl_m_thread(0, rt, env); // new thread object.
+  pt[2] = env;                  // new environment for thread.
+  pt[3] = opts;                 // thread opts.
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
