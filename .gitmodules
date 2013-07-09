@@ -1,0 +1,3 @@
+[submodule "lispread"]
+	path = lispread
+	url = http://github.com/kstephens/lispread.git

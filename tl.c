@@ -1188,4 +1188,4 @@ int main(int argc, char **argv)
 #define MALLOC(S) GC_malloc_atomic(S)
 #define REALLOC(P,S) GC_realloc(P,S)
 #define FREE(P) GC_free(P)
-#include "lispread.c"
+#include "lispread/lispread.c"
