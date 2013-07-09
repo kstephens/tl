@@ -22,7 +22,7 @@
     'OK!
     ))
 (newline)(display "In main thread.  ")(newline)(io-flush)
-(set! new-thread (make-thread thread-proc))
+(set! new-thread (make-thread thread-proc :name 'thread-1))
 (thread-proc)
 ; (write "Waiting for other thread to finish")(newline)
 (define new-thread-result (thread-join new-thread))

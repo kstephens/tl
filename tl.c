@@ -489,10 +489,10 @@ tl tl_closure_write(tl o, tl p)
   fprintf(FP, " >");
   return p;
 }
+
 tl tl_write_2(tl o, tl p, tl op);
-tl tl_pair_write(tl o, tl p, tl op)
+tl tl_pair_write_1(tl o, tl p, tl op)
 { TL_RT
-  fwrite("(", 1, 1, FP);
   if ( ! o ) goto rtn;
  again:
   if ( tl_type(o) == tl_t_pair ) {
@@ -505,7 +505,25 @@ tl tl_pair_write(tl o, tl p, tl op)
   fwrite(". ", 2, 1, FP);
   tl_write_2(o, p, op);
  rtn:
+  return p;
+}
+tl tl_pair_write(tl o, tl p, tl op)
+{ TL_RT
+  fwrite("(", 1, 1, FP);
+  tl_pair_write_1(o, p, op);
   fwrite(")", 1, 1, FP);
+  return p;
+}
+tl tl_thread_write(tl o, tl p)
+{
+  tl opts = tl_get(o, tl_i(3));
+  fprintf(FP, "#<%s ", tl_type_name(tl_type(o)));
+  if ( opts == tl_nil ) {
+    fprintf(FP, "@%p", o);
+  } else {
+    tl_pair_write_1(opts, p, tl_nil);
+  }
+  fprintf(FP, ">");
   return p;
 }
 
@@ -534,6 +552,8 @@ tl tl_write_2(tl o, tl p, tl op)
     return tl_prim_write(o, p);
   if ( t == tl_t_closure )
     return tl_closure_write(o, p);
+  if ( t == tl_t_thread )
+    return tl_thread_write(o, p);
   return tl_call(tl_s_tl_object_write, 3, o, p, op);
 }
 tl tl_display(tl o, tl p) { return tl_write_2(o, p, (tl) 0); }

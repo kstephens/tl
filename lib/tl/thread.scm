@@ -1,3 +1,6 @@
+(define (main-thread) *main-thread*)
+(define *main-thread* (tl_pthread_self))
+(tl_set *main-thread* 3 '(:name (main-thread)))
 (define (current-thread) (tl_pthread_self))
 (define (make-thread proc . opts)
   (tl_pthread_create proc opts))
