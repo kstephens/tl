@@ -83,13 +83,18 @@
               (car (cdr e))
               (macro-environment-expand-body self (cdr (cdr e)))))
           (if (eq? 'let head)
+            (if (symbol? (car (cdr e)))
+              (let ((transformer (macro-environment-get-transformer self head)))
+                    (if (null? transformer)
+                      (macro-environment-expand-list self e)
+                      (macro-environment-apply-transformer self transformer e)))
             (cons (car e)
               (cons
                 (map (lambda (b) (cons
                                    (car b)
                                    (macro-environment-expand-list self (cdr b))))
                   (car (cdr e)))
-                (macro-environment-expand-body self (cdr (cdr e)))))
+                (macro-environment-expand-body self (cdr (cdr e))))))
             (if (eq? '&macro-scope head) ;; (&macro-scope (quote env) . body)
               (let ((args (macro-environment-expand-list self (cdr e))))
                 (cons '&macro-scope

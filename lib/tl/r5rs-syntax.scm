@@ -21,9 +21,8 @@
   (if (symbol? bindings-or-loop-name)
     (let ((loop-name bindings-or-loop-name)
            (bindings (car body)))
-      (set! body (cdr body))
-    `(letrec ((,loop-name (lambda ,(map car bindings) @,body)))
-       (,loop-name ,(map cadr bindings))))
+    `(letrec ((,loop-name (lambda ,(map car bindings) ,@(cdr body))))
+       (,loop-name ,@(map cadr bindings))))
     `(let ,bindings-or-loop-name @,body)
     ))
 #||#
