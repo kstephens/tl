@@ -271,6 +271,11 @@
 (define (assq x l) (assp (lambda (y) (eq? x y)) l))
 (define (assv x l) (assp (lambda (y) (eqv? x y)) l))
 (define (assoc x l) (assp (lambda (y) (equal? x y)) l))
+(define (memp f l)
+  (if (null? l) #f
+    (if (f (car (car l))) #t
+      (memp f (cdr l)))))
+(define (memq x l) (memp (lambda (y) (eq? x y)) l))
 (define (pair-equal? a b)
   (if (equal? (car a) (car b))
     (equal? (cdr a) (cdr b))

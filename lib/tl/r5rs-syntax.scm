@@ -95,6 +95,8 @@
     `(let ((,val ,val-expr))
        ,(%case cases))))
 
+;; (define-macro (do vars ))
+
 (define (%body-defines b c)
   (if (null? b) c
     (let ((stmt (car b)))
