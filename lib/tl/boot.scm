@@ -145,6 +145,7 @@
 
 (define <character> (tl_type #\a))
 (define (character? x) (eq? (tl_type x) <character>))
+(define char? character?)
 (define (char->integer x) (tl_i (tl_C x)))
 (define (integer->char x) (tl_c (tl_I x)))
 (define (char<? a b) (< (char->integer a) (char->integer b)))
