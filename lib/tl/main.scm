@@ -16,7 +16,7 @@
         (set! *command-line-prog-files* (reverse *command-line-prog-files*)))
       (case (car args)
         (("-l")
-          (set! *command-line-load-files* (cons (cddr args) *command-line-load-files*))
+          (set! *command-line-load-files* (cons (cadr args) *command-line-load-files*))
           (process-args (cddr args)))
         (else
           (set! *command-line-prog-files* (cons (car args) *command-line-prog-files*))
@@ -32,7 +32,7 @@
   (if (null? *command-line-prog-files*) (set! *command-line-prog-files* '("-p")))
 
   (map (lambda (file)
-              ;; (display "TL: loading ")(display file)(newline)
+              ;;(display "TL: loading ")(write file)(newline)
               (load file)) *command-line-load-files*)
   (map
     (lambda (file)
