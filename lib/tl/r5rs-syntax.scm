@@ -16,7 +16,6 @@
      ,@(map (lambda (b) `(set! ,(car b) ,@(cdr b))) bindings)
      ,@body))
 
-#||#
 (define-macro (let bindings-or-loop-name . body)
   (if (symbol? bindings-or-loop-name)
     (let ((loop-name bindings-or-loop-name)
@@ -25,7 +24,23 @@
        (,loop-name ,@(map cadr bindings))))
     `(let ,bindings-or-loop-name ,@body)
     ))
-#||#
+
+(define-macro (do var-init-steps test-expressions . commands)
+  (let ((loop (%gensym 'do-loop))
+        (test (car test-expressions))
+        (expressions (cdr test-expressions)))
+    `(let ,loop ,(map (lambda (vis) (list (car vis) (cadr vis))) var-init-steps)
+       (if ,test
+         (begin ,@expressions)
+         (begin
+           ,@commands
+           (,loop
+             ,@(map (lambda (vis)
+                      (let ((var  (car vis))
+                             (step (cddr vis)))
+                        (if (null? step) var (car step))))
+                 var-init-steps)))
+         ))))
 
 (define-macro (cond . cases)
   (letrec ((%cond 
@@ -93,8 +108,6 @@
 			,(%case (cdr cases)))))))))
     `(let ((,val ,val-expr))
        ,(%case cases))))
-
-;; (define-macro (do vars ))
 
 (define (%body-defines b c)
   (if (null? b) c
