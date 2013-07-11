@@ -25,7 +25,9 @@
     (set! qq-object (lambda (object)
                       (if (pair? object)
                         (qq-element object)
-                        (list 'quote object))))
+                        (if (vector? object)
+                          (list 'list->vector (qq-list (vector->list object)))
+                          (list 'quote object)))))
     (lambda (expr)
       (if *quasiquote-debug*
         (begin (display "qq-object ")(write expr)(newline)))
