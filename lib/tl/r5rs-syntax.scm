@@ -23,7 +23,7 @@
            (bindings (car body)))
     `(letrec ((,loop-name (lambda ,(map car bindings) ,@(cdr body))))
        (,loop-name ,@(map cadr bindings))))
-    `(let ,bindings-or-loop-name @,body)
+    `(let ,bindings-or-loop-name ,@body)
     ))
 #||#
 
