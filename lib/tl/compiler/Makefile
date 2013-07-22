@@ -36,7 +36,7 @@ diff-files : $(C_DIFF_FILES)
 %.scm.tl.c : %.scm
 	$(ROOT_DIR)/bin/tl compile-stdin.scm < $< | ./filter-c-code.rb > $@
 
-%.tl.c : %.tl
+%.tl.c : %.tl tl-to-c.scm
 	$(ROOT_DIR)/bin/tl tl-compile-stdin.scm < $<  > $@
 
 %.c.diff : %.csi.c %.tl.c
