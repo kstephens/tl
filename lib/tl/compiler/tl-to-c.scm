@@ -508,7 +508,22 @@
     ((symbol? exp) `((&c:func tl_m_symbol) ((&c:func tl_S) ,(symbol->string exp))))
     ((pair? exp)   (list '(&c:func tl_cons) (encode-literal (car exp)) (encode-literal (cdr exp))))
     ((vector? exp) (list 'list->vector (encode-literal (vector->list exp))))
+    ((void? exp)   '((&c:var tl_v)))
+    ((type? exp)   (encode-type exp))
     (else          exp)))
+
+(define (encode-type exp)
+  (cond
+    ((eq? (tl_type tl_v) exp)  '(tl_type (&c:var tl_v)))
+    ((eq? (tl_type 1) exp)     '(tl_type 1))
+    ((eq? (tl_type #\a) exp)   '(tl_type #\a))
+    ((eq? (tl_type "") exp)    '(tl_type ""))
+    ((eq? (tl_type 'tl_type) exp) '(tl_type 'tl_type))
+    ((eq? (tl_type '()) exp)      '(tl_type '()))
+    ((eq? (tl_type (cons '() '())) exp)
+      `(tl_type (cons '() ())))
+    ((eq? (tl_type '#()) exp)     '(tl_type '#()))
+    (else exp)))
     
 ;; Desugaring.
 
