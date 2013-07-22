@@ -152,7 +152,6 @@
 (define (ref? exp)
   (symbol? exp))
 
-; let? : exp -> boolean
 (define (let? exp)
   (tagged-list? 'let exp))
 (define (let->bindings exp)
@@ -161,12 +160,8 @@
   (caddr exp))
 (define (let->body exp)
   (cddr exp))
-
-; let->bound-vars : let-exp -> list[symbol]
 (define (let->bound-vars exp)
   (map car (cadr exp)))
-
-; let->args : let-exp -> list[exp]
 (define (let->args exp)
   (map cadr (cadr exp)))
 
@@ -631,10 +626,6 @@
     ((app? exp)        (map desugar exp))    
     (else              (error "desugar: unknown exp: " exp))))
     
-
-
-
-
 ;; Syntactic analysis.
 
 ; free-vars : exp -> sorted-set[var]
@@ -783,7 +774,6 @@
     ((app? exp)      (map wrap-mutables exp))
     (else            (error "wrap-mutables: unknown expression type: " exp))))
                         
-
 
 ;; Name-mangling.
 
