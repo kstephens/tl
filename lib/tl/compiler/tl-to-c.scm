@@ -12,6 +12,15 @@
     (string-copy! t 0 s 0 l)
     t))
 (load "tl/string.scm")
+(define (closure->formals c) (caar c))
+(define (closure->body c)    (cdar c))
+
+;; TL top-level environment.
+(define tl-top-level-env (tl_get_top_level_env))
+(define (tl-lookup-slot sym)
+  (let ((b (tl_lookup sym tl-top-level-env)))
+    (if (null? b) #f
+      (cons sym (car b)))))
 
 ; void : -> void
 (define (void) (if #f #t))
@@ -144,10 +153,14 @@
 ; let? : exp -> boolean
 (define (let? exp)
   (tagged-list? 'let exp))
-
-; let->bindings : let-exp -> alist[symbol,exp]
 (define (let->bindings exp)
   (cadr exp))
+(define (let->names exp)
+  (map car (let->bindings exp)))
+(define (let->inits exp)
+  (map cadr (let->bindings exp)))
+(define (let->body exp)
+  (cddr exp))
 
 ; let->exp : let-exp -> exp
 (define (let->exp exp)
@@ -232,16 +245,11 @@
 (define (app->args exp)
   (cdr exp))
 
-(define (tl_lookup_slot sym)
-  (let ((b (tl_lookup sym (tl_get_env))))
-    (if (null? b) #f
-      (cons sym (car b)))))
-
 ; prim? : exp -> boolean
 (define (prim? exp)
   (or (c-func? exp)
     (and (symbol? exp)
-      (let ((slot (tl_lookup_slot exp)))
+      (let ((slot (tl-lookup-slot exp)))
         (and slot (primitive? (cdr slot)) (cdr slot))))))
 
 (define (prim->name prim)
@@ -408,6 +416,48 @@
     ((app? exp)         (map (substitute-with env) exp))
     (else               (error "substitute: unhandled expression type: " exp))))
 
+
+
+(define imports '())
+(define (import-value env exp)
+  (cond
+    ((closure? exp)
+      (let (($exp `(lambda ,(closure->formals exp) ,@(closure->body exp))))
+        (import env $exp)
+        $exp))
+    (else `(quote ,exp))))
+(define (import-ref env exp)
+  ;; (display "  " tl_stderr)(write (list 'import-ref env exp) tl_stderr)(newline tl_stderr)
+  (if (or (memq exp env) (assq exp imports)) '()
+    (let ((slot (tl-lookup-slot exp)))
+      (if slot ;; (name . val)
+        (begin
+          (let ((entry (cons (cdr slot) '())))
+            (set! imports (cons (cons exp entry) imports))
+            (set-car! entry (import-value env (car entry)))))))))
+(define (import env exp)
+  ;; (display "  " tl_stderr)(write (list 'import env exp) tl_stderr)(newline tl_stderr)
+  (cond
+    ; Core forms:
+    ((quote? exp)      #f)
+    ((const? exp)      #f)
+    ((c-var? exp)      #f)
+    ((prim? exp)       #f)
+    ((ref? exp)        (import-ref env exp))
+    ((lambda? exp)     (let (($env (append (formals=>names (lambda->formals exp)) env)))
+                         (for-each (lambda (x) (import $env x)) (lambda->body exp))))
+    ((set!? exp)       (import env (set!->exp exp)))
+    ((if? exp)         (for-each (lambda (x) (import env x)) (cdr exp)))
+
+    ; Sugar
+    ((let? exp)        (for-each (lambda (x) (import env x)) (let->inits exp))
+                       (let (($env (append (let->names exp) env)))
+                         (for-each (lambda (x) (import $env x)) (let->body exp))))
+    ((begin? exp)      (for-each (lambda (x) (import env x)) (cdr exp)))
+    
+    ; Applications:
+    ((app? exp)        (for-each (lambda (x) (import env x)) exp))
+    (else              (error "import: unknown exp: " exp))))
 
 
 ;; literals.
@@ -1132,12 +1182,17 @@
 
 ; c-compile-and-emit : (string -> A) exp -> void
 (define (c-compile-and-emit emit input-program)
-
   (define compiled-program "")
   (set! lambdas '())
 
   (set! input-program (tl_macro_expand input-program))
   ;; (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
+
+  (set! imports '())
+  (import '() input-program)
+  (display ";; imports\n" tl_stderr)(for-each (lambda (x) (write x tl_stderr)(display "\n" tl_stderr)) imports)(display "\n" tl_stderr)
+  (if (not (null? imports))
+    (set! input-program `(letrec ,imports ,input-program)))
 
   (set! input-program (desugar input-program))
 
@@ -1153,6 +1208,7 @@
   (analyze-mutable-variables input-program)
 
   (set! input-program (desugar (wrap-mutables input-program)))
+  (display ";; after desugar:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
 
   (set! input-program (closure-convert input-program))
   
