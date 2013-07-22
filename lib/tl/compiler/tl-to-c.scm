@@ -2,6 +2,8 @@
 ;; Author: Kurt Stephens
 
 ;; Based on a "Scheme-to-C Compiler."
+;; http://matt.might.net/articles/compiling-scheme-to-c/.
+;;
 ;; Author: Matthew Might
 ;; Site:   http://matt.might.net/
 ;;         http://www.ucombinator.org/
