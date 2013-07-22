@@ -10,7 +10,7 @@
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
-(define %env &env)
+(define %env (tl_get_top_level_env))
 (define %word-size tl_tlw_sizeof)
 (define (environment-vars x) (car (car x)))
 (define %eos eos)

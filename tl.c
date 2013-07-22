@@ -52,13 +52,15 @@ tl* tl_rt_thread()
 #define tl_rt  (_tl_thr[0])
 #define tl_pthread (_tl_thr[1])
 #define tl_env (_tl_thr[2])
+#define tl_top_level_env (_tl_thr[4])
 #else
 static void tl_init_th()
 {
 }
 #define TL_RT
 tl tl_rt; // runtime.
-tl tl_env; // environment.
+tl tl_env; // current environment.
+tl tl_top_level_env;
 #endif
 
 FILE *tl_stdin, *tl_stdout, *tl_stderr;
@@ -256,6 +258,7 @@ int tl_C(tl o) { return _tl_C(o); }
 #define tl_C(o)_tl_C(o)
 
 tl tl_get_env() { TL_RT return tl_env; }
+tl tl_get_top_level_env() { TL_RT return tl_top_level_env; }
 
 tl tl_type(tl o) { TL_RT return _tl_type(o); }
 
@@ -607,10 +610,8 @@ tl tl_define_here(tl var, tl val, tl env)
 }
 
 tl tl_define(tl var, tl val, tl env)
-{
-  while ( env != tl_nil && cdr(env) != tl_nil )
-    env = cdr(env);
-  return tl_define_here(var, val, env);
+{ TL_RT
+  return tl_define_here(var, val, tl_top_level_env);
 }
 
 tl tl_eqQ(tl x, tl y)
@@ -936,6 +937,8 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
   o[0] = rt;
   o[1] = (tl) pt;
   o[2] = env;
+  o[3] = tl_nil;
+  o[4] = tl_top_level_env;
   return o;
 }
 
@@ -969,6 +972,7 @@ tl tl_pthread_create(tl proc, tl opts)
   pt = tl_m_thread(0, rt, env); // new thread object.
   pt[2] = env;                  // new environment for thread.
   pt[3] = opts;                 // thread opts.
+  pt[4] = env;                  // new top-level environment for thread.
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
 
@@ -1057,6 +1061,7 @@ tl tl_stdenv(tl env)
 { TL_RT
   tl _v;
   tl_env = env = tl_let(tl__s("tl_rt"), tl_rt, env);
+  tl_top_level_env = env;
 #define Ds(N,V) tl_define_here(tl__s(N), _v = (tl) (V), env)
 #define D(N,V) tl_define_here(tl_s(N), _v = (tl) (V), env)
 #define DD(N) D(N,N)
@@ -1069,7 +1074,7 @@ tl tl_stdenv(tl env)
 #define Pf(N, F) D(N, tl_m_prim((F), #N))
 #define P(N) Pf(N, N)
   P(tl_allocate);
-  P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env);
+  P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env); P(tl_get_top_level_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_t_); P(tl_iv); P(tl_closure_env);
