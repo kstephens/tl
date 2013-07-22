@@ -275,7 +275,9 @@
   (if (null? l) #f
     (if (f (car l)) l
       (memp f (cdr l)))))
-(define (memq x l) (memp (lambda (y) (eq? x y)) l))
+(define (memq x l)   (memp (lambda (y) (eq? x y)) l))
+(define (memv x l)   (memp (lambda (y) (eqv? x y)) l))
+(define (member x l) (memp (lambda (y) (equal? x y)) l))
 (define (pair-equal? a b)
   (if (equal? (car a) (car b))
     (equal? (cdr a) (cdr b))
