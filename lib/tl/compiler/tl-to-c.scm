@@ -1104,7 +1104,7 @@
                                   " ; \n"))
                                fields))
      "} ;\n\n"
-     tyname "*" " __alloc_env_" sid
+     "static " tyname "*" " __alloc_env_" sid
      "(" (c-compile-formals fields) ")" "{\n"
       "  static const char *names[] = { "
       (apply string-append
