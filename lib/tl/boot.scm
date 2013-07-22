@@ -169,7 +169,12 @@
         (set! name (string-append name (number->string counter)))
         (make-symbol name)))))
 (define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
-(define (symbol->string s) (tl_car s))
+(define (symbol->string s)
+  (if (tl_car s)                       ;; named?
+    (if (tl_cdr s)                     ;; interned?
+      (tl_car s)
+      (string-append "#:" (tl_car s))) ;; uninterned
+    (error "unnamed symbol" s)))
 
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
