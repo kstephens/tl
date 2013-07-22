@@ -157,14 +157,6 @@
   (tagged-list? 'let exp))
 (define (let->bindings exp)
   (cadr exp))
-(define (let->names exp)
-  (map car (let->bindings exp)))
-(define (let->inits exp)
-  (map cadr (let->bindings exp)))
-(define (let->body exp)
-  (cddr exp))
-
-; let->exp : let-exp -> exp
 (define (let->exp exp)
   (caddr exp))
 (define (let->body exp)
@@ -452,8 +444,8 @@
     ((if? exp)         (for-each (lambda (x) (import env x)) (cdr exp)))
 
     ; Sugar
-    ((let? exp)        (for-each (lambda (x) (import env x)) (let->inits exp))
-                       (let (($env (append (let->names exp) env)))
+    ((let? exp)        (for-each (lambda (x) (import env x)) (let->args exp))
+                       (let (($env (append (let->bound-vars exp) env)))
                          (for-each (lambda (x) (import $env x)) (let->body exp))))
     ((begin? exp)      (for-each (lambda (x) (import env x)) (cdr exp)))
     
