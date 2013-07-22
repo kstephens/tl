@@ -741,18 +741,18 @@
     
     ; Sugar:
     ((let? exp)      (begin
-                       (map analyze-mutable-variables (map cadr (let->bindings exp)))
+                       (for-each analyze-mutable-variables (map cadr (let->bindings exp)))
                        (analyze-mutable-variables (let->exp exp))))
     ((letrec? exp)   (begin
-                       (map analyze-mutable-variables (map cadr (letrec->bindings exp)))
+                       (for-each analyze-mutable-variables (map cadr (letrec->bindings exp)))
                        (analyze-mutable-variables (letrec->exp exp))))
     ((begin? exp)    (begin
-                       (map analyze-mutable-variables (begin->exps exp))
+                       (for-each analyze-mutable-variables (begin->exps exp))
                        (void)))
     
     ; Application:
     ((app? exp)      (begin 
-                       (map analyze-mutable-variables exp)
+                       (for-each analyze-mutable-variables exp)
                        (void)))
     (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
 
