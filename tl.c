@@ -1067,7 +1067,7 @@ tl tl_stdenv(tl env)
 #define DD(N) D(N,N)
   Ds("tl_v", tl_v);
 #define V(N) D(N,tl_##N)
-  V(eos);
+  Ds("tl_eos", tl_eos);
   D(_stdin,stdin); D(_stdout,stdout); D(_stderr,stderr);
   DD(tl_stdin); DD(tl_stdout); DD(tl_stderr);
   DD(tl_progpath); DD(tl_progname); DD(tl_progdir); DD(tl_libdir);

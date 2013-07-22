@@ -13,7 +13,7 @@
 (define %env (tl_get_top_level_env))
 (define %word-size tl_tlw_sizeof)
 (define (environment-vars x) (car (car x)))
-(define %eos eos)
+(define %eos tl_eos)
 (define eq? tl_eqQ)
 (define eqv? tl_eqvQ)
 (define car tl_car)
