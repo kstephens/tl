@@ -427,8 +427,7 @@ tl tl_m_closure(void *f, void *e)
 
 tl tl_m_env(size_t size)
 { TL_RT
-  tl *o = tl_allocate(tl_t_env, size);
-  return o;
+  return tl_allocate(tl_t_env, size);
 }
 
 tl tl_m_cell(tl v)
