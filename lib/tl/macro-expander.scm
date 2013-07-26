@@ -47,7 +47,9 @@
     (macro-environment-set-transformer self symbol transformer)))
 (define (macro-environment-apply-transformer self transformer e)
   (if *macro-expand-trace* (begin (display "  apply-macro ")(write transformer)(display " to ")(write e)(newline)))
-  (apply transformer (cdr e)))
+  (let ((new (apply transformer (cdr e))))
+    (if (equal? new e) new
+      (macro-environment-expand-expr self new))))
 (define (macro-environment-skip-first-arg? self e)
   (let ((head (car e)))
     (if (eq? 'lambda head) #t
@@ -138,6 +140,8 @@
             ))
         (macro-environment-expand self e-next))
       )))
+(define (macro-environment-expand self e)
+  (macro-environment-expand-expr self e))
 (define *macro-expand-verbose* #f)
 (define (macro-environment-expand-top-level self e)
   (let ((e-prime (macro-environment-expand self e)))
