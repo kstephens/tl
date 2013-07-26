@@ -2,17 +2,31 @@
 
 #ifndef tl_NO_GC
 #include "gc/gc.h"
+void tl_gc_init()
+{
+  GC_parallel = 1;
+  GC_set_all_interior_pointers(1);
+  GC_set_finalize_on_demand(1);
+  GC_set_java_finalization(1);
+  GC_set_handle_fork(1);
+  GC_set_full_freq(16);
+  GC_INIT();
+}
 #else
 void *GC_malloc(size_t s) { return malloc(s); }
 void *GC_malloc_atomic(size_t s) { return malloc(s); }
 void *GC_realloc(void *p, size_t s) { return realloc(p, s); }
 void GC_free(void *p) { free(p); }
 void GC_gcollect() { }
+void GC_dump() { }
 void GC_register_finalizer(void *p1, void *p2, void *p3, void *p4, void *p5) { }
 void GC_invoke_finalizers() { }
 int  GC_general_register_disappearing_link(void **link) { return 0; }
-#define GC_INIT() (void) 0
 char *GC_strdup(const char *x) { return strcpy(GC_malloc_atomic(strlen(x) + 1), x); }
+void tl_gc_init()
+{
+  fprintf(stderr, "tl: warning: GC not enabled\n");
+}
 #endif
 
 #define ASSERT_ZERO(x) ((x) == 0 ? (void) 0 : (void) assert(! #x))
@@ -81,7 +95,7 @@ static void tl_init(int argc, char **argv)
     tl_libdir = malloc(strlen(tl_progdir) + sizeof("/../lib"));
     strcat(strcpy(tl_libdir, tl_progdir), "/../lib");
   }
-  GC_INIT();
+  tl_gc_init();
   tl_init_th();
 }
 
@@ -1088,7 +1102,7 @@ tl tl_stdenv(tl env)
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_read); P(tl_write_2); P(tl_object_write);
-  P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup);
+  P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup); P(GC_dump);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(tl_memcmp);
   P(isalpha); P(isdigit); P(islower); P(isupper); P(isspace);
