@@ -1,4 +1,5 @@
 #include "tl.h"
+#include <dlfcn.h> /* dlopen(...) */
 
 #ifndef tl_NO_GC
 #include "gc/gc.h"
@@ -1110,6 +1111,7 @@ tl tl_stdenv(tl env)
   P(exit); P(abort); P(getenv); P(setenv); P(system);
   P(sleep); P(usleep);
   P(fork); P(getpid); P(getppid); P(execl); P(execle); P(execv); P(execvp);
+  P(dlopen); P(dlclose); P(dlsym);
 #ifdef tl_PTHREAD
   P(tl_pthread_create); P(tl_pthread_self); P(tl_pthread_join);
   P(pthread_create); P(pthread_exit);
