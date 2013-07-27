@@ -278,7 +278,7 @@
 (define (assoc x l) (assp (lambda (y) (equal? x y)) l))
 (define (memp f l)
   (if (null? l) #f
-    (if (f (car l)) l
+    (if (f (car l)) #t
       (memp f (cdr l)))))
 (define (memq x l)   (memp (lambda (y) (eq? x y)) l))
 (define (memv x l)   (memp (lambda (y) (eqv? x y)) l))

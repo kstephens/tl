@@ -858,6 +858,7 @@ tl tl_eval(tl exp, tl env)
 
   L(define_);
   pop(exp); pop(env);
+  fprintf(stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
   tl_define(exp, val, env);
   val = exp;
   G(rtn);
