@@ -24,8 +24,19 @@
     (set-car! x (cons selector (car x)))
     (set-cdr! x (cons method (cdr x)))
     selector))
+(define (%type-find-method t selector selectors methods)
+  (if (or (null? selectors) (null? methods)) #f
+    (if (eq? (car selectors) selector) (car methods)
+      (%type-find-method t selector (cdr selectors) (cdr methods)))))
+(define (type-find-method t selector)
+  (if (null? t) t
+    (let* ((x (type-selectors-methods t))
+           (m (%type-find-method (car t) (car x) (cdr x))))
+      (if m m
+        (type-find-method (type-supertype t) selector))
+      )))
 (define-macro (define-type name . args)
-  (let ((t (gensym)))
+  (let ((t (%gensym)))
     `(define ,name
        (let ((,t (%type-make ,(symbol->string name) ,@args)))
          ,t
@@ -35,6 +46,7 @@
 (type-set-supertype! <type> <object>) ;; primitive
 (define-type <number>)
 (define-type <complex> <number>)
+(define-type <compnum> <complex>)
 (define-type <float> <complex>)
 (define-type <flonum> <float>)
 (define-type <rational> <complex>)
