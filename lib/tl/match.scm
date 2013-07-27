@@ -26,7 +26,7 @@
       ((logical? pat)
         ;; The t expression must be duplicated in each arm of
         ;; the logical operator,
-        ;; because each arm may introduce bindings are around t.
+        ;; because each arm may introduce bindings around t.
         ;; This could be optimized for 'and and 'or forms.
         `(,(car pat)
            ,@(map (lambda (x) (match-expr x val t)) (cdr pat))))
@@ -66,7 +66,9 @@
       (if (eq? b #f) a
         (list 'and a b))))
   (define (quote! x)
-    (list 'quote x))
+    (if (or (number? x) (string? x) (boolean? x) (char? x))
+      x
+      (list 'quote x)))
   (define (unquote? pat)
     (and 
       (pair? pat)
