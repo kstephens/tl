@@ -1,0 +1,2 @@
+(define x <symbol>)
+x

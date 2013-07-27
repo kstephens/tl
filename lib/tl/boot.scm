@@ -10,10 +10,10 @@
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
-(define %env &env)
+(define %env (tl_get_top_level_env))
 (define %word-size tl_tlw_sizeof)
 (define (environment-vars x) (car (car x)))
-(define %eos eos)
+(define %eos tl_eos)
 (define eq? tl_eqQ)
 (define eqv? tl_eqvQ)
 (define car tl_car)
@@ -169,7 +169,12 @@
         (set! name (string-append name (number->string counter)))
         (make-symbol name)))))
 (define (string->symbol str) (tl_m_symbol (tl_S str))) ;; interned.
-(define (symbol->string s) (tl_car s))
+(define (symbol->string s)
+  (if (tl_car s)                       ;; named?
+    (if (tl_cdr s)                     ;; interned?
+      (tl_car s)
+      (string-append "#:" (tl_car s))) ;; uninterned
+    (error "unnamed symbol" s)))
 
 (define <string> (tl_type "string"))
 (define (string? x) (eq? (tl_type x) <string>))
@@ -273,9 +278,11 @@
 (define (assoc x l) (assp (lambda (y) (equal? x y)) l))
 (define (memp f l)
   (if (null? l) #f
-    (if (f (car (car l))) #t
+    (if (f (car l)) l
       (memp f (cdr l)))))
-(define (memq x l) (memp (lambda (y) (eq? x y)) l))
+(define (memq x l)   (memp (lambda (y) (eq? x y)) l))
+(define (memv x l)   (memp (lambda (y) (eqv? x y)) l))
+(define (member x l) (memp (lambda (y) (equal? x y)) l))
 (define (pair-equal? a b)
   (if (equal? (car a) (car b))
     (equal? (cdr a) (cdr b))

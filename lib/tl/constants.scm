@@ -17,3 +17,12 @@
 (define-constant <pair> <pair>)
 (define-constant <environment> <environment>)
 (define-constant <vector> <vector>)
+
+(define-constant char? char?)
+(define-constant string? string?)
+(define-constant symbol? symbol?)
+(define-constant pair? pair?)
+(define-constant vector? vector?)
+(define-constant null? null?)
+(define-constant primitive? primitive?)
+(define-constant closure? closure?)

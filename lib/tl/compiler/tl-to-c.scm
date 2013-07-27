@@ -1,84 +1,12 @@
-;; A Scheme-to-C compiler.
+;; A TL-to-C compiler.
+;; Author: Kurt Stephens
 
+;; Based on a "Scheme-to-C Compiler."
+;; http://matt.might.net/articles/compiling-scheme-to-c/.
+;;
 ;; Author: Matthew Might
 ;; Site:   http://matt.might.net/
 ;;         http://www.ucombinator.org/
-
-;; The purpose of this compiler is to demonstrate
-;; the most direct possible mapping of Scheme into C.
-;; Toward that end, the compiler uses only two
-;; intermediate transformations: mutable-variable
-;; elimination and closure-conversion.
-
-;; To run the compiler:
-
-;;  $ interp this-file.scm < program.scm > out.c
-;;  $ gcc -o out out.c
-
-;; (It's useful to compare this compiler to the 
-;; Scheme-to-Java compiler that started from the 
-;; same codebase.)
-
-;; The compiler handles Core Scheme and some extras.
-;; With a macro system like syntax-rules and some
-;; more primitives, all of R5RS could be supported.
-
-;; Unlike the Java version, this compiler handles
-;; recursion using a lets+sets transformation.
-
-;; The compilation proceeds from Core Scheme plus
-;; sugar through three intermediate languages:
-
-;; Core Scheme + Sugar
-
-;;    =[desugar]=>
-
-;; Core Scheme 
-
-;;    =[mutable variable elimination]=>
-
-;; Intermediate Scheme (1) 
-
-;;    =[closure conversion]=>
-
-;; Intermediate Scheme (2) 
-
-;;    =[code emission]=>
-
-;; C
-
-
-;; Core input language:
-
-;; <exp> ::= <const>
-;;        |  <prim>
-;;        |  <var>
-;;        |  (lambda (<var> ...) <exp> ...)
-;;        |  (if <exp> <exp> <exp>)
-;;        |  (set! <var> <exp>)
-;;        |  (<exp> <exp> ...)
-
-;; <const> ::= <int>
-;;          |  #f 
-
-;; Syntactic sugar:
-
-;; <exp> ::+ (let ((<var> <exp>) ...) <exp> ...)
-;;        |  (letrec ((<var> <exp>) ...) <exp> ...)
-;;        |  (begin <exp> ...)
-
-;; Intermediate language (1)
-
-;; <exp> ::+ (cell <exp>)
-;;        |  (cell-get <exp>)
-;;        |  (set-cell! <exp> <value>)
-
-;; Intermediate language (2)
-
-;; <exp> ::+ (closure <lambda-exp> <env-exp>)
-;;        |  (env-make <env-num> (<symbol> <exp>) ...)
-;;        |  (env-get <env-num> <symbol> <exp>)
-
 
 ;; Utilities.
 (define (%string-truncate! s l)
@@ -86,6 +14,15 @@
     (string-copy! t 0 s 0 l)
     t))
 (load "tl/string.scm")
+(define (closure->formals c) (caar c))
+(define (closure->body c)    (cdar c))
+
+;; TL top-level environment.
+(define tl-top-level-env (tl_get_top_level_env))
+(define (tl-lookup-slot sym)
+  (let ((b (tl_lookup sym tl-top-level-env)))
+    (if (null? b) #f
+      (cons sym (car b)))))
 
 ; void : -> void
 (define (void) (if #f #t))
@@ -120,14 +57,6 @@
                                             (car params)))
                                         "$"
                                         (number->string gensym-count)))))
-
-; member : symbol sorted-set[symbol] -> boolean
-(define (member sym S)
-  (if (not (pair? S))
-      #f
-      (if (eq? sym (car S))
-          #t
-          (member sym (cdr S)))))
 
 ; symbol<? : symbol symobl -> boolean
 (define (symbol<? sym1 sym2)
@@ -223,25 +152,16 @@
 (define (ref? exp)
   (symbol? exp))
 
-; let? : exp -> boolean
 (define (let? exp)
   (tagged-list? 'let exp))
-
-; let->bindings : let-exp -> alist[symbol,exp]
 (define (let->bindings exp)
   (cadr exp))
-
-; let->exp : let-exp -> exp
 (define (let->exp exp)
   (caddr exp))
 (define (let->body exp)
   (cddr exp))
-
-; let->bound-vars : let-exp -> list[symbol]
 (define (let->bound-vars exp)
   (map car (cadr exp)))
-
-; let->args : let-exp -> list[exp]
 (define (let->args exp)
   (map cadr (cadr exp)))
 
@@ -314,16 +234,11 @@
 (define (app->args exp)
   (cdr exp))
 
-(define (tl_lookup_slot sym)
-  (let ((b (tl_lookup sym (tl_get_env))))
-    (if (null? b) #f
-      (cons sym (car b)))))
-
 ; prim? : exp -> boolean
 (define (prim? exp)
   (or (c-func? exp)
     (and (symbol? exp)
-      (let ((slot (tl_lookup_slot exp)))
+      (let ((slot (tl-lookup-slot exp)))
         (and slot (primitive? (cdr slot)) (cdr slot))))))
 
 (define (prim->name prim)
@@ -351,7 +266,7 @@
   (caddr exp))
 
 ; closure? : exp -> boolean
-(define (closure? exp) 
+(define (comp:closure? exp)
   (tagged-list? 'closure exp))
 
 ; closure->lam : closure-exp -> exp
@@ -476,7 +391,7 @@
                                     ,(substitute env (set-cell!->value exp))))
     
     ; IR (2):
-    ((closure? exp)     `(closure ,(substitute env (closure->lam exp))
+    ((comp:closure? exp)`(closure ,(substitute env (closure->lam exp))
                                   ,(substitute env (closure->env exp))))
     ((env-make? exp)    `(env-make ,(env-make->id exp) 
                                    ,@(azip (env-make->fields exp)
@@ -490,6 +405,48 @@
     ((app? exp)         (map (substitute-with env) exp))
     (else               (error "substitute: unhandled expression type: " exp))))
 
+
+
+(define imports '())
+(define (import-value env exp)
+  (cond
+    ((closure? exp)
+      (let (($exp `(lambda ,(closure->formals exp) ,@(closure->body exp))))
+        (import env $exp)
+        $exp))
+    (else `(quote ,exp))))
+(define (import-ref env exp)
+  ;; (display "  " tl_stderr)(write (list 'import-ref env exp) tl_stderr)(newline tl_stderr)
+  (if (or (memq exp env) (assq exp imports)) '()
+    (let ((slot (tl-lookup-slot exp)))
+      (if slot ;; (name . val)
+        (begin
+          (let ((entry (cons (cdr slot) '())))
+            (set! imports (cons (cons exp entry) imports))
+            (set-car! entry (import-value env (car entry)))))))))
+(define (import env exp)
+  ;; (display "  " tl_stderr)(write (list 'import env exp) tl_stderr)(newline tl_stderr)
+  (cond
+    ; Core forms:
+    ((quote? exp)      #f)
+    ((const? exp)      #f)
+    ((c-var? exp)      #f)
+    ((prim? exp)       #f)
+    ((ref? exp)        (import-ref env exp))
+    ((lambda? exp)     (let (($env (append (formals=>names (lambda->formals exp)) env)))
+                         (for-each (lambda (x) (import $env x)) (lambda->body exp))))
+    ((set!? exp)       (import env (set!->exp exp)))
+    ((if? exp)         (for-each (lambda (x) (import env x)) (cdr exp)))
+
+    ; Sugar
+    ((let? exp)        (for-each (lambda (x) (import env x)) (let->args exp))
+                       (let (($env (append (let->bound-vars exp) env)))
+                         (for-each (lambda (x) (import $env x)) (let->body exp))))
+    ((begin? exp)      (for-each (lambda (x) (import env x)) (cdr exp)))
+    
+    ; Applications:
+    ((app? exp)        (for-each (lambda (x) (import env x)) exp))
+    (else              (error "import: unknown exp: " exp))))
 
 
 ;; literals.
@@ -551,7 +508,22 @@
     ((symbol? exp) `((&c:func tl_m_symbol) ((&c:func tl_S) ,(symbol->string exp))))
     ((pair? exp)   (list '(&c:func tl_cons) (encode-literal (car exp)) (encode-literal (cdr exp))))
     ((vector? exp) (list 'list->vector (encode-literal (vector->list exp))))
+    ((void? exp)   '((&c:var tl_v)))
+    ((type? exp)   (encode-type exp))
     (else          exp)))
+
+(define (encode-type exp)
+  (cond
+    ((eq? (tl_type tl_v) exp)  '(tl_type (&c:var tl_v)))
+    ((eq? (tl_type 1) exp)     '(tl_type 1))
+    ((eq? (tl_type #\a) exp)   '(tl_type #\a))
+    ((eq? (tl_type "") exp)    '(tl_type ""))
+    ((eq? (tl_type 'tl_type) exp) '(tl_type 'tl_type))
+    ((eq? (tl_type '()) exp)      '(tl_type '()))
+    ((eq? (tl_type (cons '() '())) exp)
+      `(tl_type (cons '() ())))
+    ((eq? (tl_type '#()) exp)     '(tl_type '#()))
+    (else exp)))
     
 ;; Desugaring.
 
@@ -656,7 +628,7 @@
                                    ,(desugar (set-cell!->value exp))))
     
     ; IR (2): 
-    ((closure? exp)    `(closure ,(desugar (closure->lam exp))
+    ((comp:closure? exp) `(closure ,(desugar (closure->lam exp))
                                  ,(desugar (closure->env exp))))
     ((env-make? exp)   `(env-make ,(env-make->id exp)
                                   ,@(azip (env-make->fields exp)
@@ -669,10 +641,6 @@
     ((app? exp)        (map desugar exp))    
     (else              (error "desugar: unknown exp: " exp))))
     
-
-
-
-
 ;; Syntactic analysis.
 
 ; free-vars : exp -> sorted-set[var]
@@ -704,7 +672,7 @@
                              (free-vars (set-cell!->value exp))))
     
     ; IR (2):
-    ((closure? exp)   (union (free-vars (closure->lam exp))
+    ((comp:closure? exp)(union (free-vars (closure->lam exp))
                              (free-vars (closure->env exp))))
     ((env-make? exp)  (reduce union (map free-vars (env-make->values exp)) '()))
     ((env-get? exp)   (free-vars (env-get->env exp)))
@@ -773,18 +741,18 @@
     
     ; Sugar:
     ((let? exp)      (begin
-                       (map analyze-mutable-variables (map cadr (let->bindings exp)))
+                       (for-each analyze-mutable-variables (map cadr (let->bindings exp)))
                        (analyze-mutable-variables (let->exp exp))))
     ((letrec? exp)   (begin
-                       (map analyze-mutable-variables (map cadr (letrec->bindings exp)))
+                       (for-each analyze-mutable-variables (map cadr (letrec->bindings exp)))
                        (analyze-mutable-variables (letrec->exp exp))))
     ((begin? exp)    (begin
-                       (map analyze-mutable-variables (begin->exps exp))
+                       (for-each analyze-mutable-variables (begin->exps exp))
                        (void)))
     
     ; Application:
     ((app? exp)      (begin 
-                       (map analyze-mutable-variables exp)
+                       (for-each analyze-mutable-variables exp)
                        (void)))
     (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
 
@@ -821,7 +789,6 @@
     ((app? exp)      (map wrap-mutables exp))
     (else            (error "wrap-mutables: unknown expression type: " exp))))
                         
-
 
 ;; Name-mangling.
 
@@ -958,7 +925,7 @@
     ((set-cell!? exp)   (c-compile-set-cell! exp append-preamble))
     
     ; IR (2):
-    ((closure? exp)     (c-compile-closure exp append-preamble))
+    ((comp:closure? exp)(c-compile-closure exp append-preamble))
     ((env-make? exp)    (c-compile-env-make exp append-preamble))
     ((env-get? exp)     (c-compile-env-get exp append-preamble))
     
@@ -1186,7 +1153,7 @@
                                   " ; \n"))
                                fields))
      "} ;\n\n"
-     tyname "*" " __alloc_env_" sid
+     "static " tyname "*" " __alloc_env_" sid
      "(" (c-compile-formals fields) ")" "{\n"
       "  static const char *names[] = { "
       (apply string-append
@@ -1214,12 +1181,17 @@
 
 ; c-compile-and-emit : (string -> A) exp -> void
 (define (c-compile-and-emit emit input-program)
-
   (define compiled-program "")
   (set! lambdas '())
 
   (set! input-program (tl_macro_expand input-program))
   ;; (display ";; after macro-expand:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
+
+  (set! imports '())
+  (import '() input-program)
+  (display ";; imports\n" tl_stderr)(for-each (lambda (x) (write x tl_stderr)(display "\n" tl_stderr)) imports)(display "\n" tl_stderr)
+  (if (not (null? imports))
+    (set! input-program `(letrec ,imports ,input-program)))
 
   (set! input-program (desugar input-program))
 
@@ -1235,6 +1207,7 @@
   (analyze-mutable-variables input-program)
 
   (set! input-program (desugar (wrap-mutables input-program)))
+  (display ";; after desugar:\n" tl_stderr)(write input-program tl_stderr)(display "\n\n" tl_stderr)
 
   (set! input-program (closure-convert input-program))
   
