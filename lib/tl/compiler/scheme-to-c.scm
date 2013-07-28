@@ -309,7 +309,7 @@
   (caddr exp))
 
 ; closure? : exp -> boolean
-(define (closure? exp) 
+(define (comp:closure? exp)
   (tagged-list? 'closure exp))
 
 ; closure->lam : closure-exp -> exp
@@ -432,7 +432,7 @@
                                     ,(substitute env (set-cell!->value exp))))
     
     ; IR (2):
-    ((closure? exp)     `(closure ,(substitute env (closure->lam exp))
+    ((comp:closure? exp)`(closure ,(substitute env (closure->lam exp))
                                   ,(substitute env (closure->env exp))))
     ((env-make? exp)    `(env-make ,(env-make->id exp) 
                                    ,@(azip (env-make->fields exp)
@@ -512,7 +512,7 @@
                                    ,(desugar (set-cell!->value exp))))
     
     ; IR (2): 
-    ((closure? exp)    `(closure ,(desugar (closure->lam exp))
+    ((comp:closure? exp)`(closure ,(desugar (closure->lam exp))
                                  ,(desugar (closure->env exp))))
     ((env-make? exp)   `(env-make ,(env-make->id exp)
                                   ,@(azip (env-make->fields exp)
@@ -558,7 +558,7 @@
                              (free-vars (set-cell!->value exp))))
     
     ; IR (2):
-    ((closure? exp)   (union (free-vars (closure->lam exp))
+    ((comp:closure? exp)(union (free-vars (closure->lam exp))
                              (free-vars (closure->env exp))))
     ((env-make? exp)  (reduce union (map free-vars (env-make->values exp)) '()))
     ((env-get? exp)   (free-vars (env-get->env exp)))
@@ -806,7 +806,7 @@
     ((set-cell!? exp)   (c-compile-set-cell! exp append-preamble))
     
     ; IR (2):
-    ((closure? exp)     (c-compile-closure exp append-preamble))
+    ((comp:closure? exp)(c-compile-closure exp append-preamble))
     ((env-make? exp)    (c-compile-env-make exp append-preamble))
     ((env-get? exp)     (c-compile-env-get exp append-preamble))
     
