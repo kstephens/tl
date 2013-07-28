@@ -19,7 +19,7 @@
 (define (%check-args-list f constraints args param)
   (if (null? constraints) #t
     (let ((arg '_))
-      `(let ((,arg ',%unspec))
+      `(let ((,arg ,%unspec))
          ,(%check-args-list-1 f constraints args arg param)))))
 (define (%check-args-list-1 f constraints args arg param)
   (if (null? constraints) #t
@@ -33,7 +33,7 @@
   (cond
     ((null? constraint)        #t)
     ((symbol? constraint)     `(,constraint ,arg))
-    ((procedure? constraint)  `(',constraint ,arg))
+    ((procedure? constraint)  `(,constraint ,arg))
     ((pair? constraint)
       `(,(car constraint) 
          ,@(map (lambda (c) (%check-arg-expr c arg)) (cdr constraint))))

@@ -31,7 +31,13 @@
         x)
       x)))
 (define (macro-environment-define-constant self symbol const)
-  (map-set (macro-environment-constants self) symbol (cons const #f))
+  (let ((needs-quote?
+          (if (pair? const) #t
+            (if (null? const) #t
+              (if (symbol? const) #t
+                (vector? const))))))
+    (if needs-quote? (set! const (list 'quote const)))
+    (map-set (macro-environment-constants self) symbol (cons const #f)))
   ;; (display "\n\n  ### set-macro ")(write symbol)(write transformer)(display "\n\n")
   self)
 (define (macro-environment-get-constant self expr)
@@ -113,7 +119,7 @@
     (let ((const (macro-environment-get-constant self e)))
       (if (null? const)
         e 
-        (list 'quote (car const))))
+        (car const)))
     ))
 (define (macro-environment-expand-list self e)
   (if (null? e) e
