@@ -149,7 +149,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_env tl_(22)
 #define tl_t_boolean tl_(29) // FIXME
 
-#define tl_v tl_(30)
+  // #define ??? tl_(30)
 #define tl_symbol_list tl_(31)
 #define tl_in_error tl_(32)
 #define tl_eos tl_(33)
@@ -247,7 +247,6 @@ tl tl_m_runtime(tl parent)
   tl_s_tl_string_escape = tl_m_symbol("tl_string_escape");
   tl_s_tl_string_unescape = tl_m_symbol("tl_string_unescape");
 
-  tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
 
   {
