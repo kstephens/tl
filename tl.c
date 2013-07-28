@@ -1151,7 +1151,9 @@ tl tl_stdenv(tl env)
   return env;
 }
 
-#ifndef _tl_main
+#ifdef _tl_main
+int _tl_main (int, char **);
+#else
 #define _tl_main(argc, argv) tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv)
 #endif
 
