@@ -220,7 +220,8 @@
 
 ; if->else : if-exp -> exp
 (define (if->else exp)
-  (cadddr exp))
+  (let ((tail (cdddr exp)))
+    (if (pair? tail) (car tail) tl_v)))
 
 ; app? : exp -> boolean
 (define (app? exp)
