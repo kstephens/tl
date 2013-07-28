@@ -122,14 +122,6 @@
                                         "$"
                                         (number->string gensym-count)))))
 
-; member : symbol sorted-set[symbol] -> boolean
-(define (member sym S)
-  (if (not (pair? S))
-      #f
-      (if (eq? sym (car S))
-          #t
-          (member sym (cdr S)))))
-
 ; symbol<? : symbol symobl -> boolean
 (define (symbol<? sym1 sym2)
   (string<? (symbol->string sym1)
