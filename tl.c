@@ -5,7 +5,6 @@
 #include "gc/gc.h"
 void tl_gc_init()
 {
-  GC_parallel = 1;
   GC_set_all_interior_pointers(1);
   GC_set_finalize_on_demand(0);
   GC_set_java_finalization(1);
