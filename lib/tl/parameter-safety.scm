@@ -7,18 +7,17 @@
     result))
 
 (define (%check-args f constraints)
-  (let ((g     (%gensym))
-         (args (%gensym)))
+  (let ((g     (%gensym) '%func)
+         (args (%gensym '%args)))
     ;; (set! *quasiquote-debug* #t)
     `(let ((,g ,f))
        (set! ,f
          (lambda ,args
            ,(%check-args-list f constraints args 0)
-           (apply ,g ,args))))
-    ))
+           (apply ,g ,args))))))
 (define (%check-args-list f constraints args param)
   (if (null? constraints) #t
-    (let ((arg '_))
+    (let ((arg (%gensym '%arg)))
       `(let ((,arg ,%unspec))
          ,(%check-args-list-1 f constraints args arg param)))))
 (define (%check-args-list-1 f constraints args arg param)
