@@ -1093,7 +1093,7 @@ tl tl_stdenv(tl env)
   P(tl_m_type); P(tl_type); P(tl_set_type);
   P(tl_m_prim); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
-  P(tl_t_); P(tl_iv); P(tl_closure_env);
+  P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
   P(tl_get); P(tl_set);
   P(tl_eqQ); P(tl_eqvQ);
   P(tl_type_cons); P(tl_cons);

@@ -14,8 +14,9 @@
     (string-copy! t 0 s 0 l)
     t))
 (load "tl/string.scm")
-(define (closure->formals c) (caar c))
-(define (closure->body c)    (cdar c))
+(define closure->formals tl_closure_formals)
+(define closure->body    tl_closure_body)
+(define closure->environ tl_cdr) ;; see L(proc) in tl_eval().
 
 ;; TL top-level environment.
 (define tl-top-level-env (tl_get_top_level_env))
