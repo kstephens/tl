@@ -588,7 +588,7 @@
     ((letrec? exp)   (begin
                        (for-each analyze-mutable-variables (map cadr (letrec->bindings exp)))
                        (for-each analyze-mutable-variables (letrec->body exp))))
-    ((begin? exp)    (for-each analyze-mutable-variables (begin->exps exp))
+    ((begin? exp)    (for-each analyze-mutable-variables (begin->exps exp)))
     ; Application:
     ((app? exp)      (for-each analyze-mutable-variables exp))
     (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
