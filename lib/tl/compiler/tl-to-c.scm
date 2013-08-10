@@ -238,10 +238,10 @@
     (if sub
         (cadr sub)
         var)))
+(define (substitute-with env)
+  (lambda (exp)
+    (substitute env exp)))
 (define (substitute env exp)
-  (define (substitute-with env)
-    (lambda (exp)
-      (substitute env exp)))
   (cond
     ; Core forms:    
     ((null? env)        exp)
@@ -467,10 +467,9 @@
              (args      (letrec->args exp)))
         `(let ,namings
            (begin ,@(append sets (letrec->body exp)))))))
+(define (singlet? l)
+  (and (pair? l) (null? (cdr l))))
 (define (begin=>let exp)
-  (define (singlet? l)
-    (and (list? l)
-         (= (length l) 1)))
   (define (dummy-bind exps)
     (cond
       ((singlet? exps)  (car exps))
@@ -565,13 +564,7 @@
 (define (mark-mutable symbol)
   (set! mutable-variables (cons symbol mutable-variables)))
 (define (is-mutable? symbol)
-  (define (is-in? S)
-    (if (not (pair? S))
-        #f
-        (if (eq? (car S) symbol)
-            #t
-            (is-in? (cdr S)))))
-  (is-in? mutable-variables))
+  (memq symbol mutable-variables))
 (define (analyze-mutable-variables exp)
   (cond 
     ; Core forms:
@@ -597,18 +590,16 @@
                        (for-each analyze-mutable-variables (letrec->body exp))))
     ((begin? exp)    (for-each analyze-mutable-variables (begin->exps exp))
     ; Application:
-    ((app? exp)      (begin 
-                       (for-each analyze-mutable-variables exp)
-                       (void)))
+    ((app? exp)      (for-each analyze-mutable-variables exp))
     (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
+(define (wrap-mutable-formals formals body-exp)
+  (if (not (pair? formals))
+    body-exp
+    (if (is-mutable? (car formals))
+      `(let ((,(car formals) (&cell ,(car formals))))
+         ,(wrap-mutable-formals (cdr formals) body-exp))
+      (wrap-mutable-formals (cdr formals) body-exp))))
 (define (wrap-mutables exp)
-  (define (wrap-mutable-formals formals body-exp)
-    (if (not (pair? formals))
-        body-exp
-        (if (is-mutable? (car formals))
-            `(let ((,(car formals) (%cell ,(car formals))))
-               ,(wrap-mutable-formals (cdr formals) body-exp))
-            (wrap-mutable-formals (cdr formals) body-exp))))
   (cond
     ; Core forms:
     ((quote? exp)    exp)
@@ -671,10 +662,10 @@
 (define (allocate-environment fields)
   (let ((env (assoc fields environments)))
     (if env (cadr env)
-      (let ((id num-environments))
+      (begin
         (set! num-environments (+ 1 num-environments))
-        (set! environments (cons (list fields id) environments))
-        id))))
+        (set! environments (cons (list fields num-environments) environments))
+        num-environments))))
 (define (get-environment id)
   (cdr (assv id environments)))
 (define (closure-convert exp)
