@@ -497,7 +497,6 @@
     ; Sugar:
     ((let? exp)        (desugar (let=>lambda exp)))
     ((letrec? exp)     (desugar (letrec=>lets+sets exp)))
-    ;;  ((begin? exp)      (desugar (begin=>let exp)))
     ; IR (1):
     ((cell? exp)       `(%cell      ,(desugar (cell->value exp))))
     ((cell-get? exp)   `(%cell-get  ,(desugar (cell-get->cell exp))))
@@ -518,7 +517,6 @@
     
 ;; Syntactic analysis.
 
-; free-vars : exp -> sorted-set[var]
 (define (free-vars exp)
   (cond
     ; Core forms:
@@ -545,7 +543,7 @@
                              (free-vars (set-cell!->value exp))))
     ; IR (2):
     ((comp:closure? exp)(union (free-vars (closure->lam exp))
-                             (free-vars (closure->env exp))))
+                               (free-vars (closure->env exp))))
     ((env-make? exp)  (reduce union (map free-vars (env-make->values exp)) '()))
     ((env-get? exp)   (free-vars (env-get->env exp)))
     ; Application:
@@ -700,10 +698,8 @@
     ((app? exp)          (map closure-convert exp))
     (else                (error "closure-convert: unhandled exp: " exp))))
     
-
 ;; Compilation routines.
 
-; c-compile-program : exp -> string
 (define (c-compile-program exp)
   (let* ((preamble "")
          (append-preamble (lambda (s)
@@ -715,8 +711,6 @@
      "  " body " ;\n"
      "  return 0;\n"
      " }\n")))
-
-; c-compile-exp : exp (string -> void) -> string
 (define (c-compile-exp exp append-preamble)
   (cond
     ; Core forms:
@@ -895,32 +889,30 @@
 (define (c-compile-env-struct env)
   (let* ((id     (cadr env))
          (fields (car env))
+         (fields-mangle (map mangle fields))
          (sid    (number->string id))
          (tyname (string-append "struct __env_" sid)))
     (string-append 
      "struct __env_" (number->string id) " {\n"
       " const char **names;\n"
-     (apply string-append (map (lambda (f)
-                                 (string-append
-                                  " tl _"
-                                  (mangle f) 
-                                  " ; \n"))
-                               fields))
+     (apply string-append
+       (map (lambda (f)
+              (string-append " tl _" f  " ; \n"))
+         fields-mangle))
      "} ;\n\n"
      "static " tyname "*" " __alloc_env_" sid
      "(" (c-compile-formals fields) ")" "{\n"
       "  static const char *names[] = { "
       (apply string-append
-            (map (lambda (f)
-                   (string-append "\"" (symbol->string f) "\", "))
-                 fields))
+        (map (lambda (f)
+               (string-append "\"" (symbol->string f) "\", "))
+          fields))
       " 0 };\n"
      "  " tyname "*" " t = tl_m_env(sizeof(" tyname "))" ";\n"
      "  t->names = names;\n"
      (apply string-append 
-            (map (lambda (f)
-                   (string-append "  t->_" (mangle f) " = _" (mangle f) ";\n"))
-                 fields))
+       (map (lambda (f) (string-append "  t->_" f " = _" f ";\n"))
+         fields-mangle))
      "  return t;\n"
      "}\n\n"
      )))
