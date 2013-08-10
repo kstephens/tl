@@ -611,7 +611,7 @@
     (if (not (pair? formals))
         body-exp
         (if (is-mutable? (car formals))
-            `(let ((,(car formals) (cell ,(car formals))))
+            `(let ((,(car formals) (%cell ,(car formals))))
                ,(wrap-mutable-formals (cdr formals) body-exp))
             (wrap-mutable-formals (cdr formals) body-exp))))
   (cond
