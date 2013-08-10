@@ -121,8 +121,6 @@
   (tagged-list? 'let exp))
 (define (let->bindings exp)
   (cadr exp))
-(define (let->exp exp)
-  (caddr exp))
 (define (let->body exp)
   (cddr exp))
 (define (let->bound-vars exp)
@@ -134,8 +132,6 @@
   (tagged-list? 'letrec exp))
 (define (letrec->bindings exp)
   (cadr exp))
-(define (letrec->exp exp)
-  (caddr exp))
 (define (letrec->body exp)
   (cddr exp))
 (define (letrec->bound-vars exp)
@@ -263,15 +259,15 @@
                              ,(substitute env (if->then exp))
                              ,(substitute env (if->else exp))))
     ; Sugar:
-    ((let? exp)         `(let ,(azip (let->bound-vars exp)
+    ((let? exp)         (let ((new-env (assq-remove-keys env (let->bound-vars exp))))
+                          `(let ,(azip (let->bound-vars exp)
                                      (map (substitute-with env) (let->args exp)))
-                           ,(substitute (assq-remove-keys env (let->bound-vars exp))
-                                        (let->exp exp))))
+                           ,@(map (substitute-wth new-env) (let->body exp))))
     ((letrec? exp)      (let ((new-env (assq-remove-keys env (letrec->bound-vars exp))))
                           `(letrec ,(azip (letrec->bound-vars exp) 
                                           (map (substitute-with new-env) 
                                                (letrec->args exp)))
-                             ,(substitute new-env (letrec->exp exp)))))
+                             ,@(map (substitute-with new-env) (letrec->body exp)))))
     ((begin? exp)       (cons 'begin (map (substitute-with env) (begin->exps exp))))
     ; IR (1):
     ((cell? exp)        `(%cell      ,(substitute env (cell->value exp))))
@@ -584,9 +580,10 @@
     ((c-var? exp)    (void))
     ((prim? exp)     (void))
     ((ref? exp)      (void))
-    ((lambda? exp)   (analyze-mutable-variables (lambda->exp exp)))
-    ((set!? exp)     (begin (mark-mutable (set!->var exp))
-                            (analyze-mutable-variables (set!->exp exp))))
+    ((lambda? exp)   (for-each analyze-mutable-variables (lambda->body exp)))
+    ((set!? exp)     (begin
+                       (mark-mutable (set!->var exp))
+                       (analyze-mutable-variables (set!->exp exp))))
     ((if? exp)       (begin
                        (analyze-mutable-variables (if->condition exp))
                        (analyze-mutable-variables (if->then exp))
@@ -594,13 +591,11 @@
     ; Sugar:
     ((let? exp)      (begin
                        (for-each analyze-mutable-variables (map cadr (let->bindings exp)))
-                       (analyze-mutable-variables (let->exp exp))))
+                       (for-each analyze-mutable-variables (let->body exp))))
     ((letrec? exp)   (begin
                        (for-each analyze-mutable-variables (map cadr (letrec->bindings exp)))
-                       (analyze-mutable-variables (letrec->exp exp))))
-    ((begin? exp)    (begin
-                       (for-each analyze-mutable-variables (begin->exps exp))
-                       (void)))
+                       (for-each analyze-mutable-variables (letrec->body exp))))
+    ((begin? exp)    (for-each analyze-mutable-variables (begin->exps exp))
     ; Application:
     ((app? exp)      (begin 
                        (for-each analyze-mutable-variables exp)
