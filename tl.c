@@ -437,6 +437,8 @@ tl tl_m_cell(tl v)
   o[0] = v;
   return o;
 }
+tl tl_get_cell(tl c)       { return *(tl*)c; }
+tl tl_set_cell(tl c, tl v) { return *(tl*)c = v; }
 
 #define FP ((FILE*)p)
 tl tl_port__write(tl p, tl s, tl l)
@@ -1089,6 +1091,7 @@ tl tl_stdenv(tl env)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env); P(tl_get_top_level_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
+  P(tl_m_prim); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_t_); P(tl_iv); P(tl_closure_env);
   P(tl_get); P(tl_set);
