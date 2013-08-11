@@ -20,10 +20,24 @@
 
 ;; TL top-level environment.
 (define tl-top-level-env (tl_get_top_level_env))
-(define (tl-lookup-slot sym)
-  (let ((b (tl_lookup sym tl-top-level-env)))
+(define (tl-lookup-slot-env sym env)
+  (let ((b (tl_lookup sym env)))
     (if (null? b) #f
       (cons sym (car b)))))
+(define tl-lookup-slot-cache '())
+(define (tl-lookup-slot sym)
+  (let ((x (assq sym tl-lookup-slot-cache)))
+    (if x (cdr x)
+      (let ((result (tl-lookup-slot-env sym tl-top-level-env)))
+        (set! tl-lookup-slot-cache (cons (cons sym result) tl-lookup-slot-cache))
+        result))))
+(define (tl-lookup-slot-clo sym clo)
+  (if clo
+    (begin
+      ;; (write `(tl-lookup-slot-clo ,sym ,clo => ,(closure->environ clo)) tl_stderr)(newline tl_stderr)
+      (tl-lookup-slot-env sym (closure->environ clo))
+      )
+    #f))
 
 (define (void) (if #f #t))
 (define (tagged-list? tag l)
@@ -292,7 +306,7 @@
 ;; Import top-level definitions as referenced from tl-lookup-slot.
 (define imports '())
 (define import-anons '())
-(define (import-anon exp env)
+(define (import-anon exp env clo)
   (let ((slot (assq exp import-anons)))
     (if slot (cadr slot)
       (let ((name (gensym '%import-anon-)))
@@ -302,24 +316,24 @@
         (set! imports (cons slot imports))
         (set-car! (cdr slot) (import-value exp env))
         name))))
-(define (import-value exp env)
+(define (import-value exp env clo)
   (cond
     ((closure? exp)
       (let (($exp `(lambda ,(closure->formals exp) ,@(closure->body exp))))
-        (import $exp env)))
+        (import $exp env exp)))
     (else `(quote ,exp))))
-(define (import-ref exp env)
+(define (import-ref exp env clo)
   ;; (display "  " tl_stderr)(write (list 'import-ref env exp) tl_stderr)(newline tl_stderr)
   (if (not (or (memq exp env) (assq exp imports)))
-    (let ((slot (tl-lookup-slot exp)))
+    (let ((slot (or (tl-lookup-slot-clo exp clo) (tl-lookup-slot exp))))
       (if slot ;; (name . val)
         (begin
           (set! slot (list exp (cdr slot))) ;; (name val)
           ;; (display "import-ref " tl_stderr)(write slot tl_stderr)(newline tl_stderr)
           (set! imports (cons slot imports))
-          (set-car! (cdr slot) (import-anon (cadr slot) env))))))
+          (set-car! (cdr slot) (import-anon (cadr slot) env clo))))))
   exp)
-(define (import exp env)
+(define (import exp env clo)
   ;; (display "  " tl_stderr)(write (list 'import exp env) tl_stderr)(newline tl_stderr)
   (cond
     ; Core forms:
@@ -327,24 +341,25 @@
     ((const? exp)      exp)
     ((c-var? exp)      exp)
     ((prim? exp)       exp)
-    ((ref? exp)        (import-ref exp env))
-    ((closure? exp)    (import-anon exp env))
+    ((ref? exp)        (import-ref exp env clo))
+    ((closure? exp)    (import-anon exp env clo))
     ((lambda? exp)     (let (($env (append (formals=>names (lambda->formals exp)) env)))
                          `(lambda ,(lambda->formals exp)
-                            ,@(map (lambda (x) (import x $env)) (lambda->body exp)))))
-    ((set!? exp)       `(set! ,(set!->var exp) ,(import (set!->exp exp) env)))
-    ((if? exp)         `(if ,@(map (lambda (x) (import x env)) (cdr exp))))
-
+                            ,@(map (lambda (x) (import x $env clo)) (lambda->body exp)))))
+    ((set!? exp)       `(set! ,(set!->var exp) ,(import (set!->exp exp) env clo)))
+    ((if? exp)         `(if ,@(map (lambda (x) (import x env clo)) (cdr exp))))
     ; Sugar
-    ((let? exp)        (let ((bindings (map (lambda (x) (list (car x) (import (cadr x) env))) (let->bindings exp)))
+    ((let? exp)        (let ((bindings (map (lambda (x)
+                                              (list (car x) (import (cadr x) env clo)))
+                                         (let->bindings exp)))
                               ($env (append (let->bound-vars exp) env)))
                          `(let ,bindings
-                            ,@(map (lambda (x) (import x $env)) (let->body exp)))))
-    ((begin? exp)      `(begin ,(map (lambda (x) (import x env)) (cdr exp))))
-    
+                            ,@(map (lambda (x) (import x $env clo)) (let->body exp)))))
+    ((begin? exp)      `(begin ,(map (lambda (x) (import x env clo)) (cdr exp))))
     ; Applications:
-    ((app? exp)        (map (lambda (x) (import x env)) exp))
-    (else              (error "import: unknown exp: " exp))))
+    ((app? exp)        (map (lambda (x) (import x env clo)) exp))
+    (else              exp)))
+    ; (else              (error "import: unknown exp: " exp))))
 
 
 ;; literals.
@@ -940,7 +955,7 @@
 
   (set! imports '())
   (set! import-anons '())
-  (set! input-program (import input-program '()))
+  (set! input-program (import input-program '() #f))
   (display ";; imports\n" tl_stderr)(for-each (lambda (x) (write x tl_stderr)(display "\n" tl_stderr)) imports)(display "\n" tl_stderr)
   (if (not (null? imports))
     (set! input-program `(letrec ,imports ,input-program)))
