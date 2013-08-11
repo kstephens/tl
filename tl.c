@@ -645,16 +645,23 @@ tl tl_define(tl var, tl val, tl env)
   return tl_define_here(var, val, tl_top_level_env);
 }
 
-tl tl_eqQ(tl x, tl y)
-{
-  return tl_b(x == y);
-}
-
+tl tl_eqQ(tl x, tl y) { return tl_b(x == y); }
 tl tl_eqvQ(tl x, tl y)
 { TL_RT
   if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
+}
+
+tl tl_eqQ_hash(tl x) { return tl_i(((tlw) x) >> 2); }
+tl tl_eqvQ_hash(tl x) { return tl_eqQ_hash(x); }
+tl tl_hash_mix(tl _x, tl _y)
+{
+  tlw x = (tlw) _x, y = (tlw) _y;
+  x ^= (tlw) 0xfdb97531;
+  x ^= (x << 3) ^ (x >> 3) ^ y;
+  x ^= (x << 5) ^ (x >> 5) ^ ~(y << 7);
+  return tl_eqQ_hash((tl) x);
 }
 
 tl tl_value(tl var, tl env)
@@ -1112,7 +1119,7 @@ tl tl_stdenv(tl env)
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
   P(tl_get); P(tl_set);
-  P(tl_eqQ); P(tl_eqvQ);
+  P(tl_eqQ); P(tl_eqvQ); P(tl_eqQ_hash); P(tl_eqvQ_hash); P(tl_hash_mix);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
