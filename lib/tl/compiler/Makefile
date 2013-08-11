@@ -4,10 +4,10 @@ CFLAGS += -O3 -g -I$(ROOT_DIR) -I$(ROOT_DIR)/local/include
 T_SCM_FILES := $(shell ls t/t*.scm)
 T_TL_FILES := $(shell ls t/t*.tl)
 T_C_FILES := \
-  $(T_SCM_FILES:%.scm=%.scm.csi.c) \
-  $(T_SCM_FILES:%.scm=%.scm.tl.c) \
-  $(T_TL_FILES:%.tl=%.tl.c)
-T_FILES := $(T_C_FILES:%.c=%.t)
+  $(T_SCM_FILES:%.scm=%.scm.csi.t.c) \
+  $(T_SCM_FILES:%.scm=%.scm.tl.t.c) \
+  $(T_TL_FILES:%.tl=%.tl.t.c)
+T_FILES := $(T_C_FILES:%.c=%)
 C_DIFF_FILES := $(T_SCM_FILES:%.scm=%.c.diff)
 T_OUT_FILES := $(T_FILES:%=%.out)
 
@@ -15,8 +15,8 @@ all : $(T_FILES) $(T_OUT_FILES)
 
 diff-files : $(C_DIFF_FILES)
 
-%.t : %.c
-	$(CC) $(CFLAGS) -o $@ $*.c -L$(ROOT_DIR)/local/lib -lgc
+% : %.c
+	$(CC) $(CFLAGS) -o $@ $@.c -L$(ROOT_DIR)/local/lib -lgc
 
 %.c.s : %.c
 	$(CC) $(CFLAGS) -S -o $@ $*.c
@@ -30,14 +30,14 @@ diff-files : $(C_DIFF_FILES)
 	  cp $@ $<.exp ;\
 	fi
 
-%.scm.csi.c : %.scm
+%.scm.csi.t.c : %.scm
 	csi -nq -I $(ROOT_DIR)/lib -s compile-stdin.scm < $< | ./filter-c-code.rb > $@
 
-%.scm.tl.c : %.scm
+%.scm.tl.t.c : %.scm
 	$(ROOT_DIR)/bin/tl compile-stdin.scm < $< | ./filter-c-code.rb > $@
 
-%.tl.c : %.tl tl-to-c.scm
-	$(ROOT_DIR)/bin/tl tl-compile-stdin.scm < $<  > $@
+%.tl.t.c : %.tl tl-to-c.scm
+	$(ROOT_DIR)/bin/tl tl-compile-stdin.scm < $< > $@
 
 %.c.diff : %.csi.c %.tl.c
 	-diff -u $^ > $@
@@ -49,7 +49,7 @@ diff-files : $(C_DIFF_FILES)
 
 clean:
 	rm -f t/*.t t/*.c t/*.c.diff t/*.t.out
-	rm -rf t/g*.dSYM
+	rm -rf t/*.dSYM
 
 .PRECIOUS: $(T_C_FILES) $(C_DIFF_FILES)
 
