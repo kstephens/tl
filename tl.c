@@ -186,6 +186,8 @@ tl tl_m_runtime(tl parent)
 #define tl_p__catch tl_(81)
 #define tl_p__throw tl_(82)
 
+#define tl_prim_list tl_(100)
+
   if ( parent ) {
     memcpy(tl_rt, parent, size);
     tl_runtime_parent = parent;
@@ -247,6 +249,8 @@ tl tl_m_runtime(tl parent)
   tl_s_tl_string_unescape = tl_m_symbol("tl_string_unescape");
 
   tl_eos = tl_allocate(tl_t_eos, 0);
+
+  tl_prim_list = tl_nil;
 
   {
     int i;
@@ -416,7 +420,20 @@ tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
   o[0] = f; o[1] = (tl) name; o[2] = tl_nil;
+  tl_prim_list = tl_cons(o, tl_prim_list);
   return o;
+}
+
+tl tl_prim_named(const char *name)
+{ TL_RT
+  tl l = tl_prim_list;
+  while ( l != tl_nil ) {
+    tl p = tl_car(l);
+    if ( strcmp(name, tl_iv(p, 1)) == 0 )
+      return p;
+    l = tl_cdr(l);
+  }
+  return tl_f;
 }
 
 tl tl_m_closure(void *f, void *e)
@@ -1091,7 +1108,7 @@ tl tl_stdenv(tl env)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env); P(tl_get_top_level_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
-  P(tl_m_prim); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
+  P(tl_m_prim); P(tl_prim_named); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
   P(tl_get); P(tl_set);
