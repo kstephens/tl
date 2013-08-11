@@ -102,7 +102,8 @@
       (void? exp)))
 (define (const? exp)
   (or (immediate-const? exp)
-      (string? exp)))
+      (string? exp)
+      (primitive? exp)))
 
 (define (quote? exp)
   (tagged-list? 'quote exp))
@@ -752,6 +753,8 @@
                      "tl_m_symbol(\"" (%string-escape (symbol->string exp)) "\")"))
     ((null? exp)    "tl_nil")
     ((void? exp)    "tl_v")
+    ((primitive? exp)
+      (string-append "tl_prim_named(\"" (%string-escape (primitive->name exp)) "\")"))
     (else           (error "c-compile-const: unknown constant: " exp))))
 (define (c-compile-c-var exp)
   (symbol->string (cadr exp)))
