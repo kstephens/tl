@@ -216,18 +216,18 @@
   (cadddr exp)) 
 
 (define (set-cell!? exp)
-  (tagged-list? 'set-cell! exp))
+  (tagged-list? '&set-cell! exp))
 (define (set-cell!->cell exp)
   (cadr exp))
 (define (set-cell!->value exp)
   (caddr exp))
 
 (define (cell? exp)
-  (tagged-list? '%cell exp))
+  (tagged-list? '&cell exp))
 (define (cell->value exp)
   (cadr exp))
 (define (cell-get? exp)
-  (tagged-list? '%cell-get exp))
+  (tagged-list? '&cell-get exp))
 (define (cell-get->cell exp)
   (cadr exp))
 
@@ -270,9 +270,9 @@
                              ,@(map (substitute-with new-env) (letrec->body exp)))))
     ((begin? exp)       (cons 'begin (map (substitute-with env) (begin->exps exp))))
     ; IR (1):
-    ((cell? exp)        `(%cell      ,(substitute env (cell->value exp))))
-    ((cell-get? exp)    `(%cell-get  ,(substitute env (cell-get->cell exp))))
-    ((set-cell!? exp)   `(%set-cell! ,(substitute env (set-cell!->cell exp))
+    ((cell? exp)        `(&cell      ,(substitute env (cell->value exp))))
+    ((cell-get? exp)    `(&cell-get  ,(substitute env (cell-get->cell exp))))
+    ((set-cell!? exp)   `(&set-cell! ,(substitute env (set-cell!->cell exp))
                                      ,(substitute env (set-cell!->value exp))))
     ; IR (2):
     ((comp:closure? exp)`(closure ,(substitute env (closure->lam exp))
@@ -498,9 +498,9 @@
     ((let? exp)        (desugar (let=>lambda exp)))
     ((letrec? exp)     (desugar (letrec=>lets+sets exp)))
     ; IR (1):
-    ((cell? exp)       `(%cell      ,(desugar (cell->value exp))))
-    ((cell-get? exp)   `(%cell-get  ,(desugar (cell-get->cell exp))))
-    ((set-cell!? exp)  `(%set-cell! ,(desugar (set-cell!->cell exp))
+    ((cell? exp)       `(&cell      ,(desugar (cell->value exp))))
+    ((cell-get? exp)   `(&cell-get  ,(desugar (cell-get->cell exp))))
+    ((set-cell!? exp)  `(&set-cell! ,(desugar (set-cell!->cell exp))
                                     ,(desugar (set-cell!->value exp))))
     ; IR (2): 
     ((comp:closure? exp) `(closure ,(desugar (closure->lam exp))
@@ -604,13 +604,13 @@
     ((const? exp)    exp)
     ((c-var? exp)    exp)
     ((ref? exp)      (if (is-mutable? exp)
-                         `(%cell-get ,exp)
+                         `(&cell-get ,exp)
                          exp))
     ((prim? exp)     exp)
     ((lambda? exp)   `(lambda ,(lambda->formals exp)
                         ,(wrap-mutable-formals (formals=>names (lambda->formals exp))
                                                (wrap-mutables (lambda->exp exp)))))
-    ((set!? exp)     `(%set-cell! ,(set!->var exp) ,(wrap-mutables (set!->exp exp))))
+    ((set!? exp)     `(&set-cell! ,(set!->var exp) ,(wrap-mutables (set!->exp exp))))
     ((if? exp)       `(if ,(wrap-mutables (if->condition exp))
                           ,(wrap-mutables (if->then exp))
                           ,(wrap-mutables (if->else exp))))
@@ -690,9 +690,9 @@
     ((set!? exp)         `(set! ,(set!->var exp)
                                 ,(closure-convert (set!->exp exp))))
     ; IR (1):
-    ((cell? exp)         `(%cell      ,(closure-convert (cell->value exp))))
-    ((cell-get? exp)     `(%cell-get  ,(closure-convert (cell-get->cell exp))))
-    ((set-cell!? exp)    `(%set-cell! ,(closure-convert (set-cell!->cell exp))
+    ((cell? exp)         `(&cell      ,(closure-convert (cell->value exp))))
+    ((cell-get? exp)     `(&cell-get  ,(closure-convert (cell-get->cell exp))))
+    ((set-cell!? exp)    `(&set-cell! ,(closure-convert (set-cell!->cell exp))
                                       ,(closure-convert (set-cell!->value exp))))
     ; Applications:
     ((app? exp)          (map closure-convert exp))
@@ -988,7 +988,7 @@
 ; (c-compile-and-emit emit the-program)
 
 ; Suitable definitions for the cell functions:
-(define %cell      tl_m_cell)
-(define %set-cell! tl_set_cell)
-(define %get-cell  tl_get_cell)
+(define &cell      tl_m_cell)
+(define &set-cell! tl_set_cell)
+(define &get-cell  tl_get_cell)
 
