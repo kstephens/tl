@@ -261,12 +261,11 @@
     ; Sugar:
     ((let? exp)         (let ((new-env (assq-remove-keys env (let->bound-vars exp))))
                           `(let ,(azip (let->bound-vars exp)
-                                     (map (substitute-with env) (let->args exp)))
-                           ,@(map (substitute-wth new-env) (let->body exp))))
+                                       (map (substitute-with env) (let->args exp)))
+                             ,@(map (substitute-with new-env) (let->body exp)))))
     ((letrec? exp)      (let ((new-env (assq-remove-keys env (letrec->bound-vars exp))))
                           `(letrec ,(azip (letrec->bound-vars exp) 
-                                          (map (substitute-with new-env) 
-                                               (letrec->args exp)))
+                                          (map (substitute-with new-env) (letrec->args exp)))
                              ,@(map (substitute-with new-env) (letrec->body exp)))))
     ((begin? exp)       (cons 'begin (map (substitute-with env) (begin->exps exp))))
     ; IR (1):
@@ -751,7 +750,7 @@
 (define (c-compile-ref exp)
   (string-append "_" (mangle exp)))
 (define (c-compile-args args append-preamble)
-  (if (not (pair? args))
+  (if (null? args)
       ""
       (string-append
        (c-compile-exp (car args) append-preamble)
@@ -761,7 +760,7 @@
 (define (c-compile-body body append-preamble)
   (string-append "(" (c-compile-body-exprs body append-preamble) ")"))
 (define (c-compile-body-exprs body append-preamble)
-  (if (not (pair? body))
+  (if (null? body)
       ""
       (string-append
        (c-compile-exp (car body) append-preamble)
