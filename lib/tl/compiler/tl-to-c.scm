@@ -385,7 +385,9 @@
                        ,@(map convert-literals (begin->exps exp))))
     ; Applications:
     ((app? exp)        (map convert-literals exp))
-    (else              (error "convert-literals: unknown exp: " exp))))
+    (else              (encode-literal exp))))
+    ;(else              exp)))
+    ;(else              (error "convert-literals: unknown exp: " exp))))
 (define (convert-literals-binding b)
   (list (car b) (convert-literals (cadr b))))
 (define (bind-literals literals exp)
@@ -511,8 +513,9 @@
                                   ,(env-get->field exp)
                                   ,(env-get->env exp)))
     ; Applications:
-    ((app? exp)        (map desugar exp))    
-    (else              (error "desugar: unknown exp: " exp))))
+    ((app? exp)        (map desugar exp))
+    (else              exp)))
+    ; (else              (error "desugar: unknown exp: " exp))))
     
 ;; Syntactic analysis.
 
@@ -547,7 +550,8 @@
     ((env-get? exp)   (free-vars (env-get->env exp)))
     ; Application:
     ((app? exp)       (reduce union (map free-vars exp) '()))
-    (else             (error "free-vars: unknown expression: " exp))))
+    (else             '())))
+    ;(else             (error "free-vars: unknown expression: " exp))))
 
 ;; Mutable variable analysis and elimination.
 ;;
@@ -588,7 +592,8 @@
     ((begin? exp)    (for-each analyze-mutable-variables (begin->exps exp)))
     ; Application:
     ((app? exp)      (for-each analyze-mutable-variables exp))
-    (else            (error "analyze-mutable-variables: unknown expression type: " exp))))
+    (else            exp)))
+    ;(else            (error "analyze-mutable-variables: unknown expression type: " exp))))
 (define (wrap-mutable-formals formals body-exp)
   (if (not (pair? formals))
     body-exp
@@ -615,7 +620,8 @@
                           ,(wrap-mutables (if->else exp))))
     ; Application:
     ((app? exp)      (map wrap-mutables exp))
-    (else            (error "wrap-mutables: unknown expression type: " exp))))
+    (else            exp)))
+    ;(else            (error "wrap-mutables: unknown expression type: " exp))))
                         
 
 ;; Name-mangling.
@@ -695,7 +701,8 @@
                                       ,(closure-convert (set-cell!->value exp))))
     ; Applications:
     ((app? exp)          (map closure-convert exp))
-    (else                (error "closure-convert: unhandled exp: " exp))))
+    (else                exp)))
+    ;(else                (error "closure-convert: unhandled exp: " exp))))
     
 ;; Compilation routines.
 
@@ -729,7 +736,8 @@
     ((env-get? exp)     (c-compile-env-get exp append-preamble))
     ; Application:      
     ((app? exp)         (c-compile-app exp append-preamble))
-    (else               (error "c-compile-exp: unknown exp " exp))))
+    (else               (c-compile-const exp))))
+    ;(else               (error "c-compile-exp: unknown exp " exp))))
 (define (c-compile-const exp)
   (cond
     ((integer? exp) (string-append 
