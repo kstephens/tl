@@ -829,20 +829,22 @@ tl tl_eval(tl exp, tl env)
     longjmp(*(jmp_buf*) c[1], 1);
     abort();
   }
-  if ( args == tl_nil )
+  { tl r = args;
+  if ( r == tl_nil )
     val = tl_FP(val,tl,())();
-  else if ( cdr(args) == tl_nil )
+  else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl))(car(args));
-  else if ( cddr(args) == tl_nil )
+  else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl))(car(args), cadr(args));
-  else if ( cdr(cddr(args)) == tl_nil )
+  else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl))(car(args), cadr(args), car(cddr(args)));
-  else if ( cdr(cdr(cddr(args))) == tl_nil )
+  else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
-  else if ( cdr(cdr(cdr(cddr(args)))) == tl_nil )
+  else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))), car(cdr(cdr(cddr(args)))));
   else
     tl_error("too many args", val);
+  }
   G(rtn);
 
   L(define);
