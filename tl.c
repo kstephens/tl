@@ -741,13 +741,13 @@ tl tl_eval(tl exp, tl env)
   L(evexp);
   if ( _tl_eval_debug > 0 ) { _tl_eval_debug --; fprintf(stderr, "  ;=> "); tl_write(exp, stderr); fprintf(stderr, "\n"); _tl_eval_debug ++; }
   val = car(exp);
-  if ( val == tl_s_quote ) { val = cadr(exp); G(rtn); }
   if ( val == tl_s_if ) G(if1);
+  if ( val == tl_s_quote ) { val = cadr(exp); G(rtn); }
   if ( val == tl_s_lambda ) G(proc);
   if ( val == tl_s_let ) { exp = cdr(exp); G(let); }
-  if ( val == tl_s_define ) G(define);
-  if ( val == tl_s_setE ) G(setE);
   if ( val == tl_s_begin ) { exp = cdr(exp); G(evlist); }
+  if ( val == tl_s_setE ) G(setE);
+  if ( val == tl_s_define ) G(define);
 
   // L(evcomb);
   args = argp = tl_nil;
