@@ -144,7 +144,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_define tl_(17)
 #define tl_t_setE tl_(18)
 #define tl_t_begin tl_(19)
-#define tl_t_form tl_(20)
+// #define tl_t_XXX tl_(20)
 #define tl_t_cell tl_(21)
 #define tl_t_env tl_(22)
 #define tl_t_boolean tl_(29) // FIXME
@@ -209,7 +209,6 @@ tl tl_m_runtime(tl parent)
   tl_t_eos    = tl_m_type("eos");
   tl_t_environment = tl_m_type("environment");
   tl_t_closure = tl_m_type("closure");
-  tl_t_form   = tl_m_type("form");
   tl_t_thread = tl_m_type("thread");
 
   tl_t_cell   = tl_m_type("cell");
@@ -886,8 +885,6 @@ tl tl_eval(tl exp, tl env)
     G(define_);
   if ( tl_t_(clink) == tl_t_setE )
     G(setE_);
-  if ( tl_t_(clink) == tl_t_form )
-    { pop(exp); G(eval); }
   tl_error("tl_eval: invalid clink", clink); abort();
 #undef car
 #undef cdr
