@@ -899,18 +899,12 @@ tl tl_eval(tl exp, tl env)
   G(rtn);
 
   L(rtn);
-  if ( clink == tl_nil )
-    return val;
-  if ( tl_t_(clink) == tl_t_if2 )
-    G(if2);
-  if ( tl_t_(clink) == tl_t_evcom3 )
-    G(evcom3);
-  if ( tl_t_(clink) == tl_t_evlist )
-    G(evlist_);
-  if ( tl_t_(clink) == tl_t_define )
-    G(define_);
-  if ( tl_t_(clink) == tl_t_setE )
-    G(setE_);
+  if ( clink == tl_nil )              return val;
+  if ( tl_t_(clink) == tl_t_evcom3 )  G(evcom3);
+  if ( tl_t_(clink) == tl_t_evlist )  G(evlist_);
+  if ( tl_t_(clink) == tl_t_if2 )     G(if2);
+  if ( tl_t_(clink) == tl_t_setE )    G(setE_);
+  if ( tl_t_(clink) == tl_t_define )  G(define_);
   tl_error("tl_eval: invalid clink", clink); abort();
 #undef car
 #undef cdr
