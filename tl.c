@@ -5,7 +5,6 @@
 #include "gc/gc.h"
 void tl_gc_init()
 {
-  GC_parallel = 1;
   GC_set_all_interior_pointers(1);
   GC_set_finalize_on_demand(0);
   GC_set_java_finalization(1);
@@ -149,7 +148,7 @@ tl tl_m_runtime(tl parent)
 #define tl_t_env tl_(22)
 #define tl_t_boolean tl_(29) // FIXME
 
-#define tl_v tl_(30)
+  // #define ??? tl_(30)
 #define tl_symbol_list tl_(31)
 #define tl_in_error tl_(32)
 #define tl_eos tl_(33)
@@ -186,6 +185,8 @@ tl tl_m_runtime(tl parent)
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
 #define tl_p__throw tl_(82)
+
+#define tl_prim_list tl_(100)
 
   if ( parent ) {
     memcpy(tl_rt, parent, size);
@@ -246,8 +247,9 @@ tl tl_m_runtime(tl parent)
   tl_s_tl_string_escape = tl_m_symbol("tl_string_escape");
   tl_s_tl_string_unescape = tl_m_symbol("tl_string_unescape");
 
-  tl_v = tl_allocate(tl_t_void, 0);
   tl_eos = tl_allocate(tl_t_eos, 0);
+
+  tl_prim_list = tl_nil;
 
   {
     int i;
@@ -417,7 +419,20 @@ tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
   o[0] = f; o[1] = (tl) name; o[2] = tl_nil;
+  tl_prim_list = tl_cons(o, tl_prim_list);
   return o;
+}
+
+tl tl_prim_named(const char *name)
+{ TL_RT
+  tl l = tl_prim_list;
+  while ( l != tl_nil ) {
+    tl p = tl_car(l);
+    if ( strcmp(name, tl_iv(p, 1)) == 0 )
+      return p;
+    l = tl_cdr(l);
+  }
+  return tl_f;
 }
 
 tl tl_m_closure(void *f, void *e)
@@ -438,6 +453,8 @@ tl tl_m_cell(tl v)
   o[0] = v;
   return o;
 }
+tl tl_get_cell(tl c)       { return *(tl*)c; }
+tl tl_set_cell(tl c, tl v) { return *(tl*)c = v; }
 
 #define FP ((FILE*)p)
 tl tl_port__write(tl p, tl s, tl l)
@@ -627,17 +644,24 @@ tl tl_define(tl var, tl val, tl env)
   return tl_define_here(var, val, tl_top_level_env);
 }
 
-tl tl_eqQ(tl x, tl y)
-{
-  return tl_b(x == y);
-}
-
+tl tl_eqQ(tl x, tl y) { return tl_b(x == y); }
 tl tl_eqvQ(tl x, tl y)
 { TL_RT
   if ( tl_type(x) == tl_t_fixnum && tl_type(y) == tl_t_fixnum )
     return tl_b(tl_I(x) == tl_I(y));
   return tl_eqQ(x, y);
 }
+
+tl tl_hash_mix(tl _x, tl _y)
+{
+  tlw x = (tlw) _x, y = (tlw) _y;
+  x ^= (tlw) 0xfdb97531;
+  x ^= (x << 3) ^ (x >> 3) ^ y;
+  x ^= (x << 5) ^ (x >> 5) ^ ~y << 7;
+  return tl_i(x >> 2);
+}
+tl tl_eqQ_hash(tl x) { return tl_hash_mix(x, (tl) 0xeca86420); }
+tl tl_eqvQ_hash(tl x) { return tl_eqQ_hash(x); }
 
 tl tl_value(tl var, tl env)
 {
@@ -1090,10 +1114,11 @@ tl tl_stdenv(tl env)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env); P(tl_get_top_level_env);
   P(tl_m_type); P(tl_type); P(tl_set_type);
+  P(tl_m_prim); P(tl_prim_named); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
-  P(tl_t_); P(tl_iv); P(tl_closure_env);
+  P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
   P(tl_get); P(tl_set);
-  P(tl_eqQ); P(tl_eqvQ);
+  P(tl_eqQ); P(tl_eqvQ); P(tl_eqQ_hash); P(tl_eqvQ_hash); P(tl_hash_mix);
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
@@ -1152,7 +1177,9 @@ tl tl_stdenv(tl env)
   return env;
 }
 
-#ifndef _tl_main
+#ifdef _tl_main
+int _tl_main (int, char **);
+#else
 #define _tl_main(argc, argv) tl_call(tl_s(tl_main), 2, (tlsw) argc, (tl) argv)
 #endif
 

@@ -20,8 +20,10 @@ typedef size_t tlw;
 typedef ssize_t tlsw;
 
 #define tl_nil ((tl) 0)
-#define tl_f ((tl) (tlw) 2)
-#define tl_t ((tl) (tlw) 4)
+#define tl_f   ((tl) (tlw) 2)
+#define tl_t   ((tl) (tlw) 4)
+#define tl_v   ((tl) (tlw) 6)
+
 #define _tl_b(x) ((x) ? tl_t : tl_f)
 #define _tl_B(x) ((x) != tl_f)
 static inline tl tl_b(tlw i) { return _tl_b(i); }
@@ -47,11 +49,14 @@ static inline tl tl_t_(tl o) { return tl_iv(o, -1); }
    (o) == 0         ? tl_t_null :               \
    ((tlw) (o)) & 1  ? tl_t_fixnum :             \
    (o) <= tl_t      ? tl_t_boolean :            \
+   (o) == tl_v      ? tl_t_void :               \
                       tl_t_(o) )
 
 #define tl_FP(o,r,p) ((r(*)p) tl_iv(o, 0))
 
-static inline tl tl_closure_env(tl o) { return tl_iv(o, 2); }
+static inline tl tl_closure_formals(tl o) { return tl_iv(tl_iv(o, 0), 0); }
+static inline tl tl_closure_body(tl o)    { return tl_iv(tl_iv(o, 0), 1); }
+static inline tl tl_closure_env(tl o)     { return tl_iv(o, 2); }
 
 #define tl_MARK ((tl) (tlsw) -2)
 
