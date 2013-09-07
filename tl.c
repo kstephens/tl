@@ -977,7 +977,6 @@ tl tl_m_thread(pthread_t pt, tl rt, tl env)
 static void *tl_pthread_start(void *data)
 { TL_RT
   tl *pt = data, proc;
-
   ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, pt));
   tl_rt = pt[0];
   pt[1] = (tl) pthread_self();
@@ -1000,18 +999,15 @@ tl tl_pthread_create(tl proc, tl opts)
   tl_rt = rt;                  // use new runtime.
   env = tl_env;
   tl_rt = tl_rt_save;          // restore current runtime
-
   pt = tl_m_thread(0, rt, env); // new thread object.
   pt[2] = env;                  // new environment for thread.
   pt[3] = opts;                 // thread opts.
   pt[4] = env;                  // new top-level environment for thread.
   pt[5] = tl_nil; pt[6] = tl_f; // result.
   pt[10] = proc;                // pass proc to tl_pthread_start.
-
   ASSERT_ZERO(result = pthread_create(&new_thread, 0, tl_pthread_start, pt));
   // wait for thread to start.
   while ( ! ((pthread_t) pt[1] == new_thread && pt[10] == 0) ) ;
-
   return pt;
 }
 
