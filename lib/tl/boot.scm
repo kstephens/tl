@@ -108,9 +108,9 @@
       (fclose (->FILE* p))))
   (set-car! p #f)
   p)
-(set! tl_stdin  (%make-port tl_stdin 'tl_stdin))
-(set! tl_stdout (%make-port tl_stdout 'tl_stdout))
-(set! tl_stderr (%make-port tl_stderr 'tl_stderr))
+(set! tl_stdin  (%make-port (tl_car tl_stdin) 'tl_stdin))
+(set! tl_stdout (%make-port (tl_car tl_stdout) 'tl_stdout))
+(set! tl_stderr (%make-port (tl_car tl_stderr) 'tl_stderr))
 
 (define <null> (tl_type '()))
 (define (null? x) (eq? x '()))

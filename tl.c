@@ -77,13 +77,15 @@ tl tl_env; // current environment.
 tl tl_top_level_env;
 #endif
 
-FILE *tl_stdin, *tl_stdout, *tl_stderr;
+FILE *_tl_stdin, *_tl_stdout, *_tl_stderr;
+FILE **tl_stdin, **tl_stdout, **tl_stderr;
 char *tl_progpath, *tl_progname, *tl_progdir, *tl_libdir;
 
 static void tl_init(int argc, char **argv)
 {
   char *r;
-  tl_stdin = stdin; tl_stdout = stdout; tl_stderr = stderr;
+  _tl_stdin = stdin; _tl_stdout = stdout; _tl_stderr = stderr;
+  tl_stdin = &_tl_stdin; tl_stdout = &_tl_stdout; tl_stderr = &_tl_stderr;
   tl_progpath = tl_progname = argv[0];
   if ( (r = strrchr(tl_progname, '/')) ) {
     tl_progdir = malloc(r - tl_progname + 1);
@@ -294,16 +296,20 @@ tl tl_write(tl o, tl p);
 tl tl_m_string(void *x, size_t l);
 tl tl_call(tl s, int n, ...);
 
-tl tl__error_abort(tl msg, tl obj)
-{
-  abort(); return 0;
-}
+tl tl__error_abort(tl msg, tl obj) { abort(); return 0; }
 tl tl__error(tl msg, tl obj)
 {
-  fprintf(stderr, "\nERROR: %s", (char*) tl_iv(msg, 0));
-  fprintf(stderr, " : type:%s object-word:@%p object:", tl_type_name(tl_type(obj)), obj);
-  tl_write(obj, stderr);
-  fprintf(stderr, "\n");
+  static int in_error;
+  fprintf(*tl_stderr, "\nERROR: %s", (char*) tl_iv(msg, 0));
+  fprintf(*tl_stderr, " : type:%s object-word:@%p object:", tl_type_name(tl_type(obj)), obj);
+  if ( in_error ) {
+    fprintf(*tl_stderr, "#<N/A> TOO-MANY-ERRORS!");
+  } else {
+    ++ in_error;
+    tl_write(obj, tl_stderr);
+    -- in_error;
+  }
+  fprintf(*tl_stderr, "\n");
   return tl__error_abort(msg, obj);
 }
 tl tl_error(tl msg, tl obj, ...)
@@ -630,7 +636,7 @@ tl tl_define_here(tl var, tl val, tl env)
 { TL_RT
   tl slot;
   if ( tl_type(var) != tl_t_symbol ) return tl_error("define: not a symbol", var);
-  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(stderr, ";; define %s @%p\n", tl_S(tl_get(var, 0)), val); }
+  // if ( getenv("TL_DEFINE_DEBUG") ) { fprintf(*tl_stderr, ";; define %s @%p\n", tl_S(tl_get(var, 0)), val); }
   if ( (slot = tl_lookup(var, env)) != tl_nil )
     car(slot) = val;
   else
@@ -738,7 +744,7 @@ tl tl_eval(tl exp, tl env)
   G(eval);
 
   L(evexp);
-  if ( _tl_eval_debug > 0 ) { _tl_eval_debug --; fprintf(stderr, "  ;=> "); tl_write(exp, stderr); fprintf(stderr, "\n"); _tl_eval_debug ++; }
+  if ( _tl_eval_debug > 0 ) { _tl_eval_debug --; fprintf(*tl_stderr, "  ;=> "); tl_write(exp, tl_stderr); fprintf(*tl_stderr, "\n"); _tl_eval_debug ++; }
   val = car(exp);
   if ( val == tl_s_if ) G(if1);
   if ( val == tl_s_quote ) { val = cadr(exp); G(rtn); }
@@ -882,7 +888,7 @@ tl tl_eval(tl exp, tl env)
 
   L(define_);
   pop(exp); pop(env);
-  fprintf(stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
+  fprintf(*tl_stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
   tl_define(exp, val, env);
   val = exp;
   G(rtn);
@@ -952,9 +958,9 @@ tl tl_call(tl s, int n, ...)
 
 tl tl_eval_print(tl expr, tl env, tl out)
 { TL_RT
-  if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, stdout); fprintf(stdout, " => \n"); }
+  if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, tl_stdout); fprintf(*tl_stdout, " => \n"); }
   tl val = tl_eval_top_level(expr, env);
-  if ( out && val != tl_v ) { tl_write(val, stdout); fprintf(stdout, "\n"); }
+  if ( out && val != tl_v ) { tl_write(val, tl_stdout); fprintf(*tl_stdout, "\n"); }
   return val;
 }
 
@@ -1071,7 +1077,7 @@ tl tl_load(tl env, const char *name)
     name = buf;
   }
   if ( (fp = fopen(name, "r")) ) {
-    tl result = tl_repl(env, &fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0);
+    tl result = tl_repl(env, &fp, getenv("TL_BOOT_DEBUG") ? tl_stderr : 0, 0);
     fclose(fp);
     return result;
   } else
