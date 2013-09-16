@@ -1101,8 +1101,23 @@ int main(int argc, char **argv)
 #define READ_STATE TL_RT
 #define READ_CALL() tl_read(stream)
 #define FP(stream) (*(FILE**)stream)
+#if 0
+int GETC(tl stream)
+{
+  int c = getc(FP(stream));
+  if ( c != EOF ) putchar(c);
+  return c;
+}
+int UNGETC(tl stream, int c)
+{
+  ungetc(c, FP(stream));
+  if ( c != EOF ) putchar('\b');
+  return c;
+}
+#else
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
+#endif
 #define EQ(X,Y) ((X) == (Y))
 #define NIL tl_nil
 #define EOS tl_eos
