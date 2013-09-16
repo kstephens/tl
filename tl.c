@@ -848,7 +848,7 @@ tl tl_apply(tl f, tl args)
 }
 
 tl tl_apply_2(tl obj, tl closure)
-{ TL_RT
+{
   tl_apply(closure, cons(obj, tl_nil));
   return tl_v;
 }
@@ -866,7 +866,7 @@ tl tl_call(tl s, int n, ...)
 }
 
 tl tl_eval_print(tl expr, tl env, tl out)
-{ TL_RT
+{
   if ( out && getenv("TL_REPL_VERBOSE") ) { tl_write(expr, tl_stdout); fprintf(*tl_stdout, " => \n"); }
   tl val = tl_eval_top_level(expr, env);
   if ( out && val != tl_v ) { tl_write(val, tl_stdout); fprintf(*tl_stdout, "\n"); }
