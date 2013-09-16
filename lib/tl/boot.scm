@@ -78,21 +78,14 @@
 (define (%make-port fp info)
   (tl_set_type (cons fp info) <port>))
 (define port-info cdr)
-(define (%object-writer type f)
-  (set! tl_object_write
-    (let ((old-f tl_object_write))
-      (lambda (o p op)
-        (if (eq? (tl_type o) type)
-          (f o p op)
-          (old-f o p op))))))
-(%object-writer <port>
-  (lambda (o p op)
-    (fprintf p (tl_S "#<port @%p :FILE* @%p ") o (tl_car o))
-    (tl_write_2 (port-info o) p op)
-    (fputs (tl_S ">") p)
-    p))
 (define (<-FILE* f) (%make-port f '()))
 (define ->FILE* tl_car)
+(define (tl_string_display o p)
+  (tl_port__write p o (tl_i (tl_cdr o))))
+(define (tl_object_write_1 o p op)
+  (fprintf (->FILE* p) (tl_S "#<%s @%p>") (tl_type_name (tl_type o)) o)
+  p)
+(define tl_object_write tl_object_write_1)
 (define (open-file f m)
   (let ((fp (fopen (->char* f) (->char* m))))
     (if (eq? fp %NULL) #f
@@ -116,9 +109,9 @@
 (define (null? x) (eq? x '()))
 
 (define (display obj . port)
-  (%void (tl_write_2 obj (if (null? port) tl_stdout (car port))) (tl_I 0)))
+  (%void (tl_object_write obj (if (null? port) tl_stdout (car port)) 'display)))
 (define (write obj . port)
-  (%void (tl_write_2 obj (if (null? port) tl_stdout (car port))) (tl_I 1)))
+  (%void (tl_object_write obj (if (null? port) tl_stdout (car port)) 'write)))
 (define (newline . port)
   (%void (fputc (tl_I 10) (->FILE* (if (null? port) tl_stdout (car port))))))
 (define (read . port)
@@ -354,19 +347,6 @@
 (define (vector->list-2 v i)
   (if (>= i (vector-length v)) '()
     (cons (vector-ref v i) (vector->list-2 v (+ i 1)))))
-(define (tl_vector_write o p op)
-  (fputs (tl_S "#(") p)
-  (tl_vector_write-2 o p op 0)
-  (fputs (tl_S ")") p)
-    p)
-(define (tl_vector_write-2 o p op i)
-  (if (>= i (vector-length o)) o
-    (begin
-      (if (> i 0) (fputs (tl_S " ") p))
-      (tl_write_2 (vector-ref o i) p op)
-      (tl_vector_write-2 o p op (+ i 1))
-      )))
-(%object-writer <vector> tl_vector_write)
 
 (define (equal? a b)
   (if (eq? a b)
@@ -386,6 +366,95 @@
       #f)))
 (define (eqv? a b)
   (if (tl_eqvQ a b) #t (equal? a b)))
+
+(define (%object-writer type f)
+  (set! tl_object_write
+    (let ((old-f tl_object_write))
+      (lambda (o p op)
+        (if (eq? (tl_type o) type)
+          (f o p op)
+          (old-f o p op))))))
+(%object-writer <port>
+  (lambda (o p op)
+    (fprintf (->FILE* p) (tl_S "#<port @%p :FILE* @%p ") o (tl_car o))
+    (tl_object_write (port-info o) p op)
+    (tl_string_display ">" p)
+    p))
+(%object-writer <void>
+  (lambda (o p op)
+    (tl_string_display "#<void>" p)))
+(%object-writer <primitive>
+  (lambda (o p op)
+    (fprintf (->FILE* p) (tl_S "#<%s @%p %s @%p>")
+      (tl_type_name (tl_type o)) o (tl_cdr o) (tl_car o))
+    p))
+(%object-writer <closure>
+  (lambda (o p op)
+    (fprintf (->FILE* p) (tl_S "#<%s @%p ") (tl_type_name (tl_type o)) o)
+    (tl_object_write (car (car o)) p op)
+    (tl_string_display " >" p)
+    p))
+(%object-writer <type>
+  (lambda (o p op)
+    (fprintf (->FILE* p) (tl_S "#<%s @%p %s>") (tl_type_name (tl_type o)) o (tl_type_name o))
+    p))
+(define (tl_vector_write o p op i)
+  (if (>= i (vector-length o)) p
+    (begin
+      (if (> i 0) (tl_string_display " " p))
+      (tl_object_write (vector-ref o i) p op)
+      (tl_vector_write o p op (+ i 1)))))
+(%object-writer <vector>
+  (lambda (o p op)
+    (tl_string_display "#(" p)
+    (tl_vector_write o p op 0)
+    (tl_string_display ")" p)))
+(define (tl_pair_write o p op)
+  (if (pair? o)
+    (begin
+      (tl_object_write (car o) p op)
+      (set! o (cdr o))
+      (if (not (null? o))
+        (begin
+          (tl_string_display " " p)
+          (tl_pair_write o p op))
+        ))
+    (if (not (null? o))
+      (begin
+        (tl_string_display ". " p)
+        (tl_object_write o p op)))))
+(%object-writer <pair>
+  (lambda (o p op)
+    (tl_string_display "(" p)
+    (tl_pair_write o p op)
+    (tl_string_display ")" p)))
+(%object-writer <null>
+  (lambda (o p op)
+    (tl_string_display "()" p)))
+(%object-writer <boolean>
+  (lambda (o p op)
+    (tl_string_display (if o "#t" "#f") p)))
+(%object-writer <fixnum>
+  (lambda (o p op)
+    (tl_fixnum_write o p)))
+(%object-writer <character>
+  (lambda (o p op)
+    (tl_character_write o p)))
+(%object-writer <string>
+  (lambda (o p op)
+    (if (eq? op 'display)
+      (tl_string_display o p)
+      (begin
+        (tl_string_display "\"" p)
+        (tl_string_display (tl_string_escape o) p)
+        (tl_string_display "\"" p)))))
+(%object-writer <symbol>
+  (lambda (o p op)
+    (if (tl_car o)
+      (begin
+        (if (not (tl_cdr o)) (tl_string_display "#:" p))
+        (tl_string_display (tl_car o) p))
+      (tl_object_write_1 o p op))))
 
 ;; ## ;; logical EOF
 (set! tl_progpath (tl_s+ tl_progpath))

@@ -183,6 +183,8 @@ tl tl_m_runtime(tl parent)
 #define tl_s_tl__error tl_(63)
 #define tl_s_tl_string_escape tl_(64)
 #define tl_s_tl_string_unescape tl_(65)
+#define tl_s_write tl_(66)
+#define tl_s_display tl_(67)
 
 #define tl_p_apply tl_(80)
 #define tl_p__catch tl_(81)
@@ -237,6 +239,8 @@ tl tl_m_runtime(tl parent)
   tl_s_let = tl_m_symbol("let");
   tl_s_tl_object_write = tl_m_symbol("tl_object_write");
   tl_s_tl_macro_expand = tl_m_symbol("tl_macro_expand");
+  tl_s_write = tl_m_symbol("write");
+  tl_s_display = tl_m_symbol("display");
   tl_s_cons = tl_m_symbol("cons");
   tl_s_car = tl_m_symbol("car");
   tl_s_cdr = tl_m_symbol("cdr");
@@ -480,123 +484,20 @@ tl tl_object_write(tl o, tl p, tl op)
   fprintf(FP, "#<%s @%p>", tl_type_name(tl_type(o)), o);
   return p;
 }
-
-tl tl_string_display(tl o, tl p)
-{
-  return tl_port__write(p, o, tl_i(((tlw*) o)[1]));
-}
-
-tl tl_string_write(tl o, tl p)
-{ TL_RT
-  fwrite("\"", 1, 1, FP);
-  o = tl_call(tl_s_tl_string_escape, 1, o);
-  tl_string_display(o, p);
-  fwrite("\"", 1, 1, FP);
-  return p;
-}
-
 tl tl_fixnum_write(tl o, tl p)
 {
   fprintf(FP, "%lld", (long long) tl_I(o));
   return p;
 }
-
-tl tl_symbol_write(tl *o, tl p)
+tl tl_character_write(tl o, tl p)
 {
-  if ( o[0] == tl_f ) // unnamed?
-    return tl_object_write(o, p, 0);
-  if ( o[1] == tl_f ) fputs("#:", FP); // not interned?
-  return tl_string_display(o[0], p);
-}
-
-tl tl_type_write(tl o, tl p)
-{
-  fprintf(FP, "#<%s @%p %s>", tl_type_name(tl_type(o)), o, tl_type_name(o));
+  fprintf(FP, "#\\%c", tl_C(o));
   return p;
 }
-
-tl tl_prim_write(tl o, tl p)
-{
-  fprintf(FP, "#<%s @%p %s @%p>", tl_type_name(tl_type(o)), o, (char*) tl_iv(o, 1), tl_iv(o, 0));
-  return p;
-}
-
-tl tl_closure_write(tl o, tl p)
-{
-  fprintf(FP, "#<%s @%p ", tl_type_name(tl_type(o)), o);
-  tl_write(car(car(o)), p);
-  fprintf(FP, " >");
-  return p;
-}
-
-tl tl_write_2(tl o, tl p, tl op);
-tl tl_pair_write_1(tl o, tl p, tl op)
-{ TL_RT
-  if ( ! o ) goto rtn;
- again:
-  if ( tl_type(o) == tl_t_pair ) {
-    tl_write_2(car(o), p, op);
-    o = cdr(o);
-    if ( ! o ) goto rtn;
-    fwrite(" ", 1, 1, FP);
-    goto again;
-  }
-  fwrite(". ", 2, 1, FP);
-  tl_write_2(o, p, op);
- rtn:
-  return p;
-}
-tl tl_pair_write(tl o, tl p, tl op)
-{ TL_RT
-  fwrite("(", 1, 1, FP);
-  tl_pair_write_1(o, p, op);
-  fwrite(")", 1, 1, FP);
-  return p;
-}
-tl tl_thread_write(tl o, tl p)
-{
-  tl opts = tl_get(o, tl_i(3));
-  fprintf(FP, "#<%s ", tl_type_name(tl_type(o)));
-  if ( opts == tl_nil ) {
-    fprintf(FP, "@%p", o);
-  } else {
-    tl_pair_write_1(opts, p, tl_nil);
-  }
-  fprintf(FP, ">");
-  return p;
-}
-
-tl tl_write_2(tl o, tl p, tl op)
-{ TL_RT
-  tl t;
-  if ( o == tl_nil ) { fputs("()", p); return p; }
-  if ( o == tl_f ) { fputs("#f", p); return p; }
-  if ( o == tl_t ) { fputs("#t", p); return p; }
-  if ( o == tl_v ) { fputs("#<void>", p); return p; }
-  t = tl_type(o);
-  if ( t == tl_t_fixnum )
-    return tl_fixnum_write(o, p);
-  if ( t == tl_t_string )
-    return (op != tl_nil ? tl_string_write : tl_string_display)(o, p);
-  if ( t == tl_t_symbol )
-    return tl_symbol_write(o, p);
-  if ( t == tl_t_character )
-    { fprintf(FP, "#\\%c", tl_C(o)); return p; }
-  if ( t == tl_t_pair )
-    return tl_pair_write(o, p, op);
-  if ( t == tl_t_type )
-    return tl_type_write(o, p);
-  if ( t == tl_t_prim )
-    return tl_prim_write(o, p);
-  if ( t == tl_t_closure )
-    return tl_closure_write(o, p);
-  if ( t == tl_t_thread )
-    return tl_thread_write(o, p);
-  return tl_call(tl_s_tl_object_write, 3, o, p, op);
-}
-tl tl_display(tl o, tl p) { return tl_write_2(o, p, (tl) 0); }
-tl tl_write(tl o, tl p) { return tl_write_2(o, p, (tl) 1); }
 #undef FP
+
+tl tl_display(tl o, tl p) { TL_RT return tl_call(tl_s_tl_object_write, 3, o, p, tl_s_display); }
+tl tl_write(tl o, tl p)   { TL_RT return tl_call(tl_s_tl_object_write, 3, o, p, tl_s_write); }
 
 tl tl_bind(tl vars, tl args, tl env)
 { TL_RT
@@ -1119,7 +1020,7 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
-  P(tl_m_symbol); P(tl_make_symbol); P(tl_symbol_write);
+  P(tl_m_symbol); P(tl_make_symbol); // P(tl_symbol_write);
   P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
@@ -1128,7 +1029,8 @@ tl tl_stdenv(tl env)
   P(tl_symbols);
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
-  P(tl_read); P(tl_write_2); P(tl_object_write);
+  P(tl_port__write); P(tl_port__read);
+  P(tl_read); P(tl_object_write); P(tl_fixnum_write); P(tl_character_write); // P(tl_write_2);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup); P(GC_dump);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(tl_memcmp);
