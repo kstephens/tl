@@ -456,7 +456,7 @@ tl tl_m_cell(tl v)
 tl tl_get_cell(tl c)       { return *(tl*)c; }
 tl tl_set_cell(tl c, tl v) { return *(tl*)c = v; }
 
-#define FP ((FILE*)p)
+#define FP (*(FILE**)p)
 tl tl_port__write(tl p, tl s, tl l)
 {
   fwrite(tl_S(s), tl_I(l), 1, FP);
@@ -1034,7 +1034,7 @@ tl tl_repl(tl env, tl in, tl out, tl prompt)
 { TL_RT
   tl expr, result = tl_eos;
  again:
-  if ( prompt ) fputs("> ", (FILE*)prompt);
+  if ( prompt ) fputs("> ", *(FILE**)prompt);
   if ( (expr = tl_read(in)) != tl_eos ) {
     result = tl_eval_print(expr, env, out);
     tl_define_here(tl__s("*repl-expr*"), expr, env);
@@ -1071,7 +1071,7 @@ tl tl_load(tl env, const char *name)
     name = buf;
   }
   if ( (fp = fopen(name, "r")) ) {
-    tl result = tl_repl(env, fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0); 
+    tl result = tl_repl(env, &fp, getenv("TL_BOOT_DEBUG") ? stderr : 0, 0);
     fclose(fp);
     return result;
   } else
@@ -1190,7 +1190,7 @@ int main(int argc, char **argv)
 #define READ_DECL tl tl_read(tl stream)
 #define READ_STATE TL_RT
 #define READ_CALL() tl_read(stream)
-#define FP(stream) ((FILE*)stream)
+#define FP(stream) (*(FILE**)stream)
 #define GETC(stream) getc(FP(stream))
 #define UNGETC(stream,c) ungetc(c, FP(stream))
 #define EQ(X,Y) ((X) == (Y))
