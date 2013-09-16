@@ -1020,7 +1020,7 @@ tl tl_stdenv(tl env)
   P(tl_type_cons); P(tl_cons);
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
-  P(tl_m_symbol); P(tl_make_symbol); // P(tl_symbol_write);
+  P(tl_m_symbol); P(tl_make_symbol);
   P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
@@ -1030,7 +1030,7 @@ tl tl_stdenv(tl env)
   P(fopen); P(fclose); P(fflush); P(fprintf); P(fputs); P(fputc); P(fgetc); P(fseek);
   P(access); P(fdopen); P(fileno); P(isatty), P(ttyname); // P(ttyslot);
   P(tl_port__write); P(tl_port__read);
-  P(tl_read); P(tl_object_write); P(tl_fixnum_write); P(tl_character_write); // P(tl_write_2);
+  P(tl_read); P(tl_object_write); P(tl_fixnum_write); P(tl_character_write);
   P(GC_malloc); P(GC_realloc); P(GC_gcollect); P(GC_register_finalizer); P(GC_invoke_finalizers); P(GC_strdup); P(GC_dump);
   P(GC_malloc_atomic); P(GC_general_register_disappearing_link);
   P(strlen); P(strcpy); P(memset); P(memcpy); P(tl_memcmp);
