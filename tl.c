@@ -61,7 +61,12 @@ tl* tl_rt_thread()
   }
   return tlp;
 }
+tl tl_rt_thread_clear()
+{
+  ASSERT_ZERO(pthread_setspecific(tl_rt_thread_key, 0)); return 0;
+}
 #define TL_RT tl *_tl_thr_ = 0;
+#define TL_RT_CLEAR _tl_thr_ = tl_rt_thread_clear();
 #define _tl_thr (_tl_thr_ ? _tl_thr_ : (_tl_thr_ = tl_rt_thread()))
 #define tl_rt  (_tl_thr[0])
 #define tl_pthread (_tl_thr[1])
@@ -71,10 +76,11 @@ tl* tl_rt_thread()
 static void tl_init_th()
 {
 }
-#define TL_RT
 tl tl_rt; // runtime.
 tl tl_env; // current environment.
 tl tl_top_level_env;
+#define TL_RT
+#define TL_RT_CLEAR
 #endif
 
 FILE *_tl_stdin, *_tl_stdout, *_tl_stderr;
@@ -1089,7 +1095,7 @@ int main(int argc, char **argv)
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   _tl_main(argc, argv);
-  tl_env = tl_nil;
+  tl_rt = 0; tl_env = 0; tl_top_level_env = 0; TL_RT_CLEAR;
   GC_gcollect();
   GC_invoke_finalizers();
   return 0;
