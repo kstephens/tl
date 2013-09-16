@@ -459,8 +459,8 @@ tl tl_m_env(size_t size)
 
 tl tl_m_cell(tl v)
 { TL_RT
-  tl *o = tl_allocate(tl_t_cell, sizeof(tl) * 1);
-  o[0] = v;
+  tl *o = tl_allocate(tl_t_cell, sizeof(*o));
+  *o = v;
   return o;
 }
 tl tl_get_cell(tl c)       { return *(tl*)c; }
