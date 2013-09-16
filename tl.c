@@ -284,9 +284,9 @@ tl tl_m_type(tl name)
   // Note: this layout is the same as an environment cons.
   o[0] = o[1] = tl_nil; // ((names . values ) . parent)
   o[4] = name;
-#define tl_type_name(x) ((char*) tl_iv(x, 4))
   return o;
 }
+tl tl_type_name(tl x) { return tl_iv(x, 4); }
 
 tl tl_set_type(tl o, tl t) { tl_t_(o) = t; return o; }
 
@@ -1102,7 +1102,7 @@ tl tl_stdenv(tl env)
 #define P(N) Pf(N, N)
   P(tl_allocate);
   P(tl_m_runtime); P(tl_runtime); P(tl_set_runtime); P(tl_get_env); P(tl_get_top_level_env);
-  P(tl_m_type); P(tl_type); P(tl_set_type);
+  P(tl_m_type); P(tl_type); P(tl_type_name); P(tl_set_type);
   P(tl_m_prim); P(tl_prim_named); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
   P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
