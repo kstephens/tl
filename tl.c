@@ -563,8 +563,7 @@ tl tl_thread_write(tl o, tl p)
 tl tl_write_2(tl o, tl p, tl op)
 { TL_RT
   tl t;
-  if ( o == tl_nil )
-    return tl_pair_write(o, p, op);
+  if ( o == tl_nil ) { fputs("()", p); return p; }
   if ( o == tl_f ) { fputs("#f", p); return p; }
   if ( o == tl_t ) { fputs("#t", p); return p; }
   if ( o == tl_v ) { fputs("#<void>", p); return p; }
