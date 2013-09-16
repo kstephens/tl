@@ -34,10 +34,10 @@
   (process-args (cdr *command-line*))
   (if (null? *command-line-prog-files*) (set! *command-line-prog-files* '("-p")))
 
-  (map (lambda (file)
-              ;;(display "TL: loading ")(write file)(newline)
+  (for-each (lambda (file)
+              ;; (display "TL: loading ")(write file)(newline)
               (load file)) *command-line-load-files*)
-  (map
+  (for-each
     (lambda (file)
       (if (string=? file "-p")
         (begin
