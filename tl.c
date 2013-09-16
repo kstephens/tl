@@ -870,7 +870,9 @@ tl tl_eval(tl exp, tl env)
   else if ( (r = cdr(r)) == tl_nil )
     val = tl_FP(val,tl,(tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))));
   else if ( (r = cdr(r)) == tl_nil )
-    val = tl_FP(val,tl,(tl,tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))), car(cdr(cdr(cddr(args)))));
+    val = tl_FP(val,tl,(tl,tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))), car(cddr(cddr(args))));
+  else if ( (r = cdr(r)) == tl_nil )
+    val = tl_FP(val,tl,(tl,tl,tl,tl,tl,tl))(car(args), cadr(args), car(cddr(args)), car(cdr(cddr(args))), car(cddr(cddr(args))), car(cdr(cddr(cddr(args)))));
   else
     tl_error("too many args", val);
   }
