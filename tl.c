@@ -352,8 +352,8 @@ tl tl_type_cons(tl t, tl a, tl d)
 #define cdr_(o) ((tl*) (o))[1]
 #define car(o)car_(o)
 #define cdr(o)cdr_(o)
-  car(o) = a;
-  cdr(o) = d;
+  car_(o) = a;
+  cdr_(o) = d;
   return o;
 }
 
