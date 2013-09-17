@@ -1069,8 +1069,8 @@ static tl __numEqual ;
   
   (emit
    "static tl __prim_display(tl e, tl v) {
-  tl_write(v, stdout) ;
-  fprintf(stdout, \"\\n\");
+  tl_write(v, tl_stdout) ;
+  fprintf(*tl_stdout, \"\\n\");
   return v ;
 }")
   
