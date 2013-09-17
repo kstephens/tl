@@ -1095,9 +1095,10 @@ int main(int argc, char **argv)
   tl_rt = tl_m_runtime(0);
   tl_env = tl_stdenv(tl_nil);
   _tl_main(argc, argv);
-  tl_rt = 0; tl_env = 0; tl_top_level_env = 0; TL_RT_CLEAR;
   GC_gcollect();
   GC_invoke_finalizers();
+  tl_rt = 0; tl_env = 0; tl_top_level_env = 0;
+  TL_RT_CLEAR;
   return 0;
   }
 }
