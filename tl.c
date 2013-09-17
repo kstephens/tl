@@ -431,6 +431,13 @@ tl tl_fixnum_TO_string(tl o)
   return tl_m_string(GC_strdup(buf), strlen(buf));
 }
 
+tl tl_m_closure_(tl formals_body, tl env)
+{ TL_RT
+  tl *o = tl_allocate(tl_t_closure, sizeof(tl) * 3);
+  o[0] = formals_body; o[1] = env; o[2] = tl_f;
+  return o;
+}
+
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
@@ -548,6 +555,8 @@ tl tl_define_here(tl var, tl val, tl env)
     car(slot) = val;
   else
     tl_let(var, val, env);
+  if ( tl_type(val) == tl_t_closure && ! tl_B(tl_iv(val, 2)) )
+    tl_iv(val, 2) = var;
   return var;
 }
 
@@ -631,7 +640,7 @@ tl tl_eval(tl exp, tl env)
   L(self); val = exp; G(rtn);
 
   L(proc);
-  val = tl_type_cons(tl_t_closure, cdr(exp), env); 
+  val = tl_m_closure_(cdr(exp), env);
   G(rtn);
   
   L(if1);

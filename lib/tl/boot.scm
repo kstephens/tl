@@ -67,6 +67,8 @@
   (tl_s (tl_get prim 2)))
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
+(define (closure->name x)
+  (tl_s (tl_get x 2)))
 (define (procedure? x)
   (if (primitive? x) #t (closure? x)))
 
@@ -391,6 +393,8 @@
 (%object-writer <closure>
   (lambda (o p op)
     (fprintf (->FILE* p) (tl_S "#<%s @%p ") (tl_type_name (tl_type o)) o)
+    (tl_object_write (tl_get o 2) p op)
+    (tl_string_display " " p)
     (tl_object_write (car (car o)) p op)
     (tl_string_display " >" p)
     p))
