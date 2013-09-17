@@ -434,7 +434,7 @@ tl tl_fixnum_TO_string(tl o)
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-  o[0] = f; o[1] = (tl) name; o[2] = tl_nil;
+  o[0] = f; o[1] = tl_nil; o[2] = (tl) name;
   tl_prim_list = tl_cons(o, tl_prim_list);
   return o;
 }
@@ -444,7 +444,7 @@ tl tl_prim_named(const char *name)
   tl l = tl_prim_list;
   while ( l != tl_nil ) {
     tl p = tl_car(l);
-    if ( strcmp(name, tl_iv(p, 1)) == 0 )
+    if ( strcmp(name, tl_iv(p, 2)) == 0 )
       return p;
     l = tl_cdr(l);
   }
@@ -454,7 +454,7 @@ tl tl_prim_named(const char *name)
 tl tl_m_closure(void *f, void *e)
 { TL_RT
   tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-  o[0] = f; o[1] = (tl) ""; o[2] = e;
+  o[0] = f; o[1] = e; o[2] = (tl) "";
   return o;
 }
 
