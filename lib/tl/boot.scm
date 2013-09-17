@@ -1,12 +1,18 @@
-#|
-;; Basic test.
-((lambda (a b) (tl_cons a b)) 1 2) 
-(let ((a 1) (b 2)) (tl_cons a b))  ;; test
-(let ((a 1) (b 2))
-  (let ((c (tl_cons a b)))
-    c))
-(tl_eval_trace_ 0)
-|#
+;; Bootstrap Scheme environment in tl.c interpreter.
+;;
+;; Most of the definitions below are not type-safe.
+;;
+;; It depends on the following syntax primitives:
+;;
+;;   (define /name/ /value/)
+;;   (define (/name/ . /formals/) . /body/)
+;;   (set! /name/ /value/)
+;;   (lambda /formals/ . /body/)
+;;   (let /names-values/ . /body/)
+;;   (if /test/ ...)
+;;   (begin . /body/)
+;;   (quote /literal/)
+;;
 
 (define (%void . x) tl_v)
 (define %unspec tl_v)
