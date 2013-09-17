@@ -69,12 +69,11 @@
 
 (define <primitive>    (tl_type tl_car))
 (define (primitive? x) (eq? (tl_type x) <primitive>))
-(define (primitive->name prim)
-  (tl_s (tl_get prim 2)))
+(define (primitive->name x)
+  (tl_s (tl_get x 2)))
 (define <closure>      (tl_type primitive?))
 (define (closure? x)   (eq? (tl_type x) <closure>))
-(define (closure->name x)
-  (tl_s (tl_get x 2)))
+(define closure->name primitive->name)
 (define (procedure? x)
   (if (primitive? x) #t (closure? x)))
 
