@@ -94,6 +94,7 @@
       (%register-finalizer
         (%make-port fp (list f m))
         close-port))))
+(define (open-input-file f)  (open-file f "r"))
 (define (open-output-file f) (open-file f "w+"))
 (define (close-port p)
   ;; (display "close-port ")(write p)(newline)
