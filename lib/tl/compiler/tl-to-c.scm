@@ -699,6 +699,7 @@
 (define (get-environment id)
   (cdr (assv id environments)))
 (define (closure-convert exp)
+  (display "/* closure-convert: " tl_stderr)(write exp tl_stderr)(display " */" tl_stderr)(newline tl_stderr)
   (cond
     ((quote? exp)        exp)
     ((const? exp)        exp)
@@ -745,6 +746,7 @@
      "  return 0;\n"
      " }\n")))
 (define (c-compile-exp exp append-preamble)
+  (display "/* c-compile-exp: " tl_stderr)(write exp tl_stderr)(display " */" tl_stderr)(newline tl_stderr)
   (cond
     ; Core forms:
     ((quote? exp)       (c-compile-const (quote->value exp)))
@@ -805,6 +807,7 @@
            (string-append ",\n  " (c-compile-body-exprs (cdr body) append-preamble))
            ""))))
 (define (c-compile-app exp append-preamble)
+  (display "/* c-compile-app: " tl_stderr)(write exp tl_stderr)(display " */" tl_stderr)(newline tl_stderr)
   (let ((prim (prim? (app->fun exp))))
     (if prim
       (c-compile-app-prim exp prim append-preamble)
@@ -923,6 +926,7 @@
                        "  return " body " ;\n"
                        "}\n")))))
 (define (c-compile-env-struct env)
+  (display "/* c-compile-env-struct: " tl_stderr)(write env tl_stderr)(display " */" tl_stderr)(newline tl_stderr)
   (let* ((id     (cadr env))
          (fields (car env))
          (fields-mangle (map mangle fields))
