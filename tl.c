@@ -560,7 +560,7 @@ tl tl_define_here(tl var, tl val, tl env)
   return var;
 }
 
-tl tl_define(tl var, tl val, tl env)
+tl tl_define(tl var, tl val)
 { TL_RT
   return tl_define_here(var, val, tl_top_level_env);
 }
@@ -808,7 +808,7 @@ tl tl_eval(tl exp, tl env)
   L(define_);
   pop(exp); pop(env);
   fprintf(*tl_stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
-  tl_define(exp, val, env);
+  tl_define(exp, val);
   val = exp;
   G(rtn);
 
