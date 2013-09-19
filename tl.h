@@ -15,6 +15,8 @@
 #define GC_THREADS
 #endif
 
+#define tl_malloc(X) GC_malloc(X)
+
 typedef void *tl;
 typedef size_t tlw;
 typedef ssize_t tlsw;

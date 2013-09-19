@@ -1002,6 +1002,8 @@ tl tl_load(tl env, const char *name)
     return tl_error("Cannot load %s", tl_rt, name);
 }
 
+#include "jit.h"
+
 static tl tl_memcmp(tl a, tl b, tl as, tl bs)
 {
   int cmp = memcmp(a, b, tl_I(as) < tl_I(bs) ? tl_I(as) : tl_I(bs));
