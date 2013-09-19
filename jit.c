@@ -19,8 +19,10 @@ tl tl_jit_env(tl env)
 #define CT(TYPE,NAME)                                    \
   D(TYPE, tl_t_##NAME = tl_m_type(#TYPE));               \
   P(tl_##NAME); P(tl_##NAME##_); P(tl_##NAME##_A);       \
+  P(tl_##NAME##_FORCE);                                  \
   D(TYPE, tl_t_##NAME##P = tl_m_type(#TYPE"*"));         \
-  P(tl_##NAME##P); P(tl_##NAME##P_);                     \
+  P(tl_##NAME##P); P(tl_##NAME##P_); \
+  P(tl_##NAME##P_FORCE);                                 \
   P(tl_##NAME##Pv);                                      \
   P(tl_##NAME##P_R); P(tl_##NAME##P_W);
 #include "jit_types.h"
