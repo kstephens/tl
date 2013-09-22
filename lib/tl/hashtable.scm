@@ -65,7 +65,7 @@
         h))
     ((vector? x)
       (let ((h 0))
-        (string-each (lambda (e) (set! h (tl_hash_mix h (equal?-hash e)))) x)
+        (vector-each (lambda (e) (set! h (tl_hash_mix h (equal?-hash e)))) x)
         h))
     ((pair? x)
       (tl_hash_mix (equal?-hash (car x)) (equal?-hash (cdr x))))
