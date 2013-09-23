@@ -586,19 +586,53 @@ tl tl_eqvQ(tl x, tl y)
   return tl_eqQ(x, y);
 }
 
-tl tl_hash_mix(tl _x, tl _y)
+static int rc4r(unsigned char *s)
 {
-  tlw h = (tlw) _x, y = (tlw) _y;
-  unsigned char *s = &y;
-  for ( int i = 0; i < sizeof(h); ++ i ) {
-    tlw g;
-    h = (h << 4) + *s++;
-    if ( (g = h & ((~ (tlw) 0) << (BITS_PER_WORD - 4))) != 0 )
-      h = (h ^ (g >> (BITS_PER_WORD - 8))) ^ g;
-  }
-  return tl_i(h >> 2);
+  int temp1, temp2;
+#define x s[0x100]
+#define y s[0x101]
+  x ++;
+  y += s[x];
+  temp1 = s[x];
+  s[x] = temp2 = s[y];
+  s[y] = temp1;
+  return s[(temp1 + temp2) & 0xff];
 }
-tl tl_eqQ_hash(tl x)  { return tl_hash_mix(0, x); }
+
+tl tl_hash_mix(tl _a, tl _b)
+{
+  tlw key[2] = { (tlw) _a, _b }, v = 0;
+
+  // Setup RC4 random state from { a, b }.
+  unsigned char s[0x102];
+  for ( int i = 0; i < 0x100; ++ i ) s[i] = i;
+  x = y = 0;
+  {
+    int i1 = 0; int i2 = 0;
+    for ( int i = 0; i < 0x100; ++ i ) {
+      int ch = ((unsigned char*) &key)[i1];
+      int temp4 = (ch + s[i] + i2) & 255;
+      int temp1 = s[temp4];
+      int temp2 = s[i];
+      int temp3 = (i1 + 1) % sizeof(key);
+      s[i] = temp1;
+      s[i2] = temp2;
+      i1 = temp3;
+      i2 = temp4;
+    }
+  }
+
+  // Extract bytes from RC4 state.
+  for ( int i = 0; i < sizeof(v); ++ i ) {
+    v <<= 8;
+    v ^= rc4r(s);
+  }
+  return tl_i(v >> 2);
+}
+#undef x
+#undef y
+
+tl tl_eqQ_hash(tl x)  { return tl_hash_mix(x, 0xab871f83); }
 tl tl_eqvQ_hash(tl x) { return tl_eqQ_hash(x); }
 
 tl tl_value(tl var, tl env)
