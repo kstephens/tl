@@ -586,53 +586,29 @@ tl tl_eqvQ(tl x, tl y)
   return tl_eqQ(x, y);
 }
 
-static int rc4r(unsigned char *s)
+// http://en.wikipedia.org/wiki/Jenkins_hash_function
+static tlw jenkins_hash(tlw hash, unsigned char *key, size_t len)
 {
-  int temp1, temp2;
-#define x s[0x100]
-#define y s[0x101]
-  x ++;
-  y += s[x];
-  temp1 = s[x];
-  s[x] = temp2 = s[y];
-  s[y] = temp1;
-  return s[(temp1 + temp2) & 0xff];
+  for ( size_t i = 0; i < len; ++ i ) {
+    hash += key[i];
+    hash += (hash << 10);
+    hash ^= (hash >> 6);
+  }
+  hash += (hash << 3);
+  hash ^= (hash >> 11);
+  hash += (hash << 15);
+  return hash;
 }
 
-tl tl_hash_mix(tl _a, tl _b)
+tl tl_hash_mix(tl a, tl b)
 {
-  tlw key[2] = { (tlw) _a, _b }, v = 0;
-
-  // Setup RC4 random state from { a, b }.
-  unsigned char s[0x102];
-  for ( int i = 0; i < 0x100; ++ i ) s[i] = i;
-  x = y = 0;
-  {
-    int i1 = 0; int i2 = 0;
-    for ( int i = 0; i < 0x100; ++ i ) {
-      int ch = ((unsigned char*) &key)[i1];
-      int temp4 = (ch + s[i] + i2) & 255;
-      int temp1 = s[temp4];
-      int temp2 = s[i];
-      int temp3 = (i1 + 1) % sizeof(key);
-      s[i] = temp1;
-      s[i2] = temp2;
-      i1 = temp3;
-      i2 = temp4;
-    }
-  }
-
-  // Extract bytes from RC4 state.
-  for ( int i = 0; i < sizeof(v); ++ i ) {
-    v <<= 8;
-    v ^= rc4r(s);
-  }
-  return tl_i(v >> 2);
+  tlw r = (tlw) a + (tlw) b;
+  r = jenkins_hash(r, (void*) &a, sizeof(a));
+  r = jenkins_hash(r, (void*) &b, sizeof(b));
+  return tl_i(r >> 2);
 }
-#undef x
-#undef y
 
-tl tl_eqQ_hash(tl x)  { return tl_hash_mix(x, 0xab871f83); }
+tl tl_eqQ_hash(tl x)  { return tl_hash_mix(x, (tl) 0xab871f83); }
 tl tl_eqvQ_hash(tl x) { return tl_eqQ_hash(x); }
 
 tl tl_value(tl var, tl env)
