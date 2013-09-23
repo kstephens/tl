@@ -588,14 +588,17 @@ tl tl_eqvQ(tl x, tl y)
 
 tl tl_hash_mix(tl _x, tl _y)
 {
-  tlw x = (tlw) _x, y = (tlw) _y;
-#define BITS_PER_WORD (sizeof(tlw) * 8)
-  x ^= (tlw) 0xfdb97531;
-  x ^= (x << (BITS_PER_WORD - 3)) ^ (x >> 3) ^ y;
-  x ^= (x << (BITS_PER_WORD - 5)) ^ (x >> 5) ^ ~y << 7;
-  return tl_i(x >> 2);
+  tlw h = (tlw) _x, y = (tlw) _y;
+  unsigned char *s = &y;
+  for ( int i = 0; i < sizeof(h); ++ i ) {
+    tlw g;
+    h = (h << 4) + *s++;
+    if ( (g = h & ((~ (tlw) 0) << (BITS_PER_WORD - 4))) != 0 )
+      h = (h ^ (g >> (BITS_PER_WORD - 8))) ^ g;
+  }
+  return tl_i(h >> 2);
 }
-tl tl_eqQ_hash(tl x) { return tl_hash_mix(x, (tl) 0xeca86420); }
+tl tl_eqQ_hash(tl x)  { return tl_hash_mix(0, x); }
 tl tl_eqvQ_hash(tl x) { return tl_eqQ_hash(x); }
 
 tl tl_value(tl var, tl env)
