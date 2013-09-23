@@ -140,7 +140,8 @@
 (define (zero? x) (= x 0))
 (define (min a b) (if (< a b) a b))
 (define (sign a) (if (negative? a) -1 (if (positive? a) 1 0)))
-(define number->string tl_fixnum_TO_string)
+(define (number->string n . radix)
+  (tl_fixnum_TO_string n (if (null? radix) 10 (car radix))))
 (define (string->number s . radix)
   (tl_string_TO_number s (tl_I (if (null? radix) 10 (car radix)))))
 

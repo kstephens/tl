@@ -424,11 +424,24 @@ tl tl_string_TO_number(tl o, int radix)
   return tl_f;
 }
 
-tl tl_fixnum_TO_string(tl o)
+tl tl_fixnum_TO_string(tl _n, tl _radix)
 {
-  char buf[64];
-  snprintf(buf, sizeof(buf), "%lld", (long long) tl_I(o));
-  return tl_m_string(GC_strdup(buf), strlen(buf));
+#define BITS_PER_WORD (sizeof(tlw) * 8)
+  char buf[BITS_PER_WORD + 2], *s = buf + sizeof(buf);
+  int radix = tl_I(_radix);
+  tlsw n = tl_I(_n);
+  int neg = n < 0;
+  if ( neg ) n = - n;
+  if ( radix <  2 ) radix = 10;
+  if ( radix > 64 ) radix = 64;
+  *(-- s) = 0;
+  if ( ! n ) *(-- s) = '0';
+  while ( n ) {
+    *(-- s) = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/"[n % radix];
+    n /= radix;
+  }
+  if ( neg ) *(-- s) = '-';
+  return tl_m_string(GC_strdup(s), strlen(s));
 }
 
 tl tl_m_closure_(tl formals_body, tl env)
