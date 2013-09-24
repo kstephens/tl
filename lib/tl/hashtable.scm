@@ -28,7 +28,7 @@
         (vector-set! ht 4 new-length)
         (if (>= new-length (hashtable-size ht))
           (begin
-            (hashtable-set-size! ht (/ (* (hashtable-size ht) 2) 3))
+            (hashtable-set-size! ht (+ (/ (* (hashtable-size ht) 2) 3) 1))
             (hashtable-set!-hash ht key value h))
           (vector-set! v i (cons (cons key value) slot)))))))
 (define (%asseq p x l)
