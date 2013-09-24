@@ -39,9 +39,9 @@
   (let ((old-vector (hashtable-vector ht)))
     (vector-set! ht 1 (make-vector size '()))
     (vector-set! ht 4 0)
-    (hashtable-vector-each old-vector
+    (hashtable-vector-each
       (lambda (kv)
-        (hashtable-set! ht (car kv) (cdr kv)))))
+        (hashtable-set! ht (car kv) (cdr kv))) old-vector))
   ht)
 (define (hashtable-each proc ht)
   (hashtable-vector-each proc (hashtable-vector ht)))
