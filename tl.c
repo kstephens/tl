@@ -630,7 +630,10 @@ tl tl_setE(tl var, tl val, tl env)
 }
 
 static int _tl_eval_debug;
-tl tl_eval_debug(tl val) { _tl_eval_debug = tl_B(val) ? 1 : 0; return val; }
+tl tl_eval_debug(tl val) { _tl_eval_debug = tl_I(val); return val; }
+
+static int _tl_define_debug;
+tl tl_define_debug(tl val) { _tl_define_debug = tl_I(val); return val; }
 
 tl tl_eval(tl exp, tl env)
 { TL_RT
@@ -833,7 +836,7 @@ tl tl_eval(tl exp, tl env)
 
   L(define_);
   pop(exp); pop(env);
-  fprintf(*tl_stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
+  if ( _tl_define_debug ) fprintf(*tl_stderr, "(define %s ...)\n", (char*) tl_iv(tl_iv(exp, 0), 0));
   tl_define(exp, val);
   val = exp;
   G(rtn);
@@ -1063,7 +1066,7 @@ tl tl_stdenv(tl env)
   P(tl_car); P(tl_cdr); P(tl_set_car); P(tl_set_cdr);
   P(tl_string_TO_number); P(tl_fixnum_TO_string);
   P(tl_m_symbol); P(tl_make_symbol);
-  P(tl_eval); P(tl_eval_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
+  P(tl_eval); P(tl_eval_debug); P(tl_define_debug); P(tl_macro_expand); P(tl_eval_top_level); P(tl_repl); P(tl_load);
   P(tl_error); P(tl__error);
   P(tl_define); P(tl_define_here); P(tl_let); P(tl_setE); P(tl_lookup);
   P(tl_apply); tl_p_apply = _v; P(tl_apply_2);
