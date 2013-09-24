@@ -12,3 +12,17 @@
       (%vector-each p v (+ i 1)))))
 (define (vector-each p v) (%vector-each p v 0))
 
+(define (list-each p l)
+  (if (null? l) #f
+    (begin
+      (p (car l))
+      (list-each p (cdr l)))))
+
+(define (each p x)
+  (cond
+    ((null? l)   (list-each p l))
+    ((pair? l)   (list-each p l))
+    ((vector? l) (vector-each p l))
+    ((string? l) (string-each p l))
+    (else        (error "each" x))))
+
