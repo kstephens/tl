@@ -43,9 +43,9 @@
       (lambda (kv)
         (hashtable-set! ht (car kv) (cdr kv)))))
   ht)
-(define (hashtable-each ht proc)
-  (hashtable-vector-each (hashtable-vector ht) proc))
-(define (hashtable-vector-each v proc)
+(define (hashtable-each proc ht)
+  (hashtable-vector-each proc (hashtable-vector ht)))
+(define (hashtable-vector-each proc v)
   (vector-each 
     (lambda (slot) (for-each proc slot))
     v))
