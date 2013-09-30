@@ -431,17 +431,23 @@ tl tl_fixnum_TO_string(tl o)
   return tl_m_string(GC_strdup(buf), strlen(buf));
 }
 
+// Applicables:
+//  0 - C function
+//  1 - environment
+//  2 - name
+//  3 - formals
+//  4 - body
 tl tl_m_closure_(tl formals_body, tl env)
 { TL_RT
-  tl *o = tl_allocate(tl_t_closure, sizeof(tl) * 3);
-  o[0] = formals_body; o[1] = env; o[2] = tl_f;
+  tl *o = tl_allocate(tl_t_closure, sizeof(tl) * 5);
+  o[0] = 0; o[1] = env; o[2] = tl_f; o[3] = car(formals_body); o[4] = cdr(formals_body);
   return o;
 }
 
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-  o[0] = f; o[1] = tl_nil; o[2] = (tl) name;
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 5);
+  o[0] = f; o[1] = tl_nil; o[2] = (tl) name; o[3] = o[4] = 0;
   tl_prim_list = tl_cons(o, tl_prim_list);
   return o;
 }
@@ -460,8 +466,8 @@ tl tl_prim_named(const char *name)
 
 tl tl_m_closure(void *f, void *e)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 3);
-  o[0] = f; o[1] = e; o[2] = (tl) "";
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 5);
+  o[0] = f; o[1] = e; o[2] = (tl) ""; o[3] = o[4] = 0;
   return o;
 }
 
@@ -716,9 +722,8 @@ tl tl_eval(tl exp, tl env)
 
   // L(callclosure);
   if ( tl_type(val) != tl_t_closure ) tl_error("Cannot apply", val);
-  exp = car(val); // = (formals . body)
-  env = tl_bind(car(exp), args, cdr(val));
-  exp = cdr(exp); // body
+  env = tl_bind(tl_closure_formals(val), args, tl_closure_env(val));
+  exp = tl_closure_body(val);
   val = tl_v;
 
   L(evlist);
@@ -1031,7 +1036,8 @@ tl tl_stdenv(tl env)
   P(tl_m_type); P(tl_type); P(tl_type_name); P(tl_set_type);
   P(tl_m_prim); P(tl_prim_named); P(tl_m_cell); P(tl_get_cell); P(tl_set_cell);
   P(tl_i); P(tl_I); P(tl_c); P(tl_C); P(tl_b); P(tl_B);
-  P(tl_t_); P(tl_iv); P(tl_closure_formals); P(tl_closure_body); P(tl_closure_env);
+  P(tl_t_); P(tl_iv);
+  P(tl_closure_proc); P(tl_closure_env); P(tl_closure_name); P(tl_closure_formals); P(tl_closure_body); 
   P(tl_get); P(tl_set);
   P(tl_eqQ); P(tl_eqvQ); P(tl_eqQ_hash); P(tl_eqvQ_hash); P(tl_hash_mix);
   P(tl_type_cons); P(tl_cons);

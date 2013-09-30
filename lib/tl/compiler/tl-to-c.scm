@@ -16,7 +16,7 @@
 (load "tl/string.scm")
 (define closure->formals tl_closure_formals)
 (define closure->body    tl_closure_body)
-(define closure->environ tl_cdr) ;; see L(proc) in tl_eval().
+(define closure->environ tl_closure_env) ;; see L(proc) in tl_eval().
 
 ;; TL top-level environment.
 (define tl-top-level-env (tl_get_top_level_env))
