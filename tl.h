@@ -56,9 +56,11 @@ static inline tl tl_t_(tl o) { return tl_iv(o, -1); }
 
 #define tl_FP(o,r,p) ((r(*)p) tl_iv(o, 0))
 
-static inline tl tl_closure_formals(tl o) { return tl_iv(tl_iv(o, 0), 0); }
-static inline tl tl_closure_body(tl o)    { return tl_iv(tl_iv(o, 0), 1); }
-static inline tl tl_closure_env(tl o)     { return tl_iv(o, 2); }
+static inline tl tl_closure_proc(tl o)    { return tl_iv(o, 0); }
+static inline tl tl_closure_env(tl o)     { return tl_iv(o, 1); }
+static inline tl tl_closure_name(tl o)    { return tl_iv(o, 2); }
+static inline tl tl_closure_formals(tl o) { return tl_iv(o, 3); }
+static inline tl tl_closure_body(tl o)    { return tl_iv(o, 4); }
 
 #define tl_MARK ((tl) (tlsw) -2)
 
