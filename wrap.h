@@ -54,8 +54,8 @@
 #define WRAP_CT1(TYPE,NAME)                                             \
   static tl tl_t_##NAME;                                                \
   struct tl_ts_##NAME {                                                 \
-    tl size;                                                            \
     TYPE value;                                                         \
+    tl size;                                                            \
   };                                                                    \
   static tl tl_##NAME(TYPE value) {                                     \
     struct tl_ts_##NAME *self = tl_allocate(tl_t_##NAME, sizeof(*self)); \
@@ -76,8 +76,8 @@
   static tl tl_##NAME##Pv(tl count, tl value) {                         \
     size_t i;                                                           \
     struct tl_ts_##NAME##P *self = tl_allocate(tl_t_##NAME##P, sizeof(*self)); \
-    self->size = count;                                                 \
     self->value = GC_malloc(sizeof(self->value[0]) * tl_I(count));      \
+    self->size = count;                                                 \
     for ( i = 0; i < tl_I(count); ++ i ) self->value[i] = tl_##NAME##_(value); \
     return self;                                                        \
   }                                                                     \
