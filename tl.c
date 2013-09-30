@@ -722,6 +722,7 @@ tl tl_eval(tl exp, tl env)
 
   // L(callclosure);
   if ( tl_type(val) != tl_t_closure ) tl_error("Cannot apply", val);
+  if ( tl_closure_proc(val) ) G(callprim);
   env = tl_bind(tl_closure_formals(val), args, tl_closure_env(val));
   exp = tl_closure_body(val);
   val = tl_v;
