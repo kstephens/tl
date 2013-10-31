@@ -40,6 +40,14 @@
 (define (lambda->formals x) (cadr x))
 (define (lambda->body x)    (cddr x))
 
+(define (prim? x) (primitive? x))
+(define (primitive->jit-proc c) (tl_get c 5))
+
+(define (prim-app? x) (and (pair? x) (primitive? (car x))))
+(define (prim-app->prim x) (car x))
+
+(define (closure-set-jit-proc! c p) (tl_set c 5 p))
+
 (define (jit-lambda exp env)
   (let* (
           (nparams 0)
@@ -70,6 +78,10 @@
           (begin
             (jit-expr (car exps) jit-other)
             (jit-body (cdr exps) emit))))
+      (define (jit-prim-app exp emit)
+        (if (prim->jit-proc (car exp))
+          (emit (apply (prim->jit-proc (car exp)) (cons function (map (lambda (e) (jit-expr e jit-other)) (cdr exp)))))
+          (jit-app exp emit)))
       (define (jit-expr exp emit)
         (display "jit-expr ")(write exp)(write emit)(newline)
         (case
@@ -77,6 +89,7 @@
           ((ref? exp)               (emit (jit-param exp)))
           ((quote? exp)             (emit (jit-literal (quote->value exp))))
           ((begin? exp)             (jit-body exp emit))
+          ((prim-app? exp)          (jit-prim-app exp emit))
           (else                     (emit (jit-literal exp)))))
 
       (jit-body (lambda->body exp) jit-tailpos)
@@ -91,3 +104,17 @@
         (tl_jit_context_destroy context)
         prim))))
 
+
+(define tl_tag_bits 1)
+(define-macro (foo x) x)
+(define-macro (j-tl_I x) `(tl_jit_value_create_long_constant f tl_jit_type_long (tl_jit_long_FORCE (tl_I ,x))))
+(define-macro (define-jit-inline prim lambda)
+  `(closure-set-jit-proc! ,prim ,lambda))
+(define-jit-inline tl_fixnum_ADD
+  (lambda (f x y)
+    (let ((tb (j-tl_I tl_tag_bits)))
+      (tl_jit_insn_shl f
+        (tl_jit_insn_add f
+          (tl_jit_insn_shr f x tb)
+          (tl_jit_insn_shr f y tb)
+          tb)))))
