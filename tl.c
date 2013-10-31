@@ -437,17 +437,18 @@ tl tl_fixnum_TO_string(tl o)
 //  2 - name
 //  3 - formals
 //  4 - body
+//  5 - jit proc
 tl tl_m_closure_(tl formals_body, tl env)
 { TL_RT
-  tl *o = tl_allocate(tl_t_closure, sizeof(tl) * 5);
-  o[0] = 0; o[1] = env; o[2] = tl_f; o[3] = car(formals_body); o[4] = cdr(formals_body);
+  tl *o = tl_allocate(tl_t_closure, sizeof(tl) * 6);
+  o[0] = 0; o[1] = env; o[2] = tl_f; o[3] = car(formals_body); o[4] = cdr(formals_body); o[5] = tl_f;
   return o;
 }
 
 tl tl_m_prim(void *f, const char *name)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 5);
-  o[0] = f; o[1] = tl_nil; o[2] = (tl) name; o[3] = o[4] = 0;
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 6);
+  o[0] = f; o[1] = tl_nil; o[2] = (tl) name; o[3] = o[4] = o[5] = tl_f;
   tl_prim_list = tl_cons(o, tl_prim_list);
   return o;
 }
@@ -466,8 +467,8 @@ tl tl_prim_named(const char *name)
 
 tl tl_m_closure(void *f, void *e)
 { TL_RT
-  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 5);
-  o[0] = f; o[1] = e; o[2] = (tl) ""; o[3] = o[4] = 0;
+  tl *o = tl_allocate(tl_t_prim, sizeof(tl) * 6);
+  o[0] = f; o[1] = e; o[2] = (tl) ""; o[3] = o[4] = o[5] = tl_f;
   return o;
 }
 
