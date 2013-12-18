@@ -28,11 +28,12 @@
 (define (t str)  (lines str (lambda (str) (text str "Helvetica" 30 0))))
 (define (tt str) (lines str (lambda (str) (text str (cons 'bold 'modern) 30 0))))
 (define p para)
+(define (c-color x)    (colorize x (make-object color% 160 0 0)))
+(define (lisp-color x) (colorize x (make-object color% 0 160 0)))
 (define (c-code str)
-  (lines str (lambda (str) (colorize (tt str) (make-object color% 160 0 0)))))
+  (lines str (lambda (str) (c-color (tt str)))))
 (define (lisp-code str)
-  (lines str (lambda (str) (colorize (tt str) (make-object color% 0 160 0)))))
-
+  (lines str (lambda (str) (lisp-color (tt str)))))
 
 ;; (define gap-size 1.
 (define (tl-struct labels)
@@ -62,14 +63,30 @@
          gap-size)
     gap-size))))
 
+(define (next-if-interactive) 'next)
+
 ;;;;;
 
 (slide
- #:title "Bootstrapping A Programming Language"
-  (blank 50)
+ #:title "Bootstrapping a Programming Language"
+ (blank 50)
  (vc-append 0
             (t "Kurt Stephens")
-            (colorize (t "kurtstephens.com") "blue")))
+            (t "http://devdriven.com")
+            (t "http://github.com/kstephens/tl")
+            )
+ )
+
+(slide
+ #:title "Bootstrapping a Programming Language"
+ (t "... or, One's Safe Abstraction is Considered Another's Harmful Primitive.")
+ (blank 50)
+ (vc-append 0
+            (t "Kurt Stephens")
+            (t "http://devdriven.com")
+            (t "http://github.com/kstephens/tl")
+            )
+ )
 
 (slide
  #:title "Agenda"
@@ -88,49 +105,48 @@
 (slide
  #:title "Expressiveness"
  (item "Is the simplicity of an implementation of a language a measure of the language's expressiveness?")
- 'next
+ (next-if-interactive)
  (item "What about the simplicity of its meta-circular implementation?")
- 'next
+ (next-if-interactive)
  (p "Contrast:")
- 'next
+ (next-if-interactive)
  (item "Writing a C compiler in C.")
- 'next
+ (next-if-interactive)
  (item "Writing Scheme interpreter in Scheme.")
- 'next
+ (next-if-interactive)
  (item "META II."))
 
 (slide
  #:title "Onions and Snakes"
  (item "Peeling the Onion.")
- 'next
+ (next-if-interactive)
  (p "    Layers:")
- 'next
+ (next-if-interactive)
  (p "    \"There is a center, no matter how small.\"")
- 'next
+ (next-if-interactive)
  (item "Snake Eating its Tail.")
- 'next
+ (next-if-interactive)
  (p "    Meta-circular:")
- 'next
+ (next-if-interactive)
  (p "    \"Turtles all the way down.\"")
- 'next
+ (next-if-interactive)
+ (p "    \"Object O is an instance of Class C.\"")
+ (next-if-interactive)
+ (p "    \"Class C is an instance of Class.\"")
+ (next-if-interactive)
  (p "    \"Class is subclass of Object.\"")
- 'next
- (p "    \"Object is an instance of Class.\"")
- 'next
- (p "    \"Class is an instance of Class.\"")
  )
 
 (slide
  #:title "Nails through the Onion"
- 'next
  (item "Layer Zero is a subset of Layer One implemented in a lower-level language.")
- 'next
+ (next-if-interactive)
  (item "Each layer bootstraps the next.")
- 'next
+ (next-if-interactive)
  (item "One layer's safe abstraction is another layer's unsafe primitive.")
- 'next
+ (next-if-interactive)
  (item "Reuse, Cut the Snake: Pierce abstraction layers with structural or functional isomorphisms.")
- 'next
+ (next-if-interactive)
  (item "Lift and Reconnect the Snake: meta-circular redefinitions.")
  )
 
@@ -141,6 +157,13 @@
  (item "Data")
  (item "Values")
  (item "State")
+ )
+
+(slide
+ #:title "Example Language"
+  (item "http://github.com/kstephens/tl")
+  (lisp-color (item "Layer One - Scheme"))
+  (c-color    (item "Layer Zero - C"))
  )
 
 (slide
@@ -155,45 +178,71 @@
 
 (slide
  #:title "Layer One Semantic Implementation"
- (item "Evaluator - Scheme78 Statemachine Evaluator")
- (item "Closures")
+ (item "Evaluator")
  (item "Primitive Procedures")
+ (item "Closures")
  (item "Tail-recursion")
  (item "Environments")
+ )
+
+(slide
+ #:title "Evaluator"
+ (item "Written in C in Level 0.")
+ (item "Scheme78 Statemachine Evaluator based on...")
+ (next-if-interactive)
+ (t "\"AIM-514 -- Design of LISP-Based Processors")
+ (next-if-interactive)
+ (t "or, SCHEME: A Dielectric LISP")
+ (next-if-interactive)
+ (t "or, Finite Memories Considered Harmful")
+ (next-if-interactive)
+ (t "or, LAMBDA: The Ultimate Opcode\"")
+ (next-if-interactive)
+ (t "by Steele and Sussman")
  )
 
 (slide
  #:title "Primitive Procedures"
  (item "Unsafe primitives in a lower level are accessible in higher levels.")
  (item "Primitives are temporary implementations in higher levels until safe re-implementations are complete.")
- 'next
- (c-code "tl tl_car(tl pair);")
- 'next
+ (next-if-interactive)
+ (c-code "tl tl_car(tl pair); // Level Zero")
+ (next-if-interactive)
  (item "Is available as:")
- 'next
- (lisp-code "(tl_car pair)")
- 'next
+ (next-if-interactive)
+ (lisp-code "(tl_car pair)    ;; Level One")
+ (next-if-interactive)
  (item "And temporarily reused as:")
  (lisp-code "(define car tl_car)")
+ ;; (t (tt (colorize "(define car " "green") (colorize "tl_car" "red") (colorize ")" "green")))
+ )
+
+(slide
+ #:title "Closures"
+ (item "Structure:")
+ (subitem "Formal parameter list")
+ (subitem "Body")
+ (subitem "Inclosing environment")
  )
 
 (slide
  #:title "Layer Zero Data"
- (item "Layer Zero")
- (p "    Concrete Data Structures")
- 'next
- (item "Layer One")
- (p "    Abstract Data Types")
+ (item "Layer Zero/Unsafe Primitives")
+ (subitem "Concrete Data Structures")
+ (next-if-interactive)
+ (item "Layer One/Safe Abstractions")
+ (subitem "Abstract Data Types")
  )
 
 (slide
- #:title "Layer One ADTs"
- (item "Strings")
- (item "Symbols")
- (item "Integers")
- (item "Pairs")
- )
+  #:title "Layer Zero CDSs/Layer One ADTs"
+  (item "Layer Zero CDS")
+  (subitem "Values, Allocation, Layout, Access, Typing, Boxing, Tagging")
+  (item "Layer One ADTs")
+  (subitem "Strings, Symbols, Integers, Pairs")
+  )
 
+#|
 (slide
  #:title "Layer Zero CDSs"
  (item "Values")
@@ -205,16 +254,25 @@
  )
 
 (slide
+ #:title "Layer One ADTs"
+ (item "Strings")
+ (item "Symbols")
+ (item "Integers")
+ (item "Pairs")
+ )
+|#
+
+(slide
  #:title "Layer Zero Values"
  (t "Machine-level Words:")
- 'next
+ (next-if-interactive)
  (c-code "typedef void *tl;")
- 'next
+ (next-if-interactive)
  (t "Opaque and wide enough for any address.")
- 'next
+ (next-if-interactive)
  (c-code "typedef size_t tlw;")
  (c-code "typedef ssize_t tlsw;")
- 'next
+ (next-if-interactive)
  (t "Analogously sized integer values.")
  )
 
@@ -222,52 +280,36 @@
  #:title "Layer Zero Allocation"
  (item "Word-aligned allocation:")
  (c-code "tl tl_allocate(tl type, size_t size);")
- 'next
+ (next-if-interactive)
  (lisp-code "(tl_allocate type size)")
- 'next
+ (next-if-interactive)
  (tl-struct (list "type" "slot-0" "slot-1"))
 )
 
 (slide
  #:title "Layer Zero Access"
  (tl-struct (list "type" "slot-0" "slot-1"))
- 'next
+ (next-if-interactive)
  (item "Get:")
- 'next
+ (next-if-interactive)
  (c-code "tl tl_get(tl ref, tl offset);")
- 'next
+ (next-if-interactive)
  (lisp-code "(tl_get ref offset)")
- 'next
+ (next-if-interactive)
  (item "Set:")
- 'next
+ (next-if-interactive)
  (c-code "tl tl_set(tl ref, tl offset, tl value);")
- 'next
+ (next-if-interactive)
  (lisp-code "(tl_set ref offset value)")
- )
-
-(slide
- #:title "Primitive Procedures"
- (item "Unsafe primitives in a lower level are accessible in higher levels.")
- 'next
- (item "Primitives are temporary implementations in higher levels until safe re-implementations are complete.")
- 'next
- (c-code "tl tl_car(tl pair);")
- 'next
- (item "Is available as:")
- 'next
- (lisp-code "(tl_car pair)")
- 'next
- (item "And temporarily reused as:")
- (lisp-code "(define car tl_car)")
  )
 
 (slide
  #:title "Layer Zero Typing"
 (item "Distingushes an ADT's dynamic structure.")
 (item "Anchors a CDS with a well-known structure.")
-'next
+(next-if-interactive)
 (item "How?")
-'next
+(next-if-interactive)
 (p "   A CDSs with unused fields.")
 )
 
@@ -287,19 +329,20 @@
 (slide
  #:title "Tagging and Boxing"
  (item "Encode ADT type and representation in a single word.")
- 'next
+ (next-if-interactive)
  tl_box-table)
 
 (slide
  #:title "Type Decoding"
  tl_box-table
  (c-code "
-#define tl_type(v)                    \\
-  (        (v) == 0 ? tl_t_null     : \\
-    ((tlw) (v)) & 1 ? tl_t_fixnum   : \\
-                      tl_get(v, -1) )
+tl tl_type(tl v) {
+  return   v == 0 ? tl_t_null       :
+    ((tlw) v) & 1 ? tl_t_fixnum     :
+                    ((tl_v*) v)[-1] ;
+}
 ")
- 'next
+ (next-if-interactive)
  (lisp-code "(tl_type v)")
  )
 
@@ -307,11 +350,11 @@
  #:title "Layer Zero CDS"
  (item "Pair CDS Layout")
  (tl-struct (list "'<pair>" "car" "cdr"))
- 'next
+ (next-if-interactive)
  (item "Pair CDS Constructor:")
  (c-code "
 tl tl_cons(tl car, tl_cdr) {
-  tl *o = tl_allocate(tl_t_cons, sizeof(tl) * 2);
+  tl *o = tl_allocate(tl_t_pair, sizeof(tl) * 2);
   o[0] = car; o[1] = cdr;
   return o;
 }")
@@ -321,17 +364,17 @@ tl tl_cons(tl car, tl_cdr) {
  #:title "Layer One ADT"
  (item "ADT Constructor:")
  (lisp-code "
-(define (cons car cdr)
-  (let ((pair (tl_allocate <pair>
+(define (my-cons car cdr)
+  (let ((pair (tl_allocate <my-pair>
                 (tl_I (* 2 %word-size)))))
    (tl_set pair 0 car)
    (tl_set pair 1 cdr)
    pair))
 ")
- 'next
+ (next-if-interactive)
  (item "Unsafe ADT Operations")
- (lisp-code "(define (car p) (tl_get p 0))")
- (lisp-code "(define (cdr p) (tl_get p 1))")
+ (lisp-code "(define (my-car p) (tl_get p 0))")
+ (lisp-code "(define (my-cdr p) (tl_get p 1))")
  )
 
 (slide
@@ -348,11 +391,11 @@ tl tl_cons(tl car, tl_cdr) {
  (lisp-code "
 '(
    ( (foo bar) .   ;; <= names
-     (1 2) )       ;; <= values
+     (1   2  ) )   ;; <= values
    .
    ;; outer-scope: e.g. top-level via (define name value)
-   ( (cons car cdr) .
-     ((%cons (a d) ...) (%car (pair) ...) (%cdr (pair) ...))
+   ( (cons            car            cdr          ) .
+     (#<prim tl_cons> #<prim tl_car> #<prim tl_cdr))
    )
   )
 ")
@@ -413,11 +456,11 @@ tl tl_cons(tl car, tl_cdr) {
 (slide
  #:title "Layer Z: Compilation."
  (item "Implement compiler for Layer One language in Layer Z-1 language.")
- 'next
+ (next-if-interactive)
  (item "Compiler recognizes Layer One primitives.")
- 'next
+ (next-if-interactive)
  (item "Use compiler to compile itself.")
- 'next
+ (next-if-interactive)
  (item "Discard Layer Zero.")
  )
 
@@ -434,9 +477,9 @@ tl tl_cons(tl car, tl_cdr) {
  (tl-struct (list (list "'<pair>" "car" "cdr")
                   (list "'<environment>" "names-values" "outer-env")
                   (list "'<type>" "selectors-methods" "supertype")))
- 'next
+ (next-if-interactive)
  (item "Environments and types could be implemented using typed pairs.")
- 'next
+ (next-if-interactive)
  (item "Method lookup could be the same as environment lookup.")
  )
 

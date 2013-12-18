@@ -68,6 +68,12 @@ endif
 
 all : $(EARLY_TARGETS) bin/$(tl)
 
+docs: doc/bootstrapping.pdf
+
+doc/bootstrapping.pdf : doc/bootstrapping.rkt
+	PATH="/Applications/Racket v5.3.6/bin:$PATH" ;\
+	slideshow --pdf -o $@ doc/bootstrapping.rkt
+
 v :
 	echo "$(v)=$($v)"
 
