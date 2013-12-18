@@ -162,8 +162,8 @@
 (slide
  #:title "Example Language"
   (item "http://github.com/kstephens/tl")
-  (lisp-color (item "Layer One - Scheme"))
   (c-color    (item "Layer Zero - C"))
+  (lisp-color (item "Layer One - Scheme"))
  )
 
 (slide
