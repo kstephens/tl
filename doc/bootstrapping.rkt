@@ -393,7 +393,8 @@ tl tl_cons(tl car, tl_cdr) {
    ( (foo bar) .   ;; <= names
      (1   2  ) )   ;; <= values
    .
-   ;; outer-scope: e.g. top-level via (define name value)
+   ;; outer-scope:
+   ;; e.g. top-level via (define name value)
    ( (cons            car            cdr          ) .
      (#<prim tl_cons> #<prim tl_car> #<prim tl_cdr))
    )
@@ -426,7 +427,7 @@ tl tl_cons(tl car, tl_cdr) {
  (item "Define macro to wrap unsafe primitive with type checking.")
  (lisp-code "(define-macro (add-type-checking proc . arg-predicates) ...)")
  (item "Apply macro to unsafe primitives.")
- (lisp-code "(add-type-checking car pair?)")
+ (lisp-code "(add-type-checking (car pair?))")
  )
 
 (slide
@@ -435,11 +436,10 @@ tl tl_cons(tl car, tl_cdr) {
  (lisp-code "
 (define <vector> (make-type <object>))
 (define (make-vector size)
-  (let ((vector (tl_allocate <vector>
-                  (tl_I (* %word-size (+ size 1))))))
-    (tl_set vector 0 size)
-    vector
-    ))
+  (let ((v (tl_allocate <vector>
+             (tl_I (* %word-size (+ size 1))))))
+    (tl_set v 0 size)
+    v))
 (define (vector-ref v i) (tl_get v (+ i 1)))
 (add-type-checking (make-vector non-negative-fixnum?))
 (add-type-checking (vector-ref vector? non-negative-fixnum?))
@@ -474,9 +474,11 @@ tl tl_cons(tl car, tl_cdr) {
 
 (slide
  #:title "Pair/Object/Environment Isomorphism"
- (tl-struct (list (list "'<pair>" "car" "cdr")
-                  (list "'<environment>" "names-values" "outer-env")
-                  (list "'<type>" "selectors-methods" "supertype")))
+ (tl-struct (list
+              (list "'<pair>" "car" "cdr")
+              (list "'<type>" "selectors-methods" "supertype")
+              (list "'<environment>" "names-values" "outer-env")
+              ))
  (next-if-interactive)
  (item "Environments and types could be implemented using typed pairs.")
  (next-if-interactive)
