@@ -35,6 +35,9 @@
     ((and (char<=? #\A c) (char<=? c #\Z)) (+ (- (char->integer c) (char->integer #\A)) 10))
     (else #f)))
 
+(define (string->integer s . radix)
+  (tl_string_to_number s (if radix (car radix) 10)))
+
 (define (%string-unescape-1 s i j)
   (if (>= i (string-length s))
     (%string-truncate! s j)
